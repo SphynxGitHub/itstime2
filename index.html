@@ -255,7 +255,7 @@
           <tr>
             <td>${c.first_name || ''} ${c.last_name || ''}</td>
             <td>${c.email || ''}</td>
-            <td>${c.phone || ''}</td>
+            <td>${formatForDisplay(c.phone)}</td>
             <td>
               <button class="action-btn info" onclick="openSendModal('${c.id}')">Send Msg</button>
               <button class="action-btn warning" onclick="startCustEdit('${c.id}')">Edit</button>
@@ -440,7 +440,7 @@
       
       return `+1${digits}`;
     }
-        async function saveCustomer() {
+    async function saveCustomer() {
       const first_name = document.getElementById('cust-first-name').value;
       const last_name = document.getElementById('cust-last-name').value;
       const email = document.getElementById('cust-email').value;
@@ -469,13 +469,28 @@
         }
       }
     }
+
+    // Converts +19739341956 or 9739341956 to "+1 (973) 934-1956" for UI display
+    function formatForDisplay(phone) {
+      if (!phone) return '';
+      const digits = phone.replace(/\D/g, '');
+      
+      if (digits.length === 11 && digits.startsWith('1')) {
+        return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
+      }
+      if (digits.length === 10) {
+        return `+1 (${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+      }
+      return phone; // Fallback if number length is unexpected
+    }
+    
     // --- MODULE 3: SEND MESSAGE MODAL & VERCEL SMS ROUTE CALL ---
     async function openSendModal(custId) {
       activeModalCust = customerStore.find(c => String(c.id) === String(custId));
       if (!activeModalCust) return alert('Customer not found.');
 
       document.getElementById('modal-cust-name').innerText = `${activeModalCust.first_name || ''} ${activeModalCust.last_name || ''}`;
-      document.getElementById('modal-cust-phone').innerText = activeModalCust.phone || 'No Phone Number';
+      document.getElementById('modal-cust-phone').innerText = formatForDisplay(activeModalCust.phone) || 'No Phone Number';
       document.getElementById('modal-message-preview').value = '';
 
       await fetchTemplatesQuietly();
