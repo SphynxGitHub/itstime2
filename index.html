@@ -38,7 +38,7 @@
     th { background-color: #f1f5f9; }
     .action-btn { display: inline-block; width: auto; padding: 4px 8px; margin-bottom: 0; font-size: 12px; margin-right: 4px; }
 
-    /* MODAL POPUP */
+    /* MODAL POPUPS */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
     .modal-content { background: white; padding: 25px; width: 450px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
   </style>
@@ -80,7 +80,7 @@
         <input type="text" id="cust-first-name" placeholder="First Name">
         <input type="text" id="cust-last-name" placeholder="Last Name">
         <input type="email" id="cust-email" placeholder="Customer Email">
-        <input type="tel" id="cust-phone" placeholder="Customer Phone (e.g. +15551234567)">
+        <input type="tel" id="cust-phone" placeholder="Customer Phone (e.g. 973-934-1956)">
         
         <button id="cust-save-btn" onclick="saveCustomer()">Add Customer</button>
         <button id="cust-cancel-btn" onclick="cancelCustEdit()" class="secondary hidden">Cancel Edit</button>
@@ -129,7 +129,7 @@
     </div>
   </div>
 
-  <!-- SEND MESSAGE MODAL POPUP -->
+  <!-- IMMEDIATE SEND MESSAGE MODAL -->
   <div id="send-modal" class="modal-overlay hidden">
     <div class="modal-content">
       <h3 style="margin-top: 0;">Send SMS Message</h3>
@@ -148,6 +148,64 @@
     </div>
   </div>
 
+  <!-- CUSTOMER PROFILE & SCHEDULE MODAL -->
+  <div id="profile-modal" class="modal-overlay hidden">
+    <div class="modal-content" style="width: 650px; max-height: 85vh; overflow-y: auto;">
+      <h3 id="profile-title" style="margin-top:0;">Customer Profile</h3>
+      
+      <!-- SCHEDULE NEW MESSAGE BOX -->
+      <div style="background: #f8fafc; padding: 15px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+        <h4 style="margin-top:0; margin-bottom: 10px;">Schedule Recurring or One-Time SMS</h4>
+        
+        <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Template (Optional):</label>
+        <select id="sched-template-select" onchange="applySchedTemplateToPreview()" style="margin-bottom: 10px;">
+          <option value="">-- Select Template --</option>
+        </select>
+
+        <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Message Text:</label>
+        <textarea id="sched-message-body" rows="3" placeholder="Message content..." style="margin-bottom: 10px;"></textarea>
+        
+        <div style="display: flex; gap: 10px; align-items: flex-end;">
+          <div style="flex: 1;">
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Frequency:</label>
+            <select id="sched-type" style="margin-bottom:0;">
+              <option value="one_time">One-time</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+          </div>
+          
+          <div style="flex: 1;">
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">First Dispatch Date/Time:</label>
+            <input type="datetime-local" id="sched-datetime" style="margin-bottom:0;">
+          </div>
+
+          <button onclick="createSchedule()" style="width: auto; height: 38px; margin-bottom:0; background-color: #3ecf8e;">Schedule</button>
+        </div>
+      </div>
+
+      <!-- SCHEDULES LIST -->
+      <h4 style="margin-bottom: 5px;">Active & Scheduled Messages</h4>
+      <table style="margin-bottom: 20px;">
+        <thead>
+          <tr><th>Frequency</th><th>Next Run</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="sched-list-body"><tr><td colspan="4">Loading...</td></tr></tbody>
+      </table>
+
+      <!-- CUSTOMER HISTORY -->
+      <h4 style="margin-bottom: 5px;">Customer Interaction History</h4>
+      <table style="margin-bottom: 15px;">
+        <thead>
+          <tr><th>Timestamp</th><th>Action / Message Details</th></tr>
+        </thead>
+        <tbody id="profile-history-body"><tr><td colspan="2">Loading...</td></tr></tbody>
+      </table>
+
+      <button onclick="closeProfileModal()" class="secondary" style="margin-bottom:0;">Close Profile</button>
+    </div>
+  </div>
+
   <script>
     const SUPABASE_URL = 'https://yktwthagtgdzzkaypgqj.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_onP87pGhzbxdWjnDoOnJAA_XCAiOJFx';
@@ -158,8 +216,31 @@
     let editingCustId = null;
     let editingTmplId = null;
     let activeModalCust = null;
+    let currentProfileCustId = null;
     let customerStore = [];
     let templateStore = [];
+
+    // --- PHONE FORMATTING HELPERS ---
+    function formatToE164(phone) {
+      if (!phone) return '';
+      const digits = phone.replace(/\D/g, '');
+      if (digits.length === 10) return `+1${digits}`;
+      if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
+      if (phone.trim().startsWith('+')) return `+${digits}`;
+      return `+1${digits}`;
+    }
+
+    function formatForDisplay(phone) {
+      if (!phone) return '';
+      const digits = phone.replace(/\D/g, '');
+      if (digits.length === 11 && digits.startsWith('1')) {
+        return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
+      }
+      if (digits.length === 10) {
+        return `+1 (${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+      }
+      return phone;
+    }
 
     // --- ACTIVITY TRACKER & AUTO-LOGOUT ---
     function recordActivity() { localStorage.setItem('lastActivityTimestamp', Date.now().toString()); }
@@ -257,6 +338,7 @@
             <td>${c.email || ''}</td>
             <td>${formatForDisplay(c.phone)}</td>
             <td>
+              <button class="action-btn info" onclick="openCustomerProfile('${c.id}')">Profile</button>
               <button class="action-btn info" onclick="openSendModal('${c.id}')">Send Msg</button>
               <button class="action-btn warning" onclick="startCustEdit('${c.id}')">Edit</button>
               <button class="action-btn danger" onclick="deleteCustomer('${c.id}')">Delete</button>
@@ -269,7 +351,9 @@
       const first_name = document.getElementById('cust-first-name').value;
       const last_name = document.getElementById('cust-last-name').value;
       const email = document.getElementById('cust-email').value;
-      const phone = document.getElementById('cust-phone').value;
+      const rawPhone = document.getElementById('cust-phone').value;
+      const phone = formatToE164(rawPhone);
+
       if (!first_name) return alert('First name required.');
 
       if (editingCustId) {
@@ -298,7 +382,7 @@
       document.getElementById('cust-first-name').value = c.first_name || '';
       document.getElementById('cust-last-name').value = c.last_name || '';
       document.getElementById('cust-email').value = c.email || '';
-      document.getElementById('cust-phone').value = c.phone || '';
+      document.getElementById('cust-phone').value = formatForDisplay(c.phone) || '';
       document.getElementById('cust-form-title').innerText = 'Edit Customer';
       document.getElementById('cust-save-btn').innerText = 'Save Changes';
       document.getElementById('cust-cancel-btn').classList.remove('hidden');
@@ -416,75 +500,7 @@
       }
     }
 
-    // Automatically converts any US phone input into E.164 format (+1XXXXXXXXXX)
-    function formatToE164(phone) {
-      if (!phone) return '';
-      
-      // Remove all non-digit characters
-      const digits = phone.replace(/\D/g, '');
-      
-      // Standard 10-digit US number (e.g., 9739341956 -> +19739341956)
-      if (digits.length === 10) {
-        return `+1${digits}`;
-      }
-      
-      // 11-digit US number starting with 1 (e.g., 19739341956 -> +19739341956)
-      if (digits.length === 11 && digits.startsWith('1')) {
-        return `+${digits}`;
-      }
-      
-      // If user included international country code with '+'
-      if (phone.trim().startsWith('+')) {
-        return `+${digits}`;
-      }
-      
-      return `+1${digits}`;
-    }
-    async function saveCustomer() {
-      const first_name = document.getElementById('cust-first-name').value;
-      const last_name = document.getElementById('cust-last-name').value;
-      const email = document.getElementById('cust-email').value;
-      
-      // Auto-format phone input before saving
-      const rawPhone = document.getElementById('cust-phone').value;
-      const phone = formatToE164(rawPhone);
-    
-      if (!first_name) return alert('First name required.');
-    
-      if (editingCustId) {
-        const { error } = await supabaseClient.from('customers').update({ first_name, last_name, email, phone }).eq('id', editingCustId);
-        if (error) alert(error.message);
-        else {
-          await logActivity('Updated Customer', `Updated profile for ${first_name} ${last_name}`);
-          cancelCustEdit();
-          fetchCustomers();
-        }
-      } else {
-        const { error } = await supabaseClient.from('customers').insert([{ first_name, last_name, email, phone }]);
-        if (error) alert(error.message);
-        else {
-          await logActivity('Created Customer', `Added new customer ${first_name} ${last_name}`);
-          clearCustForm();
-          fetchCustomers();
-        }
-      }
-    }
-
-    // Converts +19739341956 or 9739341956 to "+1 (973) 934-1956" for UI display
-    function formatForDisplay(phone) {
-      if (!phone) return '';
-      const digits = phone.replace(/\D/g, '');
-      
-      if (digits.length === 11 && digits.startsWith('1')) {
-        return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
-      }
-      if (digits.length === 10) {
-        return `+1 (${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-      }
-      return phone; // Fallback if number length is unexpected
-    }
-    
-    // --- MODULE 3: SEND MESSAGE MODAL & VERCEL SMS ROUTE CALL ---
+    // --- MODULE 3: SEND IMMEDIATE SMS MODAL ---
     async function openSendModal(custId) {
       activeModalCust = customerStore.find(c => String(c.id) === String(custId));
       if (!activeModalCust) return alert('Customer not found.');
@@ -522,7 +538,7 @@
       text = text.replace(/\{first_name\}/g, activeModalCust.first_name || '');
       text = text.replace(/\{last_name\}/g, activeModalCust.last_name || '');
       text = text.replace(/\{email\}/g, activeModalCust.email || '');
-      text = text.replace(/\{phone\}/g, activeModalCust.phone || '');
+      text = text.replace(/\{phone\}/g, formatForDisplay(activeModalCust.phone) || '');
 
       document.getElementById('modal-message-preview').value = text;
     }
@@ -535,7 +551,6 @@
       const custName = `${activeModalCust.first_name || ''} ${activeModalCust.last_name || ''}`;
       
       try {
-        // Calls the Vercel serverless function (api/send-sms.js)
         const res = await fetch('/api/send-sms', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -562,7 +577,144 @@
       document.getElementById('send-modal').classList.add('hidden');
     }
 
-    // --- MODULE 4: ACTIVITY HISTORY ---
+    // --- MODULE 4: CUSTOMER PROFILE & SCHEDULING ---
+    async function openCustomerProfile(custId) {
+      currentProfileCustId = custId;
+      const cust = customerStore.find(c => String(c.id) === String(custId));
+      if (!cust) return alert('Customer not found.');
+
+      document.getElementById('profile-title').innerText = `Profile: ${cust.first_name || ''} ${cust.last_name || ''}`;
+      document.getElementById('profile-modal').classList.remove('hidden');
+
+      await fetchTemplatesQuietly();
+      const sel = document.getElementById('sched-template-select');
+      sel.innerHTML = '<option value="">-- Select Template (Optional) --</option>';
+      templateStore.forEach(t => { sel.innerHTML += `<option value="${t.id}">${t.title}</option>`; });
+
+      document.getElementById('sched-message-body').value = '';
+      document.getElementById('sched-datetime').value = '';
+
+      loadCustomerSchedules(custId);
+      loadCustomerHistory(cust.phone);
+    }
+
+    function applySchedTemplateToPreview() {
+      const selectedId = document.getElementById('sched-template-select').value;
+      const cust = customerStore.find(c => String(c.id) === String(currentProfileCustId));
+      if (!selectedId || !cust) return;
+
+      const tmpl = templateStore.find(t => String(t.id) === String(selectedId));
+      if (!tmpl) return;
+
+      let text = tmpl.body;
+      text = text.replace(/\{first_name\}/g, cust.first_name || '');
+      text = text.replace(/\{last_name\}/g, cust.last_name || '');
+      text = text.replace(/\{email\}/g, cust.email || '');
+      text = text.replace(/\{phone\}/g, formatForDisplay(cust.phone) || '');
+
+      document.getElementById('sched-message-body').value = text;
+    }
+
+    async function loadCustomerSchedules(custId) {
+      const tbody = document.getElementById('sched-list-body');
+      tbody.innerHTML = '<tr><td colspan="4">Loading schedules...</td></tr>';
+
+      const { data, error } = await supabaseClient
+        .from('scheduled_messages')
+        .select('*')
+        .eq('customer_id', String(custId))
+        .order('next_run_at', { ascending: true });
+
+      if (error || !data || data.length === 0) {
+        return tbody.innerHTML = '<tr><td colspan="4">No scheduled messages found.</td></tr>';
+      }
+
+      tbody.innerHTML = '';
+      data.forEach(s => {
+        const isPaused = s.status === 'paused';
+        const nextRun = new Date(s.next_run_at).toLocaleString();
+        
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${s.schedule_type.toUpperCase()}</strong></td>
+            <td>${nextRun}</td>
+            <td><span style="color:${isPaused ? '#e53e3e' : '#3ecf8e'}; font-weight:bold;">${s.status}</span></td>
+            <td>
+              <button class="action-btn ${isPaused ? 'info' : 'warning'}" onclick="toggleScheduleStatus('${s.id}', '${s.status}')">${isPaused ? 'Start' : 'Pause'}</button>
+              <button class="action-btn danger" onclick="deleteSchedule('${s.id}')">Delete</button>
+            </td>
+          </tr>`;
+      });
+    }
+
+    async function loadCustomerHistory(phone) {
+      const tbody = document.getElementById('profile-history-body');
+      tbody.innerHTML = '<tr><td colspan="2">Loading history...</td></tr>';
+
+      const { data } = await supabaseClient
+        .from('activity_history')
+        .select('*')
+        .ilike('details', `%${phone}%`)
+        .order('created_at', { ascending: false });
+
+      if (!data || data.length === 0) {
+        return tbody.innerHTML = '<tr><td colspan="2">No past history recorded for this customer.</td></tr>';
+      }
+
+      tbody.innerHTML = '';
+      data.forEach(h => {
+        const time = new Date(h.created_at).toLocaleString();
+        tbody.innerHTML += `
+          <tr>
+            <td style="font-size:12px; color:#666; width:150px;">${time}</td>
+            <td><strong>${h.action}:</strong> ${h.details}</td>
+          </tr>`;
+      });
+    }
+
+    async function createSchedule() {
+      const message_body = document.getElementById('sched-message-body').value;
+      const schedule_type = document.getElementById('sched-type').value;
+      const rawDatetime = document.getElementById('sched-datetime').value;
+
+      if (!message_body || !rawDatetime) return alert('Please enter message text and choose a date/time.');
+
+      const next_run_at = new Date(rawDatetime).toISOString();
+
+      const { error } = await supabaseClient.from('scheduled_messages').insert([{
+        customer_id: String(currentProfileCustId),
+        message_body,
+        schedule_type,
+        next_run_at,
+        status: 'active'
+      }]);
+
+      if (error) alert(error.message);
+      else {
+        alert('Message schedule created successfully!');
+        document.getElementById('sched-message-body').value = '';
+        loadCustomerSchedules(currentProfileCustId);
+      }
+    }
+
+    async function toggleScheduleStatus(schedId, currentStatus) {
+      const newStatus = currentStatus === 'paused' ? 'active' : 'paused';
+      await supabaseClient.from('scheduled_messages').update({ status: newStatus }).eq('id', schedId);
+      loadCustomerSchedules(currentProfileCustId);
+    }
+
+    async function deleteSchedule(schedId) {
+      if (!confirm('Cancel and delete this schedule?')) return;
+      await supabaseClient.from('scheduled_messages').delete().eq('id', schedId);
+      loadCustomerSchedules(currentProfileCustId);
+    }
+
+    function closeProfileModal() {
+      currentProfileCustId = null;
+      document.getElementById('profile-modal').classList.add('hidden');
+    }
+
+    // --- MODULE 5: ACTIVITY HISTORY ---
     async function fetchHistory() {
       const tbody = document.getElementById('history-list-body');
       tbody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
