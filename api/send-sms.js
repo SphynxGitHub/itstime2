@@ -4,7 +4,18 @@ export default async function handler(req, res) {
   const { phone, message } = req.body;
   if (!phone || !message) return res.status(400).json({ error: 'Phone and message required' });
 
-  // Credentials are read ONLY from Vercel Environment Variables
+  // Sanitize phone number to E.164 (+1XXXXXXXXXX) format
+  let cleanDigits = phone.replace(/\D/g, '');
+  let formattedPhone = phone;
+
+  if (cleanDigits.length === 10) {
+    formattedPhone = `+1${cleanDigits}`;
+  } else if (cleanDigits.length === 11 && cleanDigits.startsWith('1')) {
+    formattedPhone = `+${cleanDigits}`;
+  } else if (!phone.startsWith('+')) {
+    formattedPhone = `+${cleanDigits}`;
+  }
+
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const fromPhone = process.env.TWILIO_PHONE_NUMBER;
@@ -17,7 +28,7 @@ export default async function handler(req, res) {
 
   try {
     const params = new URLSearchParams({
-      To: phone,
+      To: formattedPhone,
       From: fromPhone,
       Body: message
     });
