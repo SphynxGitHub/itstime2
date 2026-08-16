@@ -416,6 +416,59 @@
       }
     }
 
+    // Automatically converts any US phone input into E.164 format (+1XXXXXXXXXX)
+    function formatToE164(phone) {
+      if (!phone) return '';
+      
+      // Remove all non-digit characters
+      const digits = phone.replace(/\D/g, '');
+      
+      // Standard 10-digit US number (e.g., 9739341956 -> +19739341956)
+      if (digits.length === 10) {
+        return `+1${digits}`;
+      }
+      
+      // 11-digit US number starting with 1 (e.g., 19739341956 -> +19739341956)
+      if (digits.length === 11 && digits.startsWith('1')) {
+        return `+${digits}`;
+      }
+      
+      // If user included international country code with '+'
+      if (phone.trim().startsWith('+')) {
+        return `+${digits}`;
+      }
+      
+      return `+1${digits}`;
+    }
+        async function saveCustomer() {
+      const first_name = document.getElementById('cust-first-name').value;
+      const last_name = document.getElementById('cust-last-name').value;
+      const email = document.getElementById('cust-email').value;
+      
+      // Auto-format phone input before saving
+      const rawPhone = document.getElementById('cust-phone').value;
+      const phone = formatToE164(rawPhone);
+    
+      if (!first_name) return alert('First name required.');
+    
+      if (editingCustId) {
+        const { error } = await supabaseClient.from('customers').update({ first_name, last_name, email, phone }).eq('id', editingCustId);
+        if (error) alert(error.message);
+        else {
+          await logActivity('Updated Customer', `Updated profile for ${first_name} ${last_name}`);
+          cancelCustEdit();
+          fetchCustomers();
+        }
+      } else {
+        const { error } = await supabaseClient.from('customers').insert([{ first_name, last_name, email, phone }]);
+        if (error) alert(error.message);
+        else {
+          await logActivity('Created Customer', `Added new customer ${first_name} ${last_name}`);
+          clearCustForm();
+          fetchCustomers();
+        }
+      }
+    }
     // --- MODULE 3: SEND MESSAGE MODAL & VERCEL SMS ROUTE CALL ---
     async function openSendModal(custId) {
       activeModalCust = customerStore.find(c => String(c.id) === String(custId));
