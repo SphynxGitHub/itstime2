@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>It's Time To</title>
+  <title>It's Time 2 - CRM & Messaging Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; }
@@ -24,7 +24,8 @@
     
     /* LEFT SIDEBAR MENU */
     .sidebar { width: 220px; background-color: #1e293b; color: white; padding: 20px 0; display: flex; flex-direction: column; }
-    .sidebar h3 { padding: 0 20px; margin-bottom: 20px; font-size: 18px; color: #3ecf8e; }
+    .sidebar-header { padding: 0 20px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+    .sidebar-header h3 { margin: 0; padding: 0; font-size: 20px; color: #3ecf8e; font-weight: bold; }
     .nav-item { padding: 12px 20px; color: #cbd5e1; text-decoration: none; display: block; cursor: pointer; transition: 0.2s; }
     .nav-item:hover, .nav-item.active { background-color: #334155; color: white; font-weight: bold; border-left: 4px solid #3ecf8e; }
     .sidebar-footer { margin-top: auto; padding: 20px; border-top: 1px solid #334155; }
@@ -47,7 +48,10 @@
 
   <!-- AUTHENTICATION SECTION -->
   <div id="auth-section">
-    <h2>Log In / Sign Up</h2>
+    <div style="text-align: center; margin-bottom: 15px;">
+      <img src="logo.png" alt="It's Time 2 Logo" style="width: 48px; height: 48px; object-fit: contain; vertical-align: middle;" onerror="this.style.display='none'">
+      <h2 style="margin-top: 8px;">It's Time 2</h2>
+    </div>
     <input type="email" id="email" placeholder="Email address">
     <input type="password" id="password" placeholder="Password">
     <button onclick="login()">Log In</button>
@@ -60,16 +64,15 @@
     
     <!-- LEFT NAVIGATION MENU -->
     <div class="sidebar">
-      <div style="padding: 0 20px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
-        <!-- Replace 'logo.png' with your image file name or URL -->
-        <img src="logo.png" alt="It's Time 2 Logo" style="width: 36px; height: 36px; object-fit: contain;">
-        <h3 style="margin: 0; padding: 0; font-size: 20px; color: #3ecf8e; font-weight: bold;">It's Time 2</h3>
+      <div class="sidebar-header">
+        <img src="logo.png" alt="It's Time 2 Logo" style="width: 32px; height: 32px; object-fit: contain;" onerror="this.style.display='none'">
+        <h3>It's Time 2</h3>
       </div>
-    
+
       <a class="nav-item active" id="nav-customers" onclick="switchTab('customers')">Customers</a>
       <a class="nav-item" id="nav-templates" onclick="switchTab('templates')">Message Library</a>
       <a class="nav-item" id="nav-history" onclick="switchTab('history')">Activity History</a>
-    
+
       <div class="sidebar-footer">
         <p style="font-size: 12px; margin-bottom: 10px; color: #94a3b8;">Logged in as:<br><strong id="user-email" style="color:white;"></strong></p>
         <button onclick="logout()" class="secondary" style="margin-bottom:0;">Log Out</button>
@@ -119,29 +122,42 @@
           <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Message Text:</label>
           <textarea id="sched-message-body" rows="3" placeholder="Message content..." style="margin-bottom: 12px;"></textarea>
           
-          <div style="display: flex; gap: 15px; align-items: flex-end;">
-          <div style="flex: 1;">
-            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Frequency:</label>
-            <select id="sched-type" onchange="toggleCustomDaysInput()" style="margin-bottom:0;">
-              <option value="one_time">One-time</option>
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="custom">Custom Interval (Days)</option>
-            </select>
+          <!-- FREQUENCY & MULTI-DATE CONTROLLER -->
+          <div style="display: flex; gap: 15px; align-items: flex-start; margin-top: 15px;">
+            <div style="flex: 1;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Frequency:</label>
+              <select id="sched-type" onchange="toggleCustomDatePicker()" style="margin-bottom:0;">
+                <option value="one_time">One-time</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="multi_date">Custom Multi-Date List</option>
+              </select>
+            </div>
+
+            <!-- SINGLE DATE PICKER -->
+            <div id="single-date-container" style="flex: 1;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Dispatch Date/Time:</label>
+              <input type="datetime-local" id="sched-datetime" style="margin-bottom:0;">
+            </div>
+
+            <!-- MULTI-DATE BUILDER (HIDDEN BY DEFAULT) -->
+            <div id="multi-date-container" class="hidden" style="flex: 2; background: #fff; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:6px;">Add Dates to Schedule:</label>
+              <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                <input type="datetime-local" id="multi-date-input" style="margin-bottom:0; flex: 1;">
+                <button type="button" onclick="addCustomDateToList()" style="width: auto; height: 38px; margin-bottom:0; background-color: #3182ce;">+ Add Date</button>
+              </div>
+
+              <div style="max-height: 120px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px; background: #f8fafc;">
+                <ul id="custom-dates-list" style="margin: 0; padding-left: 20px; font-size: 13px;">
+                  <li style="color: #94a3b8; list-style: none; margin-left: -15px;">No dates added yet.</li>
+                </ul>
+              </div>
+            </div>
           </div>
-        
-          <div id="custom-days-container" class="hidden" style="flex: 1;">
-            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Every (X) Days:</label>
-            <input type="number" id="sched-custom-days" min="1" value="3" placeholder="e.g. 3" style="margin-bottom:0;">
-          </div>
-          
-          <div style="flex: 1;">
-            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Dispatch Date/Time:</label>
-            <input type="datetime-local" id="sched-datetime" style="margin-bottom:0;">
-          </div>
-        
-          <div style="display: flex; gap: 8px;">
+
+          <div style="display: flex; gap: 8px; margin-top: 15px;">
             <button id="sched-save-btn" onclick="saveSchedule()" style="width: auto; height: 38px; margin-bottom:0; background-color: #3ecf8e;">Schedule Message</button>
             <button id="sched-cancel-btn" onclick="cancelSchedEdit()" class="secondary hidden" style="width: auto; height: 38px; margin-bottom:0;">Cancel Edit</button>
           </div>
@@ -234,6 +250,7 @@
     let customerStore = [];
     let templateStore = [];
     let scheduleStore = [];
+    let customDatesList = [];
 
     // --- PHONE FORMATTING HELPERS ---
     function formatToE164(phone) {
@@ -446,7 +463,6 @@
       const cust = customerStore.find(c => String(c.id) === String(custId));
       if (!cust) return alert('Customer not found.');
 
-      // Switch to profile view
       ['customers', 'templates', 'history'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden'));
       document.getElementById('view-profile').classList.remove('hidden');
 
@@ -480,6 +496,55 @@
       document.getElementById('sched-message-body').value = text;
     }
 
+    function toggleCustomDatePicker() {
+      const type = document.getElementById('sched-type').value;
+      const singleContainer = document.getElementById('single-date-container');
+      const multiContainer = document.getElementById('multi-date-container');
+
+      if (type === 'multi_date') {
+        singleContainer.classList.add('hidden');
+        multiContainer.classList.remove('hidden');
+      } else {
+        singleContainer.classList.remove('hidden');
+        multiContainer.classList.add('hidden');
+      }
+    }
+
+    function addCustomDateToList() {
+      const val = document.getElementById('multi-date-input').value;
+      if (!val) return alert('Select a date and time first.');
+
+      const iso = new Date(val).toISOString();
+      if (customDatesList.includes(iso)) return alert('That timestamp is already in your list.');
+
+      customDatesList.push(iso);
+      customDatesList.sort();
+      document.getElementById('multi-date-input').value = '';
+      renderCustomDatesList();
+    }
+
+    function removeCustomDateFromList(index) {
+      customDatesList.splice(index, 1);
+      renderCustomDatesList();
+    }
+
+    function renderCustomDatesList() {
+      const ul = document.getElementById('custom-dates-list');
+      if (customDatesList.length === 0) {
+        return ul.innerHTML = '<li style="color: #94a3b8; list-style: none; margin-left: -15px;">No dates added yet.</li>';
+      }
+
+      ul.innerHTML = '';
+      customDatesList.forEach((iso, idx) => {
+        const display = new Date(iso).toLocaleString();
+        ul.innerHTML += `
+          <li style="margin-bottom: 4px;">
+            <strong>${display}</strong>
+            <button type="button" onclick="removeCustomDateFromList(${idx})" class="action-btn danger" style="padding: 1px 6px; font-size: 10px; margin-left: 10px;">Remove</button>
+          </li>`;
+      });
+    }
+
     async function loadCustomerSchedules(custId) {
       const tbody = document.getElementById('sched-list-body');
       tbody.innerHTML = '<tr><td colspan="5">Loading schedules...</td></tr>';
@@ -500,10 +565,11 @@
       data.forEach(s => {
         const isPaused = s.status === 'paused';
         const nextRun = new Date(s.next_run_at).toLocaleString();
+        const displayType = s.schedule_type === 'multi_date' ? `MULTI-DATE (${s.pending_dates ? s.pending_dates.length : 0} left)` : s.schedule_type.toUpperCase();
         
         tbody.innerHTML += `
           <tr>
-            <td><strong>${s.schedule_type.toUpperCase()}</strong></td>
+            <td><strong>${displayType}</strong></td>
             <td>${nextRun}</td>
             <td><span style="color:${isPaused ? '#e53e3e' : '#3ecf8e'}; font-weight:bold;">${s.status}</span></td>
             <td>${s.message_body || ''}</td>
@@ -523,7 +589,16 @@
       editingSchedId = schedId;
       document.getElementById('sched-message-body').value = s.message_body || '';
       document.getElementById('sched-type').value = s.schedule_type || 'one_time';
-      document.getElementById('sched-datetime').value = toDatetimeLocal(s.next_run_at);
+
+      if (s.schedule_type === 'multi_date') {
+        customDatesList = Array.isArray(s.pending_dates) ? [...s.pending_dates] : [];
+        renderCustomDatesList();
+      } else {
+        customDatesList = [];
+        document.getElementById('sched-datetime').value = toDatetimeLocal(s.next_run_at);
+      }
+
+      toggleCustomDatePicker();
 
       document.getElementById('sched-form-title').innerText = 'Edit Scheduled Message';
       document.getElementById('sched-save-btn').innerText = 'Update Schedule';
@@ -532,55 +607,56 @@
 
     function cancelSchedEdit() {
       editingSchedId = null;
+      customDatesList = [];
       document.getElementById('sched-message-body').value = '';
       document.getElementById('sched-datetime').value = '';
       document.getElementById('sched-template-select').value = '';
       document.getElementById('sched-type').value = 'one_time';
       
+      toggleCustomDatePicker();
+      renderCustomDatesList();
+
       document.getElementById('sched-form-title').innerText = 'Schedule Recurring or One-Time SMS';
       document.getElementById('sched-save-btn').innerText = 'Schedule Message';
       document.getElementById('sched-cancel-btn').classList.add('hidden');
     }
 
-    // Toggle Custom Interval input field based on dropdown selection
-    function toggleCustomDaysInput() {
-      const type = document.getElementById('sched-type').value;
-      const container = document.getElementById('custom-days-container');
-      if (type === 'custom') {
-        container.classList.remove('hidden');
-      } else {
-        container.classList.add('hidden');
-      }
-    }
-    
-    // Save or Edit Schedule
     async function saveSchedule() {
       const message_body = document.getElementById('sched-message-body').value;
       const schedule_type = document.getElementById('sched-type').value;
-      const rawDatetime = document.getElementById('sched-datetime').value;
-      const customDays = parseInt(document.getElementById('sched-custom-days').value, 10) || 1;
-    
-      if (!message_body || !rawDatetime) return alert('Please enter message text and choose a date/time.');
-    
-      const next_run_at = new Date(rawDatetime).toISOString();
-    
+
+      if (!message_body) return alert('Please enter message text.');
+
+      let next_run_at = null;
+      let pending_dates = [];
+
+      if (schedule_type === 'multi_date') {
+        if (customDatesList.length === 0) return alert('Please add at least one date to your list.');
+        next_run_at = customDatesList[0];
+        pending_dates = [...customDatesList];
+      } else {
+        const rawDatetime = document.getElementById('sched-datetime').value;
+        if (!rawDatetime) return alert('Please select a dispatch date/time.');
+        next_run_at = new Date(rawDatetime).toISOString();
+      }
+
       const payload = {
         customer_id: String(currentProfileCustId),
         message_body,
         schedule_type,
-        interval_days: schedule_type === 'custom' ? customDays : 1,
         next_run_at,
+        pending_dates,
         status: 'active'
       };
-    
+
       if (editingSchedId) {
         const { error } = await supabaseClient.from('scheduled_messages').update({
           message_body,
           schedule_type,
-          interval_days: schedule_type === 'custom' ? customDays : 1,
-          next_run_at
+          next_run_at,
+          pending_dates
         }).eq('id', editingSchedId);
-    
+
         if (error) alert(error.message);
         else {
           alert('Schedule updated successfully!');
@@ -589,7 +665,7 @@
         }
       } else {
         const { error } = await supabaseClient.from('scheduled_messages').insert([payload]);
-    
+
         if (error) alert(error.message);
         else {
           alert('Message schedule created successfully!');
@@ -599,38 +675,6 @@
       }
     }
 
-    // Edit schedule loader
-    function startSchedEdit(schedId) {
-      const s = scheduleStore.find(item => String(item.id) === String(schedId));
-      if (!s) return;
-    
-      editingSchedId = schedId;
-      document.getElementById('sched-message-body').value = s.message_body || '';
-      document.getElementById('sched-type').value = s.schedule_type || 'one_time';
-      document.getElementById('sched-custom-days').value = s.interval_days || 3;
-      document.getElementById('sched-datetime').value = toDatetimeLocal(s.next_run_at);
-    
-      toggleCustomDaysInput();
-    
-      document.getElementById('sched-form-title').innerText = 'Edit Scheduled Message';
-      document.getElementById('sched-save-btn').innerText = 'Update Schedule';
-      document.getElementById('sched-cancel-btn').classList.remove('hidden');
-    }
-    
-    function cancelSchedEdit() {
-      editingSchedId = null;
-      document.getElementById('sched-message-body').value = '';
-      document.getElementById('sched-datetime').value = '';
-      document.getElementById('sched-template-select').value = '';
-      document.getElementById('sched-type').value = 'one_time';
-      document.getElementById('sched-custom-days').value = '3';
-      toggleCustomDaysInput();
-      
-      document.getElementById('sched-form-title').innerText = 'Schedule Recurring or One-Time SMS';
-      document.getElementById('sched-save-btn').innerText = 'Schedule Message';
-      document.getElementById('sched-cancel-btn').classList.add('hidden');
-    }
-  
     async function toggleScheduleStatus(schedId, currentStatus) {
       const newStatus = currentStatus === 'paused' ? 'active' : 'paused';
       await supabaseClient.from('scheduled_messages').update({ status: newStatus }).eq('id', schedId);
