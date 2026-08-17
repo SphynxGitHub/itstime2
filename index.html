@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Modular App Dashboard</title>
+  <title>It's Time To</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; }
@@ -60,11 +60,16 @@
     
     <!-- LEFT NAVIGATION MENU -->
     <div class="sidebar">
-      <h3>App Modules</h3>
+      <div style="padding: 0 20px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+        <!-- Replace 'logo.png' with your image file name or URL -->
+        <img src="logo.png" alt="It's Time 2 Logo" style="width: 36px; height: 36px; object-fit: contain;">
+        <h3 style="margin: 0; padding: 0; font-size: 20px; color: #3ecf8e; font-weight: bold;">It's Time 2</h3>
+      </div>
+    
       <a class="nav-item active" id="nav-customers" onclick="switchTab('customers')">Customers</a>
       <a class="nav-item" id="nav-templates" onclick="switchTab('templates')">Message Library</a>
       <a class="nav-item" id="nav-history" onclick="switchTab('history')">Activity History</a>
-
+    
       <div class="sidebar-footer">
         <p style="font-size: 12px; margin-bottom: 10px; color: #94a3b8;">Logged in as:<br><strong id="user-email" style="color:white;"></strong></p>
         <button onclick="logout()" class="secondary" style="margin-bottom:0;">Log Out</button>
