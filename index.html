@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <title>It's Time 2 - Patient Care & Messaging Dashboard</title>
+  
+  <!-- FAVICON LINK -->
   <link rel="icon" type="image/png" href="logo.png">
-  <title>It's Time 2 - Patient Reminder System</title>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; }
@@ -70,7 +73,7 @@
         <h3>It's Time 2</h3>
       </div>
 
-      <a class="nav-item active" id="nav-customers" onclick="switchTab('customers')">Customers</a>
+      <a class="nav-item active" id="nav-customers" onclick="switchTab('customers')">Patients</a>
       <a class="nav-item" id="nav-templates" onclick="switchTab('templates')">Message Library</a>
       <a class="nav-item" id="nav-history" onclick="switchTab('history')">Activity History</a>
 
@@ -83,7 +86,7 @@
     <!-- CONTENT PANEL -->
     <div class="main-content">
 
-      <!-- 1. PATIENT DIRECTORY VIEW -->
+      <!-- 1. PATIENTS DIRECTORY VIEW -->
       <div id="view-customers">
         <h2 id="cust-form-title">Add Patient</h2>
         <input type="text" id="cust-first-name" placeholder="First Name">
@@ -106,7 +109,7 @@
 
       <!-- 2. PATIENT PROFILE PAGE (FULL PAGE VIEW) -->
       <div id="view-profile" class="hidden">
-        <button onclick="switchTab('customers')" class="secondary action-btn" style="padding: 8px 16px; margin-bottom: 20px;">← Back to Directory</button>
+        <button onclick="switchTab('customers')" class="secondary action-btn" style="padding: 8px 16px; margin-bottom: 20px;">← Back to Patient Directory</button>
         
         <h2 id="profile-title" style="margin-top:0;">Patient Profile</h2>
         <p id="profile-subtitle" style="color: #666; margin-top: -10px; margin-bottom: 20px;"></p>
@@ -373,7 +376,7 @@
       const { data, error } = await supabaseClient.from('customers').select('*').order('created_at', { ascending: false });
       if (error) return tbody.innerHTML = '<tr><td colspan="4">Error loading data.</td></tr>';
       customerStore = data || [];
-      if (customerStore.length === 0) return tbody.innerHTML = '<tr><td colspan="4">No customers found.</td></tr>';
+      if (customerStore.length === 0) return tbody.innerHTML = '<tr><td colspan="4">No patients found.</td></tr>';
       tbody.innerHTML = '';
       customerStore.forEach(c => {
         tbody.innerHTML += `
@@ -404,7 +407,7 @@
         const { error } = await supabaseClient.from('customers').update({ first_name, last_name, email, phone }).eq('id', editingCustId);
         if (error) alert(error.message);
         else {
-          await logActivity('Updated Customer', `Updated profile for ${first_name} ${last_name}`);
+          await logActivity('Updated Patient', `Updated profile for ${first_name} ${last_name}`);
           cancelCustEdit();
           fetchCustomers();
         }
@@ -412,7 +415,7 @@
         const { error } = await supabaseClient.from('customers').insert([{ first_name, last_name, email, phone }]);
         if (error) alert(error.message);
         else {
-          await logActivity('Created Customer', `Added new customer ${first_name} ${last_name}`);
+          await logActivity('Created Patient', `Added new patient ${first_name} ${last_name}`);
           clearCustForm();
           fetchCustomers();
         }
@@ -427,7 +430,7 @@
       document.getElementById('cust-last-name').value = c.last_name || '';
       document.getElementById('cust-email').value = c.email || '';
       document.getElementById('cust-phone').value = formatForDisplay(c.phone) || '';
-      document.getElementById('cust-form-title').innerText = 'Edit Customer';
+      document.getElementById('cust-form-title').innerText = 'Edit Patient';
       document.getElementById('cust-save-btn').innerText = 'Save Changes';
       document.getElementById('cust-cancel-btn').classList.remove('hidden');
     }
@@ -435,8 +438,8 @@
     function cancelCustEdit() {
       editingCustId = null;
       clearCustForm();
-      document.getElementById('cust-form-title').innerText = 'Add Customer';
-      document.getElementById('cust-save-btn').innerText = 'Add Customer';
+      document.getElementById('cust-form-title').innerText = 'Add Patient';
+      document.getElementById('cust-save-btn').innerText = 'Add Patient';
       document.getElementById('cust-cancel-btn').classList.add('hidden');
     }
 
@@ -449,20 +452,20 @@
 
     async function deleteCustomer(id) {
       const c = customerStore.find(i => String(i.id) === String(id));
-      if (!confirm('Delete this customer?')) return;
+      if (!confirm('Delete this patient?')) return;
       const { error } = await supabaseClient.from('customers').delete().eq('id', id);
       if (error) alert(error.message);
       else {
-        await logActivity('Deleted Customer', `Removed customer ${c ? c.first_name : id}`);
+        await logActivity('Deleted Patient', `Removed patient ${c ? c.first_name : id}`);
         fetchCustomers();
       }
     }
 
-    // --- MODULE 2: FULL-PAGE CUSTOMER PROFILE & SCHEDULING ---
+    // --- MODULE 2: FULL-PAGE PATIENT PROFILE & SCHEDULING ---
     async function openCustomerProfile(custId) {
       currentProfileCustId = custId;
       const cust = customerStore.find(c => String(c.id) === String(custId));
-      if (!cust) return alert('Customer not found.');
+      if (!cust) return alert('Patient not found.');
 
       ['customers', 'templates', 'history'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden'));
       document.getElementById('view-profile').classList.remove('hidden');
@@ -699,7 +702,7 @@
         .order('created_at', { ascending: false });
 
       if (!data || data.length === 0) {
-        return tbody.innerHTML = '<tr><td colspan="2">No past history recorded for this customer.</td></tr>';
+        return tbody.innerHTML = '<tr><td colspan="2">No past history recorded for this patient.</td></tr>';
       }
 
       tbody.innerHTML = '';
