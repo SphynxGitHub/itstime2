@@ -83,19 +83,19 @@
     <!-- CONTENT PANEL -->
     <div class="main-content">
 
-      <!-- 1. CUSTOMERS DIRECTORY VIEW -->
+      <!-- 1. PATIENT DIRECTORY VIEW -->
       <div id="view-customers">
-        <h2 id="cust-form-title">Add Customer</h2>
+        <h2 id="cust-form-title">Add Patient</h2>
         <input type="text" id="cust-first-name" placeholder="First Name">
         <input type="text" id="cust-last-name" placeholder="Last Name">
-        <input type="email" id="cust-email" placeholder="Customer Email">
-        <input type="tel" id="cust-phone" placeholder="Customer Phone (e.g. 973-934-1956)">
+        <input type="email" id="cust-email" placeholder="Patient Email">
+        <input type="tel" id="cust-phone" placeholder="Patient Phone (e.g. 973-934-1956)">
         
-        <button id="cust-save-btn" onclick="saveCustomer()">Add Customer</button>
+        <button id="cust-save-btn" onclick="saveCustomer()">Add Patient</button>
         <button id="cust-cancel-btn" onclick="cancelCustEdit()" class="secondary hidden">Cancel Edit</button>
 
         <hr style="margin: 25px 0;">
-        <h2>Customer Directory</h2>
+        <h2>Patient Directory</h2>
         <table>
           <thead>
             <tr><th>Name</th><th>Email</th><th>Phone</th><th>Actions</th></tr>
@@ -104,11 +104,11 @@
         </table>
       </div>
 
-      <!-- 2. CUSTOMER PROFILE PAGE (FULL PAGE VIEW) -->
+      <!-- 2. PATIENT PROFILE PAGE (FULL PAGE VIEW) -->
       <div id="view-profile" class="hidden">
         <button onclick="switchTab('customers')" class="secondary action-btn" style="padding: 8px 16px; margin-bottom: 20px;">← Back to Directory</button>
         
-        <h2 id="profile-title" style="margin-top:0;">Customer Profile</h2>
+        <h2 id="profile-title" style="margin-top:0;">Patient Profile</h2>
         <p id="profile-subtitle" style="color: #666; margin-top: -10px; margin-bottom: 20px;"></p>
         
         <!-- SCHEDULE NEW OR EDIT MESSAGE FORM -->
@@ -173,8 +173,8 @@
           <tbody id="sched-list-body"><tr><td colspan="5">Loading...</td></tr></tbody>
         </table>
 
-        <!-- CUSTOMER HISTORY -->
-        <h3 style="margin-bottom: 10px;">Customer Interaction History</h3>
+        <!-- PATIENT HISTORY -->
+        <h3 style="margin-bottom: 10px;">Patient Interaction History</h3>
         <table>
           <thead>
             <tr><th>Timestamp</th><th>Action / Message Details</th></tr>
@@ -205,7 +205,7 @@
       <!-- 4. ACTIVITY HISTORY VIEW -->
       <div id="view-history" class="hidden">
         <h2>Activity History</h2>
-        <p style="color: #666; font-size: 14px;">Log of account actions, customer updates, and sent messages.</p>
+        <p style="color: #666; font-size: 14px;">Log of account actions, patient updates, and sent messages.</p>
         <table>
           <thead>
             <tr><th>Timestamp</th><th>Action</th><th>Details</th></tr>
@@ -366,7 +366,7 @@
       await supabaseClient.from('activity_history').insert([{ action, details }]);
     }
 
-    // --- MODULE 1: CUSTOMERS DIRECTORY ---
+    // --- MODULE 1: PATIENTS DIRECTORY ---
     async function fetchCustomers() {
       const tbody = document.getElementById('customer-list-body');
       tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
@@ -802,7 +802,7 @@
     // --- MODULE 4: SEND IMMEDIATE SMS MODAL ---
     async function openSendModal(custId) {
       activeModalCust = customerStore.find(c => String(c.id) === String(custId));
-      if (!activeModalCust) return alert('Customer not found.');
+      if (!activeModalCust) return alert('Patient not found.');
 
       document.getElementById('modal-cust-name').innerText = `${activeModalCust.first_name || ''} ${activeModalCust.last_name || ''}`;
       document.getElementById('modal-cust-phone').innerText = formatForDisplay(activeModalCust.phone) || 'No Phone Number';
@@ -845,7 +845,7 @@
     async function executeSendMessage() {
       const messageText = document.getElementById('modal-message-preview').value;
       if (!messageText) return alert('Message body cannot be empty.');
-      if (!activeModalCust || !activeModalCust.phone) return alert('Customer has no phone number listed.');
+      if (!activeModalCust || !activeModalCust.phone) return alert('Patient has no phone number listed.');
 
       const custName = `${activeModalCust.first_name || ''} ${activeModalCust.last_name || ''}`;
       
