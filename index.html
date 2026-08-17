@@ -120,25 +120,30 @@
           <textarea id="sched-message-body" rows="3" placeholder="Message content..." style="margin-bottom: 12px;"></textarea>
           
           <div style="display: flex; gap: 15px; align-items: flex-end;">
-            <div style="flex: 1;">
-              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Frequency:</label>
-              <select id="sched-type" style="margin-bottom:0;">
-                <option value="one_time">One-time</option>
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
-            </div>
-            
-            <div style="flex: 1;">
-              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Dispatch Date/Time:</label>
-              <input type="datetime-local" id="sched-datetime" style="margin-bottom:0;">
-            </div>
-
-            <div style="display: flex; gap: 8px;">
-              <button id="sched-save-btn" onclick="saveSchedule()" style="width: auto; height: 38px; margin-bottom:0; background-color: #3ecf8e;">Schedule Message</button>
-              <button id="sched-cancel-btn" onclick="cancelSchedEdit()" class="secondary hidden" style="width: auto; height: 38px; margin-bottom:0;">Cancel Edit</button>
-            </div>
+          <div style="flex: 1;">
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Frequency:</label>
+            <select id="sched-type" onchange="toggleCustomDaysInput()" style="margin-bottom:0;">
+              <option value="one_time">One-time</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="custom">Custom Interval (Days)</option>
+            </select>
+          </div>
+        
+          <div id="custom-days-container" class="hidden" style="flex: 1;">
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Every (X) Days:</label>
+            <input type="number" id="sched-custom-days" min="1" value="3" placeholder="e.g. 3" style="margin-bottom:0;">
+          </div>
+          
+          <div style="flex: 1;">
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Dispatch Date/Time:</label>
+            <input type="datetime-local" id="sched-datetime" style="margin-bottom:0;">
+          </div>
+        
+          <div style="display: flex; gap: 8px;">
+            <button id="sched-save-btn" onclick="saveSchedule()" style="width: auto; height: 38px; margin-bottom:0; background-color: #3ecf8e;">Schedule Message</button>
+            <button id="sched-cancel-btn" onclick="cancelSchedEdit()" class="secondary hidden" style="width: auto; height: 38px; margin-bottom:0;">Cancel Edit</button>
           </div>
         </div>
 
