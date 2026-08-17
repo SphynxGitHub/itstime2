@@ -542,22 +542,45 @@
       document.getElementById('sched-cancel-btn').classList.add('hidden');
     }
 
+    // Toggle Custom Interval input field based on dropdown selection
+    function toggleCustomDaysInput() {
+      const type = document.getElementById('sched-type').value;
+      const container = document.getElementById('custom-days-container');
+      if (type === 'custom') {
+        container.classList.remove('hidden');
+      } else {
+        container.classList.add('hidden');
+      }
+    }
+    
+    // Save or Edit Schedule
     async function saveSchedule() {
       const message_body = document.getElementById('sched-message-body').value;
       const schedule_type = document.getElementById('sched-type').value;
       const rawDatetime = document.getElementById('sched-datetime').value;
-
+      const customDays = parseInt(document.getElementById('sched-custom-days').value, 10) || 1;
+    
       if (!message_body || !rawDatetime) return alert('Please enter message text and choose a date/time.');
-
+    
       const next_run_at = new Date(rawDatetime).toISOString();
-
+    
+      const payload = {
+        customer_id: String(currentProfileCustId),
+        message_body,
+        schedule_type,
+        interval_days: schedule_type === 'custom' ? customDays : 1,
+        next_run_at,
+        status: 'active'
+      };
+    
       if (editingSchedId) {
         const { error } = await supabaseClient.from('scheduled_messages').update({
           message_body,
           schedule_type,
+          interval_days: schedule_type === 'custom' ? customDays : 1,
           next_run_at
         }).eq('id', editingSchedId);
-
+    
         if (error) alert(error.message);
         else {
           alert('Schedule updated successfully!');
@@ -565,14 +588,8 @@
           loadCustomerSchedules(currentProfileCustId);
         }
       } else {
-        const { error } = await supabaseClient.from('scheduled_messages').insert([{
-          customer_id: String(currentProfileCustId),
-          message_body,
-          schedule_type,
-          next_run_at,
-          status: 'active'
-        }]);
-
+        const { error } = await supabaseClient.from('scheduled_messages').insert([payload]);
+    
         if (error) alert(error.message);
         else {
           alert('Message schedule created successfully!');
@@ -582,6 +599,38 @@
       }
     }
 
+    // Edit schedule loader
+    function startSchedEdit(schedId) {
+      const s = scheduleStore.find(item => String(item.id) === String(schedId));
+      if (!s) return;
+    
+      editingSchedId = schedId;
+      document.getElementById('sched-message-body').value = s.message_body || '';
+      document.getElementById('sched-type').value = s.schedule_type || 'one_time';
+      document.getElementById('sched-custom-days').value = s.interval_days || 3;
+      document.getElementById('sched-datetime').value = toDatetimeLocal(s.next_run_at);
+    
+      toggleCustomDaysInput();
+    
+      document.getElementById('sched-form-title').innerText = 'Edit Scheduled Message';
+      document.getElementById('sched-save-btn').innerText = 'Update Schedule';
+      document.getElementById('sched-cancel-btn').classList.remove('hidden');
+    }
+    
+    function cancelSchedEdit() {
+      editingSchedId = null;
+      document.getElementById('sched-message-body').value = '';
+      document.getElementById('sched-datetime').value = '';
+      document.getElementById('sched-template-select').value = '';
+      document.getElementById('sched-type').value = 'one_time';
+      document.getElementById('sched-custom-days').value = '3';
+      toggleCustomDaysInput();
+      
+      document.getElementById('sched-form-title').innerText = 'Schedule Recurring or One-Time SMS';
+      document.getElementById('sched-save-btn').innerText = 'Schedule Message';
+      document.getElementById('sched-cancel-btn').classList.add('hidden');
+    }
+  
     async function toggleScheduleStatus(schedId, currentStatus) {
       const newStatus = currentStatus === 'paused' ? 'active' : 'paused';
       await supabaseClient.from('scheduled_messages').update({ status: newStatus }).eq('id', schedId);
