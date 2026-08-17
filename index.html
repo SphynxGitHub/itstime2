@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>It's Time 2 - Patient Care & Messaging Dashboard</title>
   
   <!-- FAVICON LINK -->
@@ -10,42 +11,61 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; color: #333; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; color: #333; }
     .hidden { display: none !important; }
 
     /* AUTH SCREEN */
-    #auth-section { max-width: 400px; margin: 80px auto; padding: 25px; background: white; border: 1px solid #ddd; border-radius: 8px; }
-    input, textarea, select, button { display: block; width: 100%; margin-bottom: 12px; padding: 10px; border-radius: 4px; border: 1px solid #ccc; font-family: inherit; }
-    button { background-color: #3ecf8e; color: white; border: none; font-weight: bold; cursor: pointer; }
+    #auth-section { max-width: 400px; margin: 40px auto; padding: 25px; background: white; border: 1px solid #ddd; border-radius: 8px; width: 90%; }
+    input, textarea, select, button { display: block; width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 6px; border: 1px solid #ccc; font-family: inherit; font-size: 15px; }
+    button { background-color: #3ecf8e; color: white; border: none; font-weight: bold; cursor: pointer; min-height: 44px; }
     button.secondary { background-color: #666; }
     button.danger { background-color: #e53e3e; }
     button.warning { background-color: #dd6b20; }
     button.info { background-color: #3182ce; }
-    button.link-btn { background: none; color: #0066cc; border: none; text-decoration: underline; padding: 5px; margin-bottom: 10px; cursor: pointer; text-align: right; font-weight: normal; }
+    button.link-btn { background: none; color: #0066cc; border: none; text-decoration: underline; padding: 5px; margin-bottom: 10px; cursor: pointer; text-align: right; font-weight: normal; min-height: auto; }
 
-    /* DASHBOARD LAYOUT */
-    #dashboard { display: flex; min-height: 100vh; }
+    /* DASHBOARD RESPONSIVE LAYOUT */
+    #dashboard { display: flex; flex-direction: column; min-height: 100vh; }
     
-    /* LEFT SIDEBAR MENU */
-    .sidebar { width: 220px; background-color: #1e293b; color: white; padding: 20px 0; display: flex; flex-direction: column; }
-    .sidebar-header { padding: 0 20px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
-    .sidebar-header h3 { margin: 0; padding: 0; font-size: 20px; color: #3ecf8e; font-weight: bold; }
-    .nav-item { padding: 12px 20px; color: #cbd5e1; text-decoration: none; display: block; cursor: pointer; transition: 0.2s; }
-    .nav-item:hover, .nav-item.active { background-color: #334155; color: white; font-weight: bold; border-left: 4px solid #3ecf8e; }
-    .sidebar-footer { margin-top: auto; padding: 20px; border-top: 1px solid #334155; }
+    /* SIDEBAR / TOPNAV */
+    .sidebar { width: 100%; background-color: #1e293b; color: white; padding: 15px; display: flex; flex-direction: flex-row; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    .sidebar-header { margin: 0; display: flex; align-items: center; gap: 10px; }
+    .sidebar-header h3 { margin: 0; padding: 0; font-size: 18px; color: #3ecf8e; font-weight: bold; }
+    .nav-group { display: flex; gap: 5px; width: 100%; margin-top: 10px; overflow-x: auto; padding-bottom: 5px; }
+    .nav-item { padding: 8px 14px; color: #cbd5e1; text-decoration: none; display: inline-block; cursor: pointer; transition: 0.2s; font-size: 14px; border-radius: 4px; white-space: nowrap; }
+    .nav-item:hover, .nav-item.active { background-color: #334155; color: white; font-weight: bold; }
+    .sidebar-footer { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 10px; padding-top: 10px; border-top: 1px solid #334155; font-size: 12px; }
 
     /* MAIN CONTENT AREA */
-    .main-content { flex: 1; padding: 30px; background-color: #ffffff; }
+    .main-content { flex: 1; padding: 15px; background-color: #ffffff; width: 100%; }
     
-    /* TABLES & UI */
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 14px; }
+    /* RESPONSIVE TABLES & CONTAINERS */
+    .table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 15px; }
+    table { width: 100%; border-collapse: collapse; min-width: 500px; }
+    th, td { border: 1px solid #e2e8f0; padding: 8px 10px; text-align: left; font-size: 13px; }
     th { background-color: #f1f5f9; }
-    .action-btn { display: inline-block; width: auto; padding: 6px 12px; margin-bottom: 0; font-size: 12px; margin-right: 4px; }
+    .action-btn { display: inline-block; width: auto; padding: 6px 10px; margin-bottom: 4px; font-size: 12px; margin-right: 2px; }
+
+    /* FLEX RESPONSIVE GRID HELPERS */
+    .form-row-flex { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+    .btn-group-flex { display: flex; flex-direction: row; gap: 8px; }
 
     /* MODAL POPUPS */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content { background: white; padding: 25px; width: 450px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 10px; }
+    .modal-content { background: white; padding: 20px; width: 100%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+
+    /* DESKTOP MEDIA QUERIES (384px and up) */
+    @media (min-width: 768px) {
+      #dashboard { flex-direction: row; }
+      .sidebar { width: 230px; flex-direction: column; justify-content: flex-start; padding: 20px 0; align-items: stretch; }
+      .sidebar-header { padding: 0 20px; margin-bottom: 25px; }
+      .nav-group { flex-direction: column; width: 100%; margin-top: 0; overflow-x: visible; padding-bottom: 0; }
+      .nav-item { padding: 12px 20px; border-radius: 0; display: block; }
+      .nav-item.active { border-left: 4px solid #3ecf8e; }
+      .sidebar-footer { margin-top: auto; padding: 20px; border-top: 1px solid #334155; flex-direction: column; align-items: flex-start; }
+      .main-content { padding: 30px; }
+      .form-row-flex { flex-direction: row; align-items: flex-end; }
+    }
   </style>
 </head>
 <body>
@@ -66,20 +86,22 @@
   <!-- MAIN APP DASHBOARD -->
   <div id="dashboard" class="hidden">
     
-    <!-- LEFT NAVIGATION MENU -->
+    <!-- NAVIGATION BAR / SIDEBAR -->
     <div class="sidebar">
       <div class="sidebar-header">
         <img src="logo.png" alt="It's Time 2 Logo" style="width: 32px; height: 32px; object-fit: contain;" onerror="this.style.display='none'">
         <h3>It's Time 2</h3>
       </div>
 
-      <a class="nav-item active" id="nav-customers" onclick="switchTab('customers')">Patients</a>
-      <a class="nav-item" id="nav-templates" onclick="switchTab('templates')">Message Library</a>
-      <a class="nav-item" id="nav-history" onclick="switchTab('history')">Activity History</a>
+      <div class="nav-group">
+        <a class="nav-item active" id="nav-customers" onclick="switchTab('customers')">Patients</a>
+        <a class="nav-item" id="nav-templates" onclick="switchTab('templates')">Message Library</a>
+        <a class="nav-item" id="nav-history" onclick="switchTab('history')">Activity History</a>
+      </div>
 
       <div class="sidebar-footer">
-        <p style="font-size: 12px; margin-bottom: 10px; color: #94a3b8;">Logged in as:<br><strong id="user-email" style="color:white;"></strong></p>
-        <button onclick="logout()" class="secondary" style="margin-bottom:0;">Log Out</button>
+        <p style="margin: 0 0 5px 0; color: #94a3b8;">User: <strong id="user-email" style="color:white;"></strong></p>
+        <button onclick="logout()" class="secondary" style="margin-bottom:0; min-height:36px; padding: 4px 10px; width: auto;">Log Out</button>
       </div>
     </div>
 
@@ -88,7 +110,7 @@
 
       <!-- 1. PATIENTS DIRECTORY VIEW -->
       <div id="view-customers">
-        <h2 id="cust-form-title">Add Patient</h2>
+        <h2 id="cust-form-title" style="margin-top:0;">Add Patient</h2>
         <input type="text" id="cust-first-name" placeholder="First Name">
         <input type="text" id="cust-last-name" placeholder="Last Name">
         <input type="email" id="cust-email" placeholder="Patient Email">
@@ -99,12 +121,14 @@
 
         <hr style="margin: 25px 0;">
         <h2>Patient Directory</h2>
-        <table>
-          <thead>
-            <tr><th>Name</th><th>Email</th><th>Phone</th><th>Actions</th></tr>
-          </thead>
-          <tbody id="customer-list-body"><tr><td colspan="4">Loading...</td></tr></tbody>
-        </table>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Email</th><th>Phone</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="customer-list-body"><tr><td colspan="4">Loading...</td></tr></tbody>
+          </table>
+        </div>
       </div>
 
       <!-- 2. PATIENT PROFILE PAGE (FULL PAGE VIEW) -->
@@ -112,10 +136,10 @@
         <button onclick="switchTab('customers')" class="secondary action-btn" style="padding: 8px 16px; margin-bottom: 20px;">← Back to Patient Directory</button>
         
         <h2 id="profile-title" style="margin-top:0;">Patient Profile</h2>
-        <p id="profile-subtitle" style="color: #666; margin-top: -10px; margin-bottom: 20px;"></p>
+        <p id="profile-subtitle" style="color: #666; margin-top: -10px; margin-bottom: 20px; font-size: 14px;"></p>
         
         <!-- SCHEDULE NEW OR EDIT MESSAGE FORM -->
-        <div style="background: #f8fafc; padding: 20px; border-radius: 6px; margin-bottom: 25px; border: 1px solid #e2e8f0;">
+        <div style="background: #f8fafc; padding: 15px; border-radius: 6px; margin-bottom: 25px; border: 1px solid #e2e8f0;">
           <h3 id="sched-form-title" style="margin-top:0; margin-bottom: 12px;">Schedule Recurring or One-Time SMS</h3>
           
           <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Template (Optional):</label>
@@ -127,7 +151,7 @@
           <textarea id="sched-message-body" rows="3" placeholder="Message content..." style="margin-bottom: 12px;"></textarea>
           
           <!-- FREQUENCY & MULTI-DATE CONTROLLER -->
-          <div style="display: flex; gap: 15px; align-items: flex-start; margin-top: 15px;">
+          <div class="form-row-flex">
             <div style="flex: 1;">
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Frequency:</label>
               <select id="sched-type" onchange="toggleCustomDatePicker()" style="margin-bottom:0;">
@@ -146,11 +170,11 @@
             </div>
 
             <!-- MULTI-DATE BUILDER (HIDDEN BY DEFAULT) -->
-            <div id="multi-date-container" class="hidden" style="flex: 2; background: #fff; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+            <div id="multi-date-container" class="hidden" style="flex: 2; background: #fff; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%;">
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:6px;">Add Dates to Schedule:</label>
               <div style="display: flex; gap: 8px; margin-bottom: 10px;">
                 <input type="datetime-local" id="multi-date-input" style="margin-bottom:0; flex: 1;">
-                <button type="button" onclick="addCustomDateToList()" style="width: auto; height: 38px; margin-bottom:0; background-color: #3182ce;">+ Add Date</button>
+                <button type="button" onclick="addCustomDateToList()" style="width: auto; height: 44px; margin-bottom:0; background-color: #3182ce; white-space: nowrap;">+ Add Date</button>
               </div>
 
               <div style="max-height: 120px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px; background: #f8fafc;">
@@ -161,34 +185,38 @@
             </div>
           </div>
 
-          <div style="display: flex; gap: 8px; margin-top: 15px;">
-            <button id="sched-save-btn" onclick="saveSchedule()" style="width: auto; height: 38px; margin-bottom:0; background-color: #3ecf8e;">Schedule Message</button>
-            <button id="sched-cancel-btn" onclick="cancelSchedEdit()" class="secondary hidden" style="width: auto; height: 38px; margin-bottom:0;">Cancel Edit</button>
+          <div class="btn-group-flex" style="margin-top: 15px;">
+            <button id="sched-save-btn" onclick="saveSchedule()" style="width: auto; margin-bottom:0; background-color: #3ecf8e;">Schedule Message</button>
+            <button id="sched-cancel-btn" onclick="cancelSchedEdit()" class="secondary hidden" style="width: auto; margin-bottom:0;">Cancel Edit</button>
           </div>
         </div>
 
         <!-- SCHEDULED MESSAGES LIST -->
         <h3 style="margin-bottom: 10px;">Active & Scheduled Messages</h3>
-        <table style="margin-bottom: 30px;">
-          <thead>
-            <tr><th>Frequency</th><th>Next Run</th><th>Status</th><th>Message Text</th><th>Actions</th></tr>
-          </thead>
-          <tbody id="sched-list-body"><tr><td colspan="5">Loading...</td></tr></tbody>
-        </table>
+        <div class="table-container" style="margin-bottom: 30px;">
+          <table>
+            <thead>
+              <tr><th>Frequency</th><th>Next Run</th><th>Status</th><th>Message Text</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="sched-list-body"><tr><td colspan="5">Loading...</td></tr></tbody>
+          </table>
+        </div>
 
         <!-- PATIENT HISTORY -->
         <h3 style="margin-bottom: 10px;">Patient Interaction History</h3>
-        <table>
-          <thead>
-            <tr><th>Timestamp</th><th>Action / Message Details</th></tr>
-          </thead>
-          <tbody id="profile-history-body"><tr><td colspan="2">Loading...</td></tr></tbody>
-        </table>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr><th>Timestamp</th><th>Action / Message Details</th></tr>
+            </thead>
+            <tbody id="profile-history-body"><tr><td colspan="2">Loading...</td></tr></tbody>
+          </table>
+        </div>
       </div>
 
       <!-- 3. MESSAGE LIBRARY VIEW -->
       <div id="view-templates" class="hidden">
-        <h2 id="tmpl-form-title">Add Reminder Template</h2>
+        <h2 id="tmpl-form-title" style="margin-top:0;">Add Reminder Template</h2>
         <input type="text" id="tmpl-title" placeholder="Template Title (e.g., 24h Appointment Reminder)">
         <textarea id="tmpl-body" rows="4" placeholder="Template Message (Use tags: {first_name}, {last_name}, {email}, {phone})"></textarea>
         
@@ -197,24 +225,28 @@
 
         <hr style="margin: 25px 0;">
         <h2>Saved Reminder Templates</h2>
-        <table>
-          <thead>
-            <tr><th>Title</th><th>Message Preview</th><th>Actions</th></tr>
-          </thead>
-          <tbody id="template-list-body"><tr><td colspan="3">Loading...</td></tr></tbody>
-        </table>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr><th>Title</th><th>Message Preview</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="template-list-body"><tr><td colspan="3">Loading...</td></tr></tbody>
+          </table>
+        </div>
       </div>
 
       <!-- 4. ACTIVITY HISTORY VIEW -->
       <div id="view-history" class="hidden">
-        <h2>Activity History</h2>
+        <h2 style="margin-top:0;">Activity History</h2>
         <p style="color: #666; font-size: 14px;">Log of account actions, patient updates, and sent messages.</p>
-        <table>
-          <thead>
-            <tr><th>Timestamp</th><th>Action</th><th>Details</th></tr>
-          </thead>
-          <tbody id="history-list-body"><tr><td colspan="3">Loading...</td></tr></tbody>
-        </table>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr><th>Timestamp</th><th>Action</th><th>Details</th></tr>
+            </thead>
+            <tbody id="history-list-body"><tr><td colspan="3">Loading...</td></tr></tbody>
+          </table>
+        </div>
       </div>
 
     </div>
@@ -292,7 +324,7 @@
       if (last && Date.now() - parseInt(last, 10) > ONE_HOUR_MS) { logout(true); return true; }
       return false;
     }
-    ['mousemove', 'keydown', 'click'].forEach(evt => window.addEventListener(evt, recordActivity));
+    ['mousemove', 'keydown', 'click', 'touchstart'].forEach(evt => window.addEventListener(evt, recordActivity));
 
     // --- NAVIGATION CONTROLLER ---
     function switchTab(tabName) {
