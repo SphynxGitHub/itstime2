@@ -18,9 +18,9 @@ export default async function handler(req, res) {
 
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
   const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const fromPhone = process.env.TWILIO_PHONE_NUMBER;
+  const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
 
-  if (!accountSid || !authToken || !fromPhone) {
+  if (!accountSid || !authToken || !messagingServiceSid) {
     return res.status(500).json({ error: 'Server error: Missing Twilio environment variables in Vercel.' });
   }
 
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
   try {
     const params = new URLSearchParams({
       To: formattedPhone,
-      From: fromPhone,
+      MessagingServiceSid: messagingServiceSid, // Connects directly to your approved A2P campaign
       Body: message
     });
 
