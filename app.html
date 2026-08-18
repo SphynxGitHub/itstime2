@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>It's Time 2 - Billing & Usage</title>
+  <!-- Supabase JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg-slate: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-slate); color: var(--text-main); padding: 24px; display: flex; justify-content: center; }
+    
+    .container { width: 100%; max-width: 680px; display: flex; flex-direction: column; gap: 20px; }
+    
+    .header { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 16px 24px; border-radius: 12px; border: 1px solid var(--border-color); }
+    .header h1 { font-size: 1.25rem; color: var(--primary); font-weight: 700; }
+    .user-badge { font-size: 0.875rem; color: var(--text-muted); }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .card h2 { font-size: 1.1rem; margin-bottom: 16px; font-weight: 600; }
+
+    .plan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .badge { background: #dbeafe; color: #1e40af; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 9999px; text-transform: uppercase; }
+
+    /* Usage Progress Bar */
+    .usage-box { margin-bottom: 24px; }
+    .usage-labels { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 8px; color: var(--text-muted); }
+    .progress-bar-bg { width: 100%; height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; width: 0%; background: var(--primary); transition: width 0.3s ease, background-color 0.3s ease; }
+
+    /* Auto-Upgrade Toggle Card */
+    .toggle-card { background: #f1f5f9; border-radius: 8px; padding: 16px; display: flex; align-items: flex-start; gap: 12px; cursor: pointer; border: 1px solid var(--border-color); }
+    .toggle-card input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--primary); margin-top: 2px; cursor: pointer; }
+    .toggle-info strong { display: block; font-size: 0.95rem; margin-bottom: 2px; }
+    .toggle-info p { font-size: 0.85rem; color: var(--text-muted); margin: 0; }
+
+    /* Upgrade Action Buttons */
+    .grid-plans { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .btn { padding: 12px 16px; border-radius: 8px; border: none; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s ease; text-align: center; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: #f1f5f9; color: var(--text-main); border: 1px solid var(--border-color); }
+    .btn-secondary:hover { background: #e2e8f0; }
+
+    #loading { text-align: center; color: var(--text-muted); padding: 20px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <header class="header">
+    <h1>It's Time 2</h1>
+    <span class="user-badge" id="userEmail">Loading user...</span>
+  </header>
+
+  <!-- Loading State Indicator -->
+  <div id="loading">Loading subscription details...</div>
+
+  <!-- Main Dashboard Content -->
+  <main id="billingContent" style="display: none;" class="card">
+    <div class="plan-header">
+      <h2>Subscription & Usage</h2>
+      <span class="badge" id="planBadge">TRIAL</span>
+    </div>
+
+    <!-- SMS Quota Usage Bar -->
+    <div class="usage-box">
+      <div class="usage-labels">
+        <span>SMS Sent This Month</span>
+        <span><strong id="smsSentCount">0</strong> / <span id="smsLimitCount">100</span></span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressBar"></div>
+      </div>
+    </div>
+
+    <!-- Auto-Upgrade Toggle -->
+    <label class="toggle-card" for="autoUpgradeToggle">
+      <input type="checkbox" id="autoUpgradeToggle">
+      <div class="toggle-info">
+        <strong>Enable Auto-Upgrade</strong>
+        <p>Automatically move to the next tier when your monthly SMS limit is reached to prevent interruption in patient reminders.</p>
+      </div>
+    </label>
+
+    <!-- Plan Upgrade Buttons -->
+    <h3 style="font-size: 1rem; margin-top: 24px; margin-bottom: 12px;">Change Subscription Plan</h3>
+    <div class="grid-plans">
+      <button class="btn btn-secondary" id="btnStarter" onclick="triggerCheckout('starter')">
+        Starter ($29/mo) <br><small style="font-weight: 400; color: var(--text-muted);">1,000 SMS</small>
+      </button>
+      <button class="btn btn-primary" id="btnPro" onclick="triggerCheckout('pro')">
+        Pro ($79/mo) <br><small style="font-weight: 400; opacity: 0.9;">5,000 SMS</small>
+      </button>
+    </div>
+  </main>
+</div>
+
+<script>
+  // 1. Initialize Supabase Client
+  const SUPABASE_URL = "https://yktwthagtgdzzkaypgqj.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrdHd0aGFndGdkenprYXlwZ3FqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY5MDU3NDksImV4cCI6MjEwMjQ4MTc0OX0.i05_52OSGh54Ocx_rIkJkVdiwZzL4LSWZAwI_peZblk"; // Replace with your public Supabase anon key
+  
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  
+  let currentUserId = null;
+
+  window.addEventListener('DOMContentLoaded', async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+  
+    if (!user) {
+      // Redirect to login page if no active session is found
+      window.location.href = '/login.html'; // Adjust to your actual login page path
+      return;
+    }
+  
+    currentUserId = user.id;
+    document.getElementById('userEmail').innerText = user.email;
+  
+    await fetchCustomerData();
+  });
+
+  // 2. Load User Session and Usage Data
+  window.addEventListener('DOMContentLoaded', async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      document.getElementById('loading').innerText = "Please log in to view billing settings.";
+      return;
+    }
+
+    currentUserId = user.id;
+    document.getElementById('userEmail').innerText = user.email;
+
+    await fetchCustomerData();
+  });
+
+  // 3. Query Database for Usage and Preferences
+  async function fetchCustomerData() {
+    const { data: customer, error } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('user_id', currentUserId)
+      .single();
+
+    if (error || !customer) {
+      console.error("Error fetching customer data:", error);
+      document.getElementById('loading').innerText = "Failed to load customer subscription.";
+      return;
+    }
+
+    // Populate UI elements
+    document.getElementById('planBadge').innerText = (customer.plan_tier || 'trial').toUpperCase();
+    document.getElementById('smsSentCount').innerText = customer.sms_sent_this_month || 0;
+    document.getElementById('smsLimitCount').innerText = customer.sms_limit || 100;
+    document.getElementById('autoUpgradeToggle').checked = customer.auto_upgrade_enabled || false;
+
+    // Calculate usage progress bar fill percentage
+    const limit = customer.sms_limit || 100;
+    const sent = customer.sms_sent_this_month || 0;
+    const percent = Math.min(100, Math.round((sent / limit) * 100));
+
+    const progressBar = document.getElementById('progressBar');
+    progressBar.style.width = `${percent}%`;
+    if (percent > 90) {
+      progressBar.style.backgroundColor = '#ef4444'; // Red alert when near quota
+    }
+
+    // Unhide main billing card
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('billingContent').style.display = 'block';
+  }
+
+  // 4. Update Auto-Upgrade Preference in Real-Time
+  document.getElementById('autoUpgradeToggle').addEventListener('change', async (e) => {
+    const isChecked = e.target.checked;
+    
+    const { error } = await supabase
+      .from('customers')
+      .update({ auto_upgrade_enabled: isChecked })
+      .eq('user_id', currentUserId);
+
+    if (error) {
+      alert("Failed to update auto-upgrade settings.");
+      e.target.checked = !isChecked; // Revert checkmark if database write fails
+    }
+  });
+
+  // 5. Initiate Stripe Checkout Session
+  async function triggerCheckout(planTier) {
+    const autoUpgrade = document.getElementById('autoUpgradeToggle').checked;
+
+    try {
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUserId,
+          planTier: planTier,
+          autoUpgrade: autoUpgrade
+        })
+      });
+
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url; // Redirect to Stripe Checkout
+      } else {
+        alert("Unable to initiate checkout: " + (data.error || "Unknown error"));
+      }
+    } catch (err) {
+      alert("Network error: Could not reach payment API.");
+    }
+  }
+</script>
+
+</body>
+</html>
