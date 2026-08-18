@@ -292,6 +292,28 @@
           </div>
         </div>
 
+        <div class="billing-card" style="background: white;">
+          <h3>SMS Provider Configuration</h3>
+          <label style="font-size: 13px; font-weight: bold; margin-bottom: 4px; display: block;">Select Gateway:</label>
+          <select id="provider-select" onchange="toggleProviderFields()" style="margin-bottom: 12px;">
+            <option value="system">Built-in Gateway (System Master Account)</option>
+            <option value="twilio">Twilio (BYOC)</option>
+            <option value="quo">Quo (formerly OpenPhone) (BYOC)</option>
+            <option value="telnyx">Telnyx (BYOC)</option>
+          </select>
+        
+          <!-- Dynamic Credentials Inputs -->
+          <div id="provider-credentials" class="hidden">
+            <input type="text" id="provider-key" placeholder="API Key / Auth Token">
+            <input type="text" id="provider-sid" placeholder="Account SID (Twilio only)">
+            <input type="text" id="provider-phone" placeholder="Sending Phone Number (e.g. +19739341956)">
+            <button onclick="saveProviderSettings()" style="width: auto;">Save Gateway Credentials</button>
+          </div>
+        
+          <!-- Instruction Accordion -->
+          <div id="provider-instructions" style="margin-top: 15px; font-size: 13px; color: #64748b;"></div>
+        </div>
+
         <h3>Upgrade Subscription Plan</h3>
         <div class="grid-plans">
           <div class="billing-card" style="background: white;">
@@ -1040,7 +1062,7 @@
       const sentCount = customer.sms_sent_this_month || 0;
       const limitCount = customer.sms_limit || 100;
     
-      // 1. Update UI Elements
+      // 1. Populate Usage & Plan Badge
       document.getElementById('billing-plan-badge').innerText = planTier.toUpperCase();
       document.getElementById('billing-sms-sent').innerText = sentCount;
       document.getElementById('billing-sms-limit').innerText = limitCount;
@@ -1051,12 +1073,22 @@
       bar.style.width = `${percent}%`;
       bar.style.backgroundColor = percent > 90 ? '#ef4444' : '#3ecf8e';
     
-      // 2. CHECK IF USER IS ON TRIAL / UNPAID PLAN -> TRIGGER POPUP
+      // 2. Load Saved BYOC Gateway Settings
+      if (customer.provider_type) {
+        document.getElementById('provider-select').value = customer.provider_type;
+      }
+      document.getElementById('provider-key').value = customer.provider_api_key || '';
+      document.getElementById('provider-sid').value = customer.provider_account_sid || '';
+      document.getElementById('provider-phone').value = customer.provider_phone_number || '';
+    
+      // Trigger UI adjustment for dynamic fields & setup guides
+      toggleProviderFields();
+    
+      // 3. Trigger Trial Modal Check
       if (planTier === 'trial') {
         document.getElementById('trial-modal-sent').innerText = sentCount;
         document.getElementById('trial-modal-limit').innerText = limitCount;
         
-        // Only show once per session so it doesn't annoy users continuously
         if (!sessionStorage.getItem('trialModalShown')) {
           document.getElementById('trial-modal').classList.remove('hidden');
           sessionStorage.setItem('trialModalShown', 'true');
@@ -1104,6 +1136,85 @@
         }
       } catch (err) {
         alert('Network error initiating payment session.');
+      }
+    }
+
+    // --- MODULE 7: BYOC GATEWAY CONTROLLER ---
+
+    function toggleProviderFields() {
+      const provider = document.getElementById('provider-select').value;
+      const credsDiv = document.getElementById('provider-credentials');
+      const sidInput = document.getElementById('provider-sid');
+      const instructionsDiv = document.getElementById('provider-instructions');
+    
+      if (provider === 'system') {
+        credsDiv.classList.add('hidden');
+        instructionsDiv.innerHTML = '<p style="color: #64748b;"><strong>Built-in Gateway Selected:</strong> Outbound messages dispatch automatically via our system master Twilio account. No extra setup required.</p>';
+        return;
+      }
+    
+      // Show credentials container for custom gateways
+      credsDiv.classList.remove('hidden');
+    
+      if (provider === 'twilio') {
+        sidInput.classList.remove('hidden');
+        document.getElementById('provider-key').placeholder = 'Auth Token (or API Secret)';
+        instructionsDiv.innerHTML = `
+          <strong>Twilio Setup Guide:</strong>
+          <ol style="margin-top: 6px; padding-left: 20px; line-height: 1.5;">
+            <li>Log in to your <strong>Twilio Console</strong>.</li>
+            <li>Copy your <strong>Account SID</strong> and <strong>Auth Token</strong>.</li>
+            <li>Enter your verified Twilio phone number in E.164 format (+1XXXXXXXXXX).</li>
+          </ol>
+        `;
+      } else if (provider === 'quo') {
+        sidInput.classList.add('hidden');
+        document.getElementById('provider-key').placeholder = 'Quo API Key';
+        instructionsDiv.innerHTML = `
+          <strong>Quo (formerly OpenPhone) Setup Guide:</strong>
+          <ol style="margin-top: 6px; padding-left: 20px; line-height: 1.5;">
+            <li>Log in to your <strong>Quo Workspace</strong> (Admin role required).</li>
+            <li>Navigate to <strong>Settings → API</strong> and click <strong>Generate API Key</strong>.</li>
+            <li>Paste the key above along with your Quo phone number.</li>
+          </ol>
+        `;
+      } else if (provider === 'telnyx') {
+        sidInput.classList.add('hidden');
+        document.getElementById('provider-key').placeholder = 'Telnyx V2 API Key';
+        instructionsDiv.innerHTML = `
+          <strong>Telnyx Setup Guide:</strong>
+          <ol style="margin-top: 6px; padding-left: 20px; line-height: 1.5;">
+            <li>Log in to the <strong>Telnyx Portal</strong>.</li>
+            <li>Go to <strong>API Keys</strong> and generate a V2 API Key.</li>
+            <li>Enter your Telnyx phone number assigned to an active Messaging Profile.</li>
+          </ol>
+        `;
+      }
+    }
+    
+    async function saveProviderSettings() {
+      if (!currentUserId) return alert('User session expired. Please log in again.');
+    
+      const provider_type = document.getElementById('provider-select').value;
+      const provider_api_key = document.getElementById('provider-key').value;
+      const provider_account_sid = document.getElementById('provider-sid').value;
+      const provider_phone_number = document.getElementById('provider-phone').value;
+    
+      const { error } = await supabaseClient
+        .from('customers')
+        .update({
+          provider_type,
+          provider_api_key,
+          provider_account_sid,
+          provider_phone_number
+        })
+        .eq('user_id', currentUserId);
+    
+      if (error) {
+        alert('Error saving provider settings: ' + error.message);
+      } else {
+        alert('SMS Gateway settings saved successfully!');
+        await logActivity('Updated Gateway', `Switched gateway mode to: ${provider_type.toUpperCase()}`);
       }
     }
   </script>
