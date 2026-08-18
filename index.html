@@ -8,7 +8,10 @@
   <!-- FAVICON LINK -->
   <link rel="icon" type="image/png" href="logo.png">
 
+  <!-- SUPABASE & LUCIDE ICONS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
   <style>
     * { box-sizing: border-box; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; color: #333; }
@@ -85,7 +88,15 @@
       <h2 style="margin-top: 8px;">It's Time 2</h2>
     </div>
     <input type="email" id="email" placeholder="Email address">
-    <input type="password" id="password" placeholder="Password">
+    
+    <!-- MASKED PASSWORD WITH LUCIDE EYE ICON -->
+    <div style="position: relative; margin-bottom: 12px;">
+      <input type="password" id="password" placeholder="Password" style="margin-bottom: 0; padding-right: 42px;">
+      <button type="button" onclick="toggleVisibility('password', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; width: auto; min-height: auto; margin-bottom: 0; padding: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #64748b;" title="Toggle Visibility">
+        <i data-lucide="eye" style="width: 20px; height: 20px;"></i>
+      </button>
+    </div>
+
     <button onclick="login()">Log In</button>
     <button onclick="signUp()" class="secondary">Sign Up</button>
     <button onclick="resetPassword()" class="link-btn">Forgot Password?</button>
@@ -304,7 +315,14 @@
         
           <!-- Dynamic Credentials Inputs -->
           <div id="provider-credentials" class="hidden">
-            <input type="text" id="provider-key" placeholder="API Key / Auth Token">
+            <!-- MASKED API KEY WITH LUCIDE EYE ICON -->
+            <div style="position: relative; margin-bottom: 12px;">
+              <input type="password" id="provider-key" placeholder="API Key / Auth Token" style="margin-bottom: 0; padding-right: 42px;">
+              <button type="button" onclick="toggleVisibility('provider-key', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; width: auto; min-height: auto; margin-bottom: 0; padding: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #64748b;" title="Toggle Visibility">
+                <i data-lucide="eye" style="width: 20px; height: 20px;"></i>
+              </button>
+            </div>
+
             <input type="text" id="provider-sid" placeholder="Account SID (Twilio only)">
             <input type="text" id="provider-phone" placeholder="Sending Phone Number (e.g. +19739341956)">
             <button onclick="saveProviderSettings()" style="width: auto;">Save Gateway Credentials</button>
@@ -395,6 +413,22 @@
     let scheduleStore = [];
     let customDatesList = [];
 
+    // --- VISIBILITY TOGGLE (LUCIDE) ---
+    function toggleVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      
+      const icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        if (icon) icon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        input.type = 'password';
+        if (icon) icon.setAttribute('data-lucide', 'eye');
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
     // --- PHONE FORMATTING HELPERS ---
     function formatToE164(phone) {
       if (!phone) return '';
@@ -454,7 +488,9 @@
 
     // --- SESSION INITIALIZATION ---
     window.addEventListener('DOMContentLoaded', async () => {
+      if (window.lucide) lucide.createIcons();
       if (checkInactivity()) return;
+      
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) {
         recordActivity();
@@ -1015,6 +1051,7 @@
       const messageText = document.getElementById('modal-message-preview').value;
       if (!messageText) return alert('Message body cannot be empty.');
       if (!activeModalCust || !activeModalCust.phone) return alert('Patient has no phone number listed.');
+      if (!currentUserId) return alert('User session expired. Please log in again.');
 
       const custName = `${activeModalCust.first_name || ''} ${activeModalCust.last_name || ''}`;
       
@@ -1066,23 +1103,16 @@
     }
 
     // --- MODULE 6: BILLING & SUBSCRIPTION CONTROLLER ---
-   async function fetchBillingDetails() {
+    async function fetchBillingDetails() {
       if (!currentUserId) return;
     
-      // Use .maybeSingle() instead of .single() to avoid 406 error crashes
       const { data: customer, error } = await supabaseClient
         .from('practices')
         .select('*')
         .eq('user_id', currentUserId)
         .maybeSingle();
     
-      if (error) {
-        console.error('Error fetching billing details:', error);
-        return;
-      }
-    
-      // If no practice record exists yet, create default view state
-      if (!customer) return;
+      if (error || !customer) return;
     
       const planTier = customer.plan_tier || 'trial';
       const sentCount = customer.sms_sent_this_month || 0;
@@ -1101,7 +1131,7 @@
         bar.style.backgroundColor = percent > 90 ? '#ef4444' : '#3ecf8e';
       }
     
-      // 2. Load Saved Gateway Credentials
+      // 2. Load Saved BYOC Gateway Settings
       if (customer.provider_type) {
         document.getElementById('provider-select').value = customer.provider_type;
       }
@@ -1109,10 +1139,10 @@
       document.getElementById('provider-sid').value = customer.provider_account_sid || '';
       document.getElementById('provider-phone').value = customer.provider_phone_number || '';
     
-      // Refresh dynamic inputs
+      // Trigger UI adjustment for dynamic fields & setup guides
       toggleProviderFields();
     
-      // 3. Trigger Trial Warning Modal
+      // 3. Trigger Trial Modal Check
       if (planTier === 'trial') {
         document.getElementById('trial-modal-sent').innerText = sentCount;
         document.getElementById('trial-modal-limit').innerText = limitCount;
@@ -1123,7 +1153,7 @@
         }
       }
     }
-      
+    
     function closeTrialModal() {
       document.getElementById('trial-modal').classList.add('hidden');
     }
@@ -1224,9 +1254,9 @@
       if (!currentUserId) return alert('User session expired. Please log in again.');
     
       const provider_type = document.getElementById('provider-select').value;
-      const provider_api_key = document.getElementById('provider-key').value;
-      const provider_account_sid = document.getElementById('provider-sid').value;
-      const provider_phone_number = document.getElementById('provider-phone').value;
+      const provider_api_key = document.getElementById('provider-key').value.trim();
+      const provider_account_sid = document.getElementById('provider-sid').value.trim();
+      const provider_phone_number = document.getElementById('provider-phone').value.trim();
     
       const { error } = await supabaseClient
         .from('practices')
@@ -1243,6 +1273,7 @@
       } else {
         alert('SMS Gateway settings saved successfully!');
         await logActivity('Updated Gateway', `Switched gateway mode to: ${provider_type.toUpperCase()}`);
+        await fetchBillingDetails();
       }
     }
   </script>
