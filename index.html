@@ -1066,16 +1066,23 @@
     }
 
     // --- MODULE 6: BILLING & SUBSCRIPTION CONTROLLER ---
-    async function fetchBillingDetails() {
+   async function fetchBillingDetails() {
       if (!currentUserId) return;
     
+      // Use .maybeSingle() instead of .single() to avoid 406 error crashes
       const { data: customer, error } = await supabaseClient
         .from('practices')
         .select('*')
         .eq('user_id', currentUserId)
-        .single();
+        .maybeSingle();
     
-      if (error || !customer) return;
+      if (error) {
+        console.error('Error fetching billing details:', error);
+        return;
+      }
+    
+      // If no practice record exists yet, create default view state
+      if (!customer) return;
     
       const planTier = customer.plan_tier || 'trial';
       const sentCount = customer.sms_sent_this_month || 0;
@@ -1089,10 +1096,12 @@
     
       const percent = Math.min(100, Math.round((sentCount / limitCount) * 100));
       const bar = document.getElementById('billing-progress-bar');
-      bar.style.width = `${percent}%`;
-      bar.style.backgroundColor = percent > 90 ? '#ef4444' : '#3ecf8e';
+      if (bar) {
+        bar.style.width = `${percent}%`;
+        bar.style.backgroundColor = percent > 90 ? '#ef4444' : '#3ecf8e';
+      }
     
-      // 2. Load Saved BYOC Gateway Settings
+      // 2. Load Saved Gateway Credentials
       if (customer.provider_type) {
         document.getElementById('provider-select').value = customer.provider_type;
       }
@@ -1100,10 +1109,10 @@
       document.getElementById('provider-sid').value = customer.provider_account_sid || '';
       document.getElementById('provider-phone').value = customer.provider_phone_number || '';
     
-      // Trigger UI adjustment for dynamic fields & setup guides
+      // Refresh dynamic inputs
       toggleProviderFields();
     
-      // 3. Trigger Trial Modal Check
+      // 3. Trigger Trial Warning Modal
       if (planTier === 'trial') {
         document.getElementById('trial-modal-sent').innerText = sentCount;
         document.getElementById('trial-modal-limit').innerText = limitCount;
@@ -1114,7 +1123,7 @@
         }
       }
     }
-    
+      
     function closeTrialModal() {
       document.getElementById('trial-modal').classList.add('hidden');
     }
