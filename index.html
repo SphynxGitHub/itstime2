@@ -1174,7 +1174,7 @@
     async function triggerCheckout(planTier) {
       if (!currentUserId) return alert('Please log in first.');
       const autoUpgrade = document.getElementById('billing-auto-upgrade').checked;
-
+    
       try {
         const res = await fetch('/api/create-checkout-session', {
           method: 'POST',
@@ -1185,15 +1185,24 @@
             autoUpgrade: autoUpgrade
           })
         });
-
-        const data = await res.json();
+    
+        const rawText = await res.text();
+        let data;
+        try {
+          data = JSON.parse(rawText);
+        } catch (e) {
+          throw new Error(`Server response error: ${rawText}`);
+        }
+    
+        if (!res.ok) throw new Error(data.error || 'Failed to initialize payment.');
+    
         if (data.url) {
           window.location.href = data.url;
         } else {
-          alert('Checkout initiation failed: ' + (data.error || 'Unknown error'));
+          alert('Checkout initiation failed: No redirect URL returned.');
         }
       } catch (err) {
-        alert('Network error initiating payment session.');
+        alert('Checkout Error: ' + err.message);
       }
     }
 
