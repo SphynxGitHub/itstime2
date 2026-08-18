@@ -116,6 +116,21 @@
   
   let currentUserId = null;
 
+  window.addEventListener('DOMContentLoaded', async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+  
+    if (!user) {
+      // Redirect to login page if no active session is found
+      window.location.href = '/login.html'; // Adjust to your actual login page path
+      return;
+    }
+  
+    currentUserId = user.id;
+    document.getElementById('userEmail').innerText = user.email;
+  
+    await fetchCustomerData();
+  });
+
   // 2. Load User Session and Usage Data
   window.addEventListener('DOMContentLoaded', async () => {
     const { data: { user } } = await supabase.auth.getUser();
