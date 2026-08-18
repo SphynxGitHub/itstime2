@@ -54,7 +54,14 @@
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 10px; }
     .modal-content { background: white; padding: 20px; width: 100%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
 
-    /* DESKTOP MEDIA QUERIES (384px and up) */
+    /* BILLING / USAGE UI STYLES */
+    .billing-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+    .progress-bar-bg { width: 100%; height: 12px; background: #cbd5e1; border-radius: 6px; overflow: hidden; margin: 10px 0; }
+    .progress-bar-fill { height: 100%; width: 0%; background: #3ecf8e; transition: width 0.3s ease, background-color 0.3s ease; }
+    .badge-plan { background: #dbeafe; color: #1e40af; font-size: 12px; font-weight: bold; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; }
+    .grid-plans { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 15px; }
+
+    /* DESKTOP MEDIA QUERIES (768px and up) */
     @media (min-width: 768px) {
       #dashboard { flex-direction: row; }
       .sidebar { width: 230px; flex-direction: column; justify-content: flex-start; padding: 20px 0; align-items: stretch; }
@@ -65,6 +72,7 @@
       .sidebar-footer { margin-top: auto; padding: 20px; border-top: 1px solid #334155; flex-direction: column; align-items: flex-start; }
       .main-content { padding: 30px; }
       .form-row-flex { flex-direction: row; align-items: flex-end; }
+      .grid-plans { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
@@ -97,6 +105,7 @@
         <a class="nav-item active" id="nav-customers" onclick="switchTab('customers')">Patients</a>
         <a class="nav-item" id="nav-templates" onclick="switchTab('templates')">Message Library</a>
         <a class="nav-item" id="nav-history" onclick="switchTab('history')">Activity History</a>
+        <a class="nav-item" id="nav-billing" onclick="switchTab('billing')">Billing & Plan</a>
       </div>
 
       <div class="sidebar-footer">
@@ -249,6 +258,58 @@
         </div>
       </div>
 
+      <!-- 5. BILLING & PLAN VIEW -->
+      <div id="view-billing" class="hidden">
+        <h2 style="margin-top:0;">Subscription & Usage</h2>
+        <p style="color: #666; font-size: 14px;">Monitor your monthly SMS quota and manage subscription tiers.</p>
+        
+        <div class="billing-card">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin:0;">Current Tier</h3>
+            <span class="badge-plan" id="billing-plan-badge">TRIAL</span>
+          </div>
+
+          <!-- SMS Usage Counter & Progress Bar -->
+          <div style="margin-top: 20px;">
+            <div style="display: flex; justify-content: space-between; font-size: 14px;">
+              <span>Monthly SMS Usage</span>
+              <span><strong id="billing-sms-sent">0</strong> / <span id="billing-sms-limit">100</span> Sent</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="billing-progress-bar"></div>
+            </div>
+          </div>
+
+          <!-- Auto Upgrade Toggle -->
+          <div style="margin-top: 20px; background: white; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+            <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; margin-bottom: 0;">
+              <input type="checkbox" id="billing-auto-upgrade" onchange="toggleAutoUpgrade(this.checked)" style="width: auto; margin-top: 3px;">
+              <div>
+                <strong style="font-size: 14px;">Enable Auto-Upgrade</strong>
+                <p style="margin: 0; font-size: 12px; color: #64748b;">Automatically bump your account to the next tier when your limit is reached to ensure reminders continue dispatching without interruption.</p>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <h3>Upgrade Subscription Plan</h3>
+        <div class="grid-plans">
+          <div class="billing-card" style="background: white;">
+            <h4 style="margin-top: 0;">Starter Practice</h4>
+            <p style="font-size: 24px; font-weight: bold; margin: 10px 0;">$29 <span style="font-size: 14px; font-weight: normal; color: #64748b;">/ month</span></p>
+            <p style="font-size: 13px; color: #64748b;">Includes 1,000 SMS check-ins per month.</p>
+            <button onclick="triggerCheckout('starter')" class="info" style="margin-bottom: 0;">Upgrade to Starter</button>
+          </div>
+
+          <div class="billing-card" style="background: white; border: 2px solid #3ecf8e;">
+            <h4 style="margin-top: 0; color: #3ecf8e;">Pro Practice</h4>
+            <p style="font-size: 24px; font-weight: bold; margin: 10px 0;">$79 <span style="font-size: 14px; font-weight: normal; color: #64748b;">/ month</span></p>
+            <p style="font-size: 13px; color: #64748b;">Includes 5,000 SMS check-ins per month.</p>
+            <button onclick="triggerCheckout('pro')" style="margin-bottom: 0;">Upgrade to Pro</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -271,6 +332,29 @@
     </div>
   </div>
 
+  <!-- TRIAL / UNPAID PLAN POPUP MODAL -->
+  <div id="trial-modal" class="modal-overlay hidden">
+    <div class="modal-content" style="text-align: center;">
+      <h2 style="margin-top: 0; color: #dd6b20;">⚠️ You are on a Trial Plan</h2>
+      <p style="font-size: 14px; color: #666; margin: 15px 0;">
+        Your account is currently limited to <strong>100 SMS messages</strong> per month. Upgrade your plan to unlock higher dispatch limits and prevent delivery interruptions.
+      </p>
+  
+      <!-- Usage Preview inside Modal -->
+      <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+        <span style="font-size: 13px; color: #64748b;">Current Usage: </span>
+        <strong id="trial-modal-sent">0</strong> / <span id="trial-modal-limit">100</span> SMS
+      </div>
+  
+      <button onclick="switchTab('billing'); closeTrialModal();" style="background-color: #3ecf8e; margin-bottom: 8px;">
+        Upgrade Plan Now
+      </button>
+      <button onclick="closeTrialModal()" class="secondary">
+        Continue with Trial
+      </button>
+    </div>
+  </div>
+
   <script>
     const SUPABASE_URL = 'https://yktwthagtgdzzkaypgqj.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_onP87pGhzbxdWjnDoOnJAA_XCAiOJFx';
@@ -278,6 +362,7 @@
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const ONE_HOUR_MS = 60 * 60 * 1000;
     
+    let currentUserId = null;
     let editingCustId = null;
     let editingTmplId = null;
     let editingSchedId = null;
@@ -329,7 +414,7 @@
     // --- NAVIGATION CONTROLLER ---
     function switchTab(tabName) {
       cancelSchedEdit();
-      ['customers', 'profile', 'templates', 'history'].forEach(t => {
+      ['customers', 'profile', 'templates', 'history', 'billing'].forEach(t => {
         document.getElementById(`view-${t}`).classList.add('hidden');
         const nav = document.getElementById(`nav-${t}`);
         if (nav) nav.classList.remove('active');
@@ -342,6 +427,7 @@
       if (tabName === 'customers') fetchCustomers();
       if (tabName === 'templates') fetchTemplates();
       if (tabName === 'history') fetchHistory();
+      if (tabName === 'billing') fetchBillingDetails();
     }
 
     // --- SESSION INITIALIZATION ---
@@ -350,6 +436,7 @@
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) {
         recordActivity();
+        currentUserId = session.user.id;
         showApp(session.user.email);
       }
     });
@@ -360,6 +447,7 @@
       document.getElementById('dashboard').classList.remove('hidden');
       fetchCustomers();
       fetchTemplatesQuietly();
+      fetchBillingDetails(); // 👈 Triggers trial popup check upon login
     }
 
     // --- AUTHENTICATION ---
@@ -377,12 +465,17 @@
       const password = document.getElementById('password').value;
       const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
       if (error) alert(error.message);
-      else { recordActivity(); showApp(data.user.email); }
+      else { 
+        recordActivity(); 
+        currentUserId = data.user.id;
+        showApp(data.user.email); 
+      }
     }
 
     async function logout(wasExpired = false) {
       await supabaseClient.auth.signOut();
       localStorage.removeItem('lastActivityTimestamp');
+      currentUserId = null;
       document.getElementById('auth-section').classList.remove('hidden');
       document.getElementById('dashboard').classList.add('hidden');
       if (wasExpired) alert('Logged out automatically due to 1 hour of inactivity.');
@@ -444,7 +537,7 @@
           fetchCustomers();
         }
       } else {
-        const { error } = await supabaseClient.from('customers').insert([{ first_name, last_name, email, phone }]);
+        const { error } = await supabaseClient.from('customers').insert([{ first_name, last_name, email, phone, user_id: currentUserId }]);
         if (error) alert(error.message);
         else {
           await logActivity('Created Patient', `Added new patient ${first_name} ${last_name}`);
@@ -499,7 +592,7 @@
       const cust = customerStore.find(c => String(c.id) === String(custId));
       if (!cust) return alert('Patient not found.');
 
-      ['customers', 'templates', 'history'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden'));
+      ['customers', 'templates', 'history', 'billing'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden'));
       document.getElementById('view-profile').classList.remove('hidden');
 
       document.getElementById('profile-title').innerText = `${cust.first_name || ''} ${cust.last_name || ''}`;
@@ -889,13 +982,14 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            userId: currentUserId,
             phone: activeModalCust.phone,
             message: messageText
           })
         });
 
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to send SMS');
+        if (!res.ok) throw new Error(data.message || data.error || 'Failed to send SMS');
 
         await logActivity('Sent SMS', `Sent to ${custName} (${activeModalCust.phone}): "${messageText}"`);
 
@@ -928,6 +1022,89 @@
             <td>${h.details || ''}</td>
           </tr>`;
       });
+    }
+
+    // --- MODULE 6: BILLING & SUBSCRIPTION CONTROLLER ---
+    async function fetchBillingDetails() {
+      if (!currentUserId) return;
+    
+      const { data: customer, error } = await supabaseClient
+        .from('customers')
+        .select('*')
+        .eq('user_id', currentUserId)
+        .single();
+    
+      if (error || !customer) return;
+    
+      const planTier = customer.plan_tier || 'trial';
+      const sentCount = customer.sms_sent_this_month || 0;
+      const limitCount = customer.sms_limit || 100;
+    
+      // 1. Update UI Elements
+      document.getElementById('billing-plan-badge').innerText = planTier.toUpperCase();
+      document.getElementById('billing-sms-sent').innerText = sentCount;
+      document.getElementById('billing-sms-limit').innerText = limitCount;
+      document.getElementById('billing-auto-upgrade').checked = customer.auto_upgrade_enabled || false;
+    
+      const percent = Math.min(100, Math.round((sentCount / limitCount) * 100));
+      const bar = document.getElementById('billing-progress-bar');
+      bar.style.width = `${percent}%`;
+      bar.style.backgroundColor = percent > 90 ? '#ef4444' : '#3ecf8e';
+    
+      // 2. CHECK IF USER IS ON TRIAL / UNPAID PLAN -> TRIGGER POPUP
+      if (planTier === 'trial') {
+        document.getElementById('trial-modal-sent').innerText = sentCount;
+        document.getElementById('trial-modal-limit').innerText = limitCount;
+        
+        // Only show once per session so it doesn't annoy users continuously
+        if (!sessionStorage.getItem('trialModalShown')) {
+          document.getElementById('trial-modal').classList.remove('hidden');
+          sessionStorage.setItem('trialModalShown', 'true');
+        }
+      }
+    }
+    
+    function closeTrialModal() {
+      document.getElementById('trial-modal').classList.add('hidden');
+    }
+
+    async function toggleAutoUpgrade(isEnabled) {
+      if (!currentUserId) return;
+      const { error } = await supabaseClient
+        .from('customers')
+        .update({ auto_upgrade_enabled: isEnabled })
+        .eq('user_id', currentUserId);
+
+      if (error) {
+        alert('Failed to update auto-upgrade setting.');
+        document.getElementById('billing-auto-upgrade').checked = !isEnabled;
+      }
+    }
+
+    async function triggerCheckout(planTier) {
+      if (!currentUserId) return alert('Please log in first.');
+      const autoUpgrade = document.getElementById('billing-auto-upgrade').checked;
+
+      try {
+        const res = await fetch('/api/create-checkout-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUserId,
+            planTier: planTier,
+            autoUpgrade: autoUpgrade
+          })
+        });
+
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          alert('Checkout initiation failed: ' + (data.error || 'Unknown error'));
+        }
+      } catch (err) {
+        alert('Network error initiating payment session.');
+      }
     }
   </script>
 </body>
