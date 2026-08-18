@@ -75,18 +75,33 @@ export default async function handler(req, res) {
       messageSid = data.sid;
     } 
 
-    // --- OPTION B: BYOC QUO ---
+    // --- OPTION B: BYOC QUO (Formerly OpenPhone) ---
     else if (provider === 'quo' && practice.provider_api_key) {
-      const response = await fetch('https://api.quo.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Authorization': practice.provider_api_key, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: message, from: practice.provider_phone_number, to: [formattedPhone] })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Quo send failed');
-      messageSid = data.id || 'quo_sent';
-    }
+      // Ensure key has 'Bearer ' prefix
+      const authHeader = practice.provider_api_key.startsWith('Bearer ') 
+        ? practice.provider_api_key 
+        : `Bearer ${practice.provider_api_key}`;
 
+      const response = await fetch('https://api.openphone.com/v1/messages', {
+        method: 'POST',
+        headers: { 
+          'Authorization': authHeader, 
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ 
+          content: message, 
+          from: practice.provider_phone_number, 
+          to: [formattedPhone] 
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || data.error || 'Quo dispatch failed');
+      }
+      messageSid = data.data?.id || 'quo_sent';
+    }
+      
     // --- OPTION C: DEFAULT MASTER TWILIO GATEWAY ---
     else {
       const auth = Buffer.from(`${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64');
