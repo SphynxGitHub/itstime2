@@ -125,7 +125,7 @@
         <input type="email" id="cust-email" placeholder="Patient Email">
         <input type="tel" id="cust-phone" placeholder="Patient Phone (e.g. 973-934-1956)">
         
-        <button id="cust-save-btn" onclick="saveCustomer()">Add Patient</button>
+        <button id="cust-save-btn" onclick="savePatient()">Add Patient</button>
         <button id="cust-cancel-btn" onclick="cancelCustEdit()" class="secondary hidden">Cancel Edit</button>
 
         <hr style="margin: 25px 0;">
@@ -446,7 +446,7 @@
       const activeNav = document.getElementById(`nav-${tabName}`);
       if (activeNav) activeNav.classList.add('active');
 
-      if (tabName === 'customers') fetchCustomers();
+      if (tabName === 'customers') fetchPatients();
       if (tabName === 'templates') fetchTemplates();
       if (tabName === 'history') fetchHistory();
       if (tabName === 'billing') fetchBillingDetails();
@@ -467,7 +467,7 @@
       document.getElementById('user-email').innerText = email;
       document.getElementById('auth-section').classList.add('hidden');
       document.getElementById('dashboard').classList.remove('hidden');
-      fetchCustomers();
+      fetchPatients();
       fetchTemplatesQuietly();
       fetchBillingDetails(); // 👈 Triggers trial popup check upon login
     }
@@ -517,10 +517,10 @@
     }
 
     // --- MODULE 1: PATIENTS DIRECTORY ---
-    async function fetchCustomers() {
+    async function fetchPatients() {
       const tbody = document.getElementById('customer-list-body');
       tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
-      const { data, error } = await supabaseClient.from('customers').select('*').order('created_at', { ascending: false });
+      const { data, error } = await supabaseClient.from('practices').select('*').order('created_at', { ascending: false });
       if (error) return tbody.innerHTML = '<tr><td colspan="4">Error loading data.</td></tr>';
       customerStore = data || [];
       if (customerStore.length === 0) return tbody.innerHTML = '<tr><td colspan="4">No patients found.</td></tr>';
@@ -532,16 +532,16 @@
             <td>${c.email || ''}</td>
             <td>${formatForDisplay(c.phone)}</td>
             <td>
-              <button class="action-btn info" onclick="openCustomerProfile('${c.id}')">Profile & Schedules</button>
+              <button class="action-btn info" onclick="openPatientProfile('${c.id}')">Profile & Schedules</button>
               <button class="action-btn info" onclick="openSendModal('${c.id}')">Send Msg</button>
               <button class="action-btn warning" onclick="startCustEdit('${c.id}')">Edit</button>
-              <button class="action-btn danger" onclick="deleteCustomer('${c.id}')">Delete</button>
+              <button class="action-btn danger" onclick="deletePatient('${c.id}')">Delete</button>
             </td>
           </tr>`;
       });
     }
 
-    async function saveCustomer() {
+    async function savePatient() {
       const first_name = document.getElementById('cust-first-name').value;
       const last_name = document.getElementById('cust-last-name').value;
       const email = document.getElementById('cust-email').value;
@@ -551,20 +551,20 @@
       if (!first_name) return alert('First name required.');
 
       if (editingCustId) {
-        const { error } = await supabaseClient.from('customers').update({ first_name, last_name, email, phone }).eq('id', editingCustId);
+        const { error } = await supabaseClient.from('practices').update({ first_name, last_name, email, phone }).eq('id', editingCustId);
         if (error) alert(error.message);
         else {
           await logActivity('Updated Patient', `Updated profile for ${first_name} ${last_name}`);
           cancelCustEdit();
-          fetchCustomers();
+          fetchPatients();
         }
       } else {
-        const { error } = await supabaseClient.from('customers').insert([{ first_name, last_name, email, phone, user_id: currentUserId }]);
+        const { error } = await supabaseClient.from('practices').insert([{ first_name, last_name, email, phone, user_id: currentUserId }]);
         if (error) alert(error.message);
         else {
           await logActivity('Created Patient', `Added new patient ${first_name} ${last_name}`);
           clearCustForm();
-          fetchCustomers();
+          fetchPatients();
         }
       }
     }
@@ -597,19 +597,19 @@
       document.getElementById('cust-phone').value = '';
     }
 
-    async function deleteCustomer(id) {
+    async function deletePatient(id) {
       const c = customerStore.find(i => String(i.id) === String(id));
       if (!confirm('Delete this patient?')) return;
-      const { error } = await supabaseClient.from('customers').delete().eq('id', id);
+      const { error } = await supabaseClient.from('practices').delete().eq('id', id);
       if (error) alert(error.message);
       else {
         await logActivity('Deleted Patient', `Removed patient ${c ? c.first_name : id}`);
-        fetchCustomers();
+        fetchPatients();
       }
     }
 
     // --- MODULE 2: FULL-PAGE PATIENT PROFILE & SCHEDULING ---
-    async function openCustomerProfile(custId) {
+    async function openPatientProfile(custId) {
       currentProfileCustId = custId;
       const cust = customerStore.find(c => String(c.id) === String(custId));
       if (!cust) return alert('Patient not found.');
@@ -626,8 +626,8 @@
       templateStore.forEach(t => { sel.innerHTML += `<option value="${t.id}">${t.title}</option>`; });
 
       cancelSchedEdit();
-      loadCustomerSchedules(custId);
-      loadCustomerHistory(cust.phone);
+      loadPatientSchedules(custId);
+      loadPatientHistory(cust.phone);
     }
 
     function applySchedTemplateToPreview() {
@@ -696,7 +696,7 @@
       });
     }
 
-    async function loadCustomerSchedules(custId) {
+    async function loadPatientSchedules(custId) {
       const tbody = document.getElementById('sched-list-body');
       tbody.innerHTML = '<tr><td colspan="5">Loading schedules...</td></tr>';
 
@@ -812,7 +812,7 @@
         else {
           alert('Schedule updated successfully!');
           cancelSchedEdit();
-          loadCustomerSchedules(currentProfileCustId);
+          loadPatientSchedules(currentProfileCustId);
         }
       } else {
         const { error } = await supabaseClient.from('scheduled_messages').insert([payload]);
@@ -821,7 +821,7 @@
         else {
           alert('Message schedule created successfully!');
           cancelSchedEdit();
-          loadCustomerSchedules(currentProfileCustId);
+          loadPatientSchedules(currentProfileCustId);
         }
       }
     }
@@ -829,16 +829,16 @@
     async function toggleScheduleStatus(schedId, currentStatus) {
       const newStatus = currentStatus === 'paused' ? 'active' : 'paused';
       await supabaseClient.from('scheduled_messages').update({ status: newStatus }).eq('id', schedId);
-      loadCustomerSchedules(currentProfileCustId);
+      loadPatientSchedules(currentProfileCustId);
     }
 
     async function deleteSchedule(schedId) {
       if (!confirm('Cancel and delete this schedule?')) return;
       await supabaseClient.from('scheduled_messages').delete().eq('id', schedId);
-      loadCustomerSchedules(currentProfileCustId);
+      loadPatientSchedules(currentProfileCustId);
     }
 
-    async function loadCustomerHistory(phone) {
+    async function loadPatientHistory(phone) {
       const tbody = document.getElementById('profile-history-body');
       tbody.innerHTML = '<tr><td colspan="2">Loading history...</td></tr>';
 
@@ -1051,7 +1051,7 @@
       if (!currentUserId) return;
     
       const { data: customer, error } = await supabaseClient
-        .from('customers')
+        .from('practices')
         .select('*')
         .eq('user_id', currentUserId)
         .single();
@@ -1103,7 +1103,7 @@
     async function toggleAutoUpgrade(isEnabled) {
       if (!currentUserId) return;
       const { error } = await supabaseClient
-        .from('customers')
+        .from('practices')
         .update({ auto_upgrade_enabled: isEnabled })
         .eq('user_id', currentUserId);
 
@@ -1201,7 +1201,7 @@
       const provider_phone_number = document.getElementById('provider-phone').value;
     
       const { error } = await supabaseClient
-        .from('customers')
+        .from('practices')
         .update({
           provider_type,
           provider_api_key,
