@@ -8,35 +8,47 @@ const supabase = createClient(
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { userId, phone, message } = req.body;
-  if (!phone || !message) return res.status(400).json({ error: 'Phone and message required' });
+  // 1. Safe Body Parsing
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch (e) { body = {}; }
+  }
+  body = body || {};
 
-  // Sanitize phone number to E.164 (+1XXXXXXXXXX) format
-  let cleanDigits = phone.replace(/\D/g, '');
-  let formattedPhone = phone;
+  const { userId, phone, message } = body;
+
+  if (!userId) return res.status(400).json({ error: 'Missing userId parameter.' });
+  if (!phone) return res.status(400).json({ error: 'Missing phone number parameter.' });
+  if (!message) return res.status(400).json({ error: 'Missing message content.' });
+
+  // 2. Format Phone Number
+  const phoneStr = String(phone);
+  let cleanDigits = phoneStr.replace(/\D/g, '');
+  let formattedPhone = phoneStr;
   if (cleanDigits.length === 10) formattedPhone = `+1${cleanDigits}`;
   else if (cleanDigits.length === 11 && cleanDigits.startsWith('1')) formattedPhone = `+${cleanDigits}`;
 
   try {
-    // 1. Fetch Practice Billing & Gateway Settings
+    // 3. Fetch Practice Settings Safely
     let { data: practice } = await supabase
       .from('practices')
       .select('*')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
-    // Auto-create practice record if missing
+    // Auto-create Practice Record if Missing
     if (!practice) {
       const { data: newPractice } = await supabase
         .from('practices')
-        .insert([{ user_id: userId, plan_tier: 'trial', sms_limit: 100, sms_sent_this_month: 0 }])
+        .insert([{ user_id: userId, plan_tier: 'trial', sms_limit: 100, sms_sent_this_month: 0, provider_type: 'system' }])
         .select()
         .single();
-      practice = newPractice;
+      
+      practice = newPractice || { plan_tier: 'trial', sms_limit: 100, sms_sent_this_month: 0, provider_type: 'system' };
     }
 
-    // 2. Check Monthly SMS Quotas
-    if (practice.sms_sent_this_month >= practice.sms_limit) {
+    // 4. Monthly Quota Check
+    if ((practice.sms_sent_this_month || 0) >= (practice.sms_limit || 100)) {
       if (!practice.auto_upgrade_enabled) {
         return res.status(403).json({ 
           error: 'LIMIT_REACHED', 
@@ -75,7 +87,7 @@ export default async function handler(req, res) {
       messageSid = data.id || 'quo_sent';
     }
 
-    // --- OPTION C: DEFAULT MASTER SYSTEM TWILIO ACCOUNT ---
+    // --- OPTION C: DEFAULT MASTER TWILIO GATEWAY ---
     else {
       const auth = Buffer.from(`${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64');
       const params = new URLSearchParams({ To: formattedPhone, MessagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID, Body: message });
@@ -90,7 +102,7 @@ export default async function handler(req, res) {
       messageSid = data.sid;
     }
 
-    // 3. Increment Practice's Monthly Usage Count
+    // 5. Increment Usage Counter
     await supabase
       .from('practices')
       .update({ sms_sent_this_month: (practice.sms_sent_this_month || 0) + 1 })
