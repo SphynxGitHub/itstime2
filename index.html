@@ -3,225 +3,931 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>It's Time 2 | Practice Dashboard</title>
-  <!-- Supabase JS Client -->
+  <title>It's Time 2 - Patient Care & Messaging Dashboard</title>
+  
+  <!-- FAVICON LINK -->
+  <link rel="icon" type="image/png" href="logo2.png">
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root {
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --border: #e2e8f0;
-      --text: #0f172a;
-      --muted: #64748b;
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; color: #333; }
+    .hidden { display: none !important; }
+
+    /* AUTH SCREEN */
+    #auth-section { max-width: 400px; margin: 40px auto; padding: 25px; background: white; border: 1px solid #ddd; border-radius: 8px; width: 90%; }
+    input, textarea, select, button { display: block; width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 6px; border: 1px solid #ccc; font-family: inherit; font-size: 15px; }
+    button { background-color: #3ecf8e; color: white; border: none; font-weight: bold; cursor: pointer; min-height: 44px; }
+    button.secondary { background-color: #666; }
+    button.danger { background-color: #e53e3e; }
+    button.warning { background-color: #dd6b20; }
+    button.info { background-color: #3182ce; }
+    button.link-btn { background: none; color: #0066cc; border: none; text-decoration: underline; padding: 5px; margin-bottom: 10px; cursor: pointer; text-align: right; font-weight: normal; min-height: auto; }
+
+    /* DASHBOARD RESPONSIVE LAYOUT */
+    #dashboard { display: flex; flex-direction: column; min-height: 100vh; }
+    
+    /* SIDEBAR / TOPNAV */
+    .sidebar { width: 100%; background-color: #1e293b; color: white; padding: 15px; display: flex; flex-direction: flex-row; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    .sidebar-header { margin: 0; display: flex; align-items: center; gap: 10px; }
+    .sidebar-header h3 { margin: 0; padding: 0; font-size: 18px; color: #3ecf8e; font-weight: bold; }
+    .nav-group { display: flex; gap: 5px; width: 100%; margin-top: 10px; overflow-x: auto; padding-bottom: 5px; }
+    .nav-item { padding: 8px 14px; color: #cbd5e1; text-decoration: none; display: inline-block; cursor: pointer; transition: 0.2s; font-size: 14px; border-radius: 4px; white-space: nowrap; }
+    .nav-item:hover, .nav-item.active { background-color: #334155; color: white; font-weight: bold; }
+    .sidebar-footer { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 10px; padding-top: 10px; border-top: 1px solid #334155; font-size: 12px; }
+
+    /* MAIN CONTENT AREA */
+    .main-content { flex: 1; padding: 15px; background-color: #ffffff; width: 100%; }
+    
+    /* RESPONSIVE TABLES & CONTAINERS */
+    .table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 15px; }
+    table { width: 100%; border-collapse: collapse; min-width: 500px; }
+    th, td { border: 1px solid #e2e8f0; padding: 8px 10px; text-align: left; font-size: 13px; }
+    th { background-color: #f1f5f9; }
+    .action-btn { display: inline-block; width: auto; padding: 6px 10px; margin-bottom: 4px; font-size: 12px; margin-right: 2px; }
+
+    /* FLEX RESPONSIVE GRID HELPERS */
+    .form-row-flex { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+    .btn-group-flex { display: flex; flex-direction: row; gap: 8px; }
+
+    /* MODAL POPUPS */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 10px; }
+    .modal-content { background: white; padding: 20px; width: 100%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+
+    /* DESKTOP MEDIA QUERIES (384px and up) */
+    @media (min-width: 768px) {
+      #dashboard { flex-direction: row; }
+      .sidebar { width: 230px; flex-direction: column; justify-content: flex-start; padding: 20px 0; align-items: stretch; }
+      .sidebar-header { padding: 0 20px; margin-bottom: 25px; }
+      .nav-group { flex-direction: column; width: 100%; margin-top: 0; overflow-x: visible; padding-bottom: 0; }
+      .nav-item { padding: 12px 20px; border-radius: 0; display: block; }
+      .nav-item.active { border-left: 4px solid #3ecf8e; }
+      .sidebar-footer { margin-top: auto; padding: 20px; border-top: 1px solid #334155; flex-direction: column; align-items: flex-start; }
+      .main-content { padding: 30px; }
+      .form-row-flex { flex-direction: row; align-items: flex-end; }
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding: 24px; }
-
-    /* Layout Structure */
-    .app-container { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
-    
-    /* Top Bar */
-    header { max-width: 1100px; margin: 0 auto 24px auto; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 16px 24px; border-radius: 12px; border: 1px solid var(--border); }
-    .logo { font-weight: 800; font-size: 1.2rem; color: var(--primary); }
-    .user-info { font-size: 0.9rem; color: var(--muted); display: flex; align-items: center; gap: 16px; }
-
-    /* Cards & Components */
-    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 24px; }
-    .card h2 { font-size: 1.1rem; margin-bottom: 16px; }
-
-    /* Form Fields */
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
-    .form-group input, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; }
-    .form-group textarea { height: 100px; resize: vertical; }
-
-    /* Buttons */
-    .btn { padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; transition: background 0.2s; }
-    .btn-primary { background: var(--primary); color: #fff; }
-    .btn-primary:hover { background: var(--primary-hover); }
-    .btn-secondary { background: #f1f5f9; color: var(--text); border: 1px solid var(--border); }
-
-    /* Usage Sidebar Bar */
-    .badge { background: #dbeafe; color: #1e40af; font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 999px; text-transform: uppercase; }
-    .progress-bar-bg { width: 100%; height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden; margin: 12px 0; }
-    .progress-bar-fill { height: 100%; width: 0%; background: var(--primary); transition: width 0.3s ease; }
-    
-    /* Toggle Switch */
-    .toggle-card { background: #f1f5f9; border-radius: 8px; padding: 12px; display: flex; gap: 10px; cursor: pointer; margin-top: 16px; }
-    .toggle-card input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <!-- Top Navigation Header -->
-  <header>
-    <div class="logo">It's Time 2 App</div>
-    <div class="user-info">
-      <span id="userEmail">Loading practice...</span>
-      <button class="btn btn-secondary" onclick="handleLogout()" style="padding: 6px 12px; font-size: 0.85rem;">Sign Out</button>
+  <!-- AUTHENTICATION SECTION -->
+  <div id="auth-section">
+    <div style="text-align: center; margin-bottom: 15px;">
+      <img src="logo2.png" alt="It's Time 2 Logo" style="width: 48px; height: 48px; object-fit: contain; vertical-align: middle;" onerror="this.style.display='none'">
+      <h2 style="margin-top: 8px;">It's Time 2</h2>
     </div>
-  </header>
+    <input type="email" id="email" placeholder="Email address">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Log In</button>
+    <button onclick="signUp()" class="secondary">Sign Up</button>
+    <button onclick="resetPassword()" class="link-btn">Forgot Password?</button>
+  </div>
 
-  <!-- Main Dashboard Grid -->
-  <div class="app-container">
+  <!-- MAIN APP DASHBOARD -->
+  <div id="dashboard" class="hidden">
     
-    <!-- LEFT COLUMN: Patient Check-In & Dispatch Workflows -->
-    <main>
-      <!-- Quick SMS Sender -->
-      <section class="card">
-        <h2>Send Patient Reminder / Check-In</h2>
-        <form id="smsForm">
-          <div class="form-group">
-            <label for="recipientPhone">Patient Mobile Phone Number</label>
-            <input type="tel" id="recipientPhone" placeholder="+19739341956" required>
-          </div>
-          <div class="form-group">
-            <label for="messageBody">Reminder Message</label>
-            <textarea id="messageBody" placeholder="Hello John, this is a reminder from your clinic. It's time to check in!" required></textarea>
-          </div>
-          <button type="submit" class="btn btn-primary" id="sendBtn">Send SMS Check-In</button>
-        </form>
-      </section>
-
-      <!-- Sent SMS History / Queue -->
-      <section class="card">
-        <h2>Recent Check-In Activity</h2>
-        <div id="activityLog" style="font-size: 0.9rem; color: var(--muted);">
-          No messages dispatched this session.
-        </div>
-      </section>
-    </main>
-
-    <!-- RIGHT COLUMN: Billing, Quota & Usage Settings -->
-    <aside>
-      <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <h3 style="font-size: 1rem;">Subscription Plan</h3>
-          <span class="badge" id="planBadge">TRIAL</span>
-        </div>
-
-        <!-- Progress Quota -->
-        <div style="margin-top: 16px;">
-          <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
-            <span>SMS Used This Month</span>
-            <span><strong id="smsSent">0</strong> / <span id="smsLimit">100</span></span>
-          </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="progressBar"></div>
-          </div>
-        </div>
-
-        <!-- Auto Upgrade Preference -->
-        <label class="toggle-card">
-          <input type="checkbox" id="autoUpgradeToggle">
-          <div style="font-size: 0.8rem;">
-            <strong>Enable Auto-Upgrade</strong>
-            <p style="color: var(--muted); margin-top: 2px;">Prevents service blocks when SMS limits are reached.</p>
-          </div>
-        </label>
-
-        <!-- Upgrade Action -->
-        <a href="/billing.html" class="btn btn-secondary" style="width: 100%; text-align: center; margin-top: 16px; text-decoration: none; display: block; font-size: 0.85rem;">
-          Manage Subscription
-        </a>
+    <!-- NAVIGATION BAR / SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <img src="logo2.png" alt="It's Time 2 Logo" style="width: 32px; height: 32px; object-fit: contain;" onerror="this.style.display='none'">
+        <h3>It's Time 2</h3>
       </div>
-    </aside>
 
+      <div class="nav-group">
+        <a class="nav-item active" id="nav-customers" onclick="switchTab('customers')">Patients</a>
+        <a class="nav-item" id="nav-templates" onclick="switchTab('templates')">Message Library</a>
+        <a class="nav-item" id="nav-history" onclick="switchTab('history')">Activity History</a>
+      </div>
+
+      <div class="sidebar-footer">
+        <p style="margin: 0 0 5px 0; color: #94a3b8;">User: <strong id="user-email" style="color:white;"></strong></p>
+        <button onclick="logout()" class="secondary" style="margin-bottom:0; min-height:36px; padding: 4px 10px; width: auto;">Log Out</button>
+      </div>
+    </div>
+
+    <!-- CONTENT PANEL -->
+    <div class="main-content">
+
+      <!-- 1. PATIENTS DIRECTORY VIEW -->
+      <div id="view-customers">
+        <h2 id="cust-form-title" style="margin-top:0;">Add Patient</h2>
+        <input type="text" id="cust-first-name" placeholder="First Name">
+        <input type="text" id="cust-last-name" placeholder="Last Name">
+        <input type="email" id="cust-email" placeholder="Patient Email">
+        <input type="tel" id="cust-phone" placeholder="Patient Phone (e.g. 973-934-1956)">
+        
+        <button id="cust-save-btn" onclick="saveCustomer()">Add Patient</button>
+        <button id="cust-cancel-btn" onclick="cancelCustEdit()" class="secondary hidden">Cancel Edit</button>
+
+        <hr style="margin: 25px 0;">
+        <h2>Patient Directory</h2>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Email</th><th>Phone</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="customer-list-body"><tr><td colspan="4">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 2. PATIENT PROFILE PAGE (FULL PAGE VIEW) -->
+      <div id="view-profile" class="hidden">
+        <button onclick="switchTab('customers')" class="secondary action-btn" style="padding: 8px 16px; margin-bottom: 20px;">← Back to Patient Directory</button>
+        
+        <h2 id="profile-title" style="margin-top:0;">Patient Profile</h2>
+        <p id="profile-subtitle" style="color: #666; margin-top: -10px; margin-bottom: 20px; font-size: 14px;"></p>
+        
+        <!-- SCHEDULE NEW OR EDIT MESSAGE FORM -->
+        <div style="background: #f8fafc; padding: 15px; border-radius: 6px; margin-bottom: 25px; border: 1px solid #e2e8f0;">
+          <h3 id="sched-form-title" style="margin-top:0; margin-bottom: 12px;">Schedule Recurring or One-Time SMS</h3>
+          
+          <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Template (Optional):</label>
+          <select id="sched-template-select" onchange="applySchedTemplateToPreview()" style="margin-bottom: 12px;">
+            <option value="">-- Select Template --</option>
+          </select>
+
+          <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Message Text:</label>
+          <textarea id="sched-message-body" rows="3" placeholder="Message content..." style="margin-bottom: 12px;"></textarea>
+          
+          <!-- FREQUENCY & MULTI-DATE CONTROLLER -->
+          <div class="form-row-flex">
+            <div style="flex: 1;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Frequency:</label>
+              <select id="sched-type" onchange="toggleCustomDatePicker()" style="margin-bottom:0;">
+                <option value="one_time">One-time</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="multi_date">Custom Multi-Date List</option>
+              </select>
+            </div>
+
+            <!-- SINGLE DATE PICKER -->
+            <div id="single-date-container" style="flex: 1;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Dispatch Date/Time:</label>
+              <input type="datetime-local" id="sched-datetime" style="margin-bottom:0;">
+            </div>
+
+            <!-- MULTI-DATE BUILDER (HIDDEN BY DEFAULT) -->
+            <div id="multi-date-container" class="hidden" style="flex: 2; background: #fff; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:6px;">Add Dates to Schedule:</label>
+              <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                <input type="datetime-local" id="multi-date-input" style="margin-bottom:0; flex: 1;">
+                <button type="button" onclick="addCustomDateToList()" style="width: auto; height: 44px; margin-bottom:0; background-color: #3182ce; white-space: nowrap;">+ Add Date</button>
+              </div>
+
+              <div style="max-height: 120px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px; background: #f8fafc;">
+                <ul id="custom-dates-list" style="margin: 0; padding-left: 20px; font-size: 13px;">
+                  <li style="color: #94a3b8; list-style: none; margin-left: -15px;">No dates added yet.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="btn-group-flex" style="margin-top: 15px;">
+            <button id="sched-save-btn" onclick="saveSchedule()" style="width: auto; margin-bottom:0; background-color: #3ecf8e;">Schedule Message</button>
+            <button id="sched-cancel-btn" onclick="cancelSchedEdit()" class="secondary hidden" style="width: auto; margin-bottom:0;">Cancel Edit</button>
+          </div>
+        </div>
+
+        <!-- SCHEDULED MESSAGES LIST -->
+        <h3 style="margin-bottom: 10px;">Active & Scheduled Messages</h3>
+        <div class="table-container" style="margin-bottom: 30px;">
+          <table>
+            <thead>
+              <tr><th>Frequency</th><th>Next Run</th><th>Status</th><th>Message Text</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="sched-list-body"><tr><td colspan="5">Loading...</td></tr></tbody>
+          </table>
+        </div>
+
+        <!-- PATIENT HISTORY -->
+        <h3 style="margin-bottom: 10px;">Patient Interaction History</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr><th>Timestamp</th><th>Action / Message Details</th></tr>
+            </thead>
+            <tbody id="profile-history-body"><tr><td colspan="2">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 3. MESSAGE LIBRARY VIEW -->
+      <div id="view-templates" class="hidden">
+        <h2 id="tmpl-form-title" style="margin-top:0;">Add Reminder Template</h2>
+        <input type="text" id="tmpl-title" placeholder="Template Title (e.g., 24h Appointment Reminder)">
+        <textarea id="tmpl-body" rows="4" placeholder="Template Message (Use tags: {first_name}, {last_name}, {email}, {phone})"></textarea>
+        
+        <button id="tmpl-save-btn" onclick="saveTemplate()">Save Template</button>
+        <button id="tmpl-cancel-btn" onclick="cancelTmplEdit()" class="secondary hidden">Cancel Edit</button>
+
+        <hr style="margin: 25px 0;">
+        <h2>Saved Reminder Templates</h2>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr><th>Title</th><th>Message Preview</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="template-list-body"><tr><td colspan="3">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 4. ACTIVITY HISTORY VIEW -->
+      <div id="view-history" class="hidden">
+        <h2 style="margin-top:0;">Activity History</h2>
+        <p style="color: #666; font-size: 14px;">Log of account actions, patient updates, and sent messages.</p>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr><th>Timestamp</th><th>Action</th><th>Details</th></tr>
+            </thead>
+            <tbody id="history-list-body"><tr><td colspan="3">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- IMMEDIATE SEND MESSAGE MODAL -->
+  <div id="send-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3 style="margin-top: 0;">Send SMS Message</h3>
+      <p style="font-size: 14px; color: #666;">To: <strong id="modal-cust-name"></strong> (<span id="modal-cust-phone"></span>)</p>
+
+      <label style="font-size: 12px; font-weight: bold; margin-bottom: 4px; display: block;">Select Template:</label>
+      <select id="modal-template-select" onchange="applyTemplateToPreview()">
+        <option value="">-- Choose a Template --</option>
+      </select>
+
+      <label style="font-size: 12px; font-weight: bold; margin-bottom: 4px; display: block; margin-top: 10px;">Message Preview (Editable):</label>
+      <textarea id="modal-message-preview" rows="5" placeholder="Select a template above to generate message..."></textarea>
+
+      <button onclick="executeSendMessage()">Send SMS</button>
+      <button onclick="closeSendModal()" class="secondary">Cancel</button>
+    </div>
   </div>
 
   <script>
-    const SUPABASE_URL = "https://yktwthagtgdzzkaypgqj.supabase.co";
-    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"; // Paste your anon key here
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_URL = 'https://yktwthagtgdzzkaypgqj.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_onP87pGhzbxdWjnDoOnJAA_XCAiOJFx';
 
-    let currentUserId = null;
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const ONE_HOUR_MS = 60 * 60 * 1000;
+    
+    let editingCustId = null;
+    let editingTmplId = null;
+    let editingSchedId = null;
+    let activeModalCust = null;
+    let currentProfileCustId = null;
+    let customerStore = [];
+    let templateStore = [];
+    let scheduleStore = [];
+    let customDatesList = [];
 
-    // Load User & Usage Data
-    window.addEventListener('DOMContentLoaded', async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+    // --- PHONE FORMATTING HELPERS ---
+    function formatToE164(phone) {
+      if (!phone) return '';
+      const digits = phone.replace(/\D/g, '');
+      if (digits.length === 10) return `+1${digits}`;
+      if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
+      if (phone.trim().startsWith('+')) return `+${digits}`;
+      return `+1${digits}`;
+    }
 
-      if (!user) {
-        window.location.href = '/login.html';
-        return;
+    function formatForDisplay(phone) {
+      if (!phone) return '';
+      const digits = phone.replace(/\D/g, '');
+      if (digits.length === 11 && digits.startsWith('1')) {
+        return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
       }
+      if (digits.length === 10) {
+        return `+1 (${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+      }
+      return phone;
+    }
 
-      currentUserId = user.id;
-      document.getElementById('userEmail').innerText = user.email;
+    function toDatetimeLocal(isoString) {
+      if (!isoString) return '';
+      const date = new Date(isoString);
+      const offset = date.getTimezoneOffset() * 60000;
+      return (new Date(date.getTime() - offset)).toISOString().slice(0, 16);
+    }
 
-      await loadUsageData();
+    // --- ACTIVITY TRACKER & AUTO-LOGOUT ---
+    function recordActivity() { localStorage.setItem('lastActivityTimestamp', Date.now().toString()); }
+    function checkInactivity() {
+      const last = localStorage.getItem('lastActivityTimestamp');
+      if (last && Date.now() - parseInt(last, 10) > ONE_HOUR_MS) { logout(true); return true; }
+      return false;
+    }
+    ['mousemove', 'keydown', 'click', 'touchstart'].forEach(evt => window.addEventListener(evt, recordActivity));
+
+    // --- NAVIGATION CONTROLLER ---
+    function switchTab(tabName) {
+      cancelSchedEdit();
+      ['customers', 'profile', 'templates', 'history'].forEach(t => {
+        document.getElementById(`view-${t}`).classList.add('hidden');
+        const nav = document.getElementById(`nav-${t}`);
+        if (nav) nav.classList.remove('active');
+      });
+
+      document.getElementById(`view-${tabName}`).classList.remove('hidden');
+      const activeNav = document.getElementById(`nav-${tabName}`);
+      if (activeNav) activeNav.classList.add('active');
+
+      if (tabName === 'customers') fetchCustomers();
+      if (tabName === 'templates') fetchTemplates();
+      if (tabName === 'history') fetchHistory();
+    }
+
+    // --- SESSION INITIALIZATION ---
+    window.addEventListener('DOMContentLoaded', async () => {
+      if (checkInactivity()) return;
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) {
+        recordActivity();
+        showApp(session.user.email);
+      }
     });
 
-    async function loadUsageData() {
-      const { data: customer } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('user_id', currentUserId)
-        .single();
+    function showApp(email) {
+      document.getElementById('user-email').innerText = email;
+      document.getElementById('auth-section').classList.add('hidden');
+      document.getElementById('dashboard').classList.remove('hidden');
+      fetchCustomers();
+      fetchTemplatesQuietly();
+    }
 
-      if (customer) {
-        document.getElementById('planBadge').innerText = (customer.plan_tier || 'trial').toUpperCase();
-        document.getElementById('smsSent').innerText = customer.sms_sent_this_month || 0;
-        document.getElementById('smsLimit').innerText = customer.sms_limit || 100;
-        document.getElementById('autoUpgradeToggle').checked = customer.auto_upgrade_enabled || false;
+    // --- AUTHENTICATION ---
+    async function signUp() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      if (!email || !password) return alert('Enter email and password.');
+      const { error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) alert(error.message);
+      else alert('Success! You can now log in.');
+    }
 
-        const percent = Math.min(100, Math.round(((customer.sms_sent_this_month || 0) / (customer.sms_limit || 100)) * 100));
-        document.getElementById('progressBar').style.width = `${percent}%`;
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) alert(error.message);
+      else { recordActivity(); showApp(data.user.email); }
+    }
+
+    async function logout(wasExpired = false) {
+      await supabaseClient.auth.signOut();
+      localStorage.removeItem('lastActivityTimestamp');
+      document.getElementById('auth-section').classList.remove('hidden');
+      document.getElementById('dashboard').classList.add('hidden');
+      if (wasExpired) alert('Logged out automatically due to 1 hour of inactivity.');
+    }
+
+    async function resetPassword() {
+      const email = document.getElementById('email').value;
+      if (!email) return alert('Enter email address.');
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
+      if (error) alert(error.message);
+      else alert('Reset link sent!');
+    }
+
+    // --- ACTIVITY LOGGING HELPER ---
+    async function logActivity(action, details) {
+      await supabaseClient.from('activity_history').insert([{ action, details }]);
+    }
+
+    // --- MODULE 1: PATIENTS DIRECTORY ---
+    async function fetchCustomers() {
+      const tbody = document.getElementById('customer-list-body');
+      tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
+      const { data, error } = await supabaseClient.from('customers').select('*').order('created_at', { ascending: false });
+      if (error) return tbody.innerHTML = '<tr><td colspan="4">Error loading data.</td></tr>';
+      customerStore = data || [];
+      if (customerStore.length === 0) return tbody.innerHTML = '<tr><td colspan="4">No patients found.</td></tr>';
+      tbody.innerHTML = '';
+      customerStore.forEach(c => {
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${c.first_name || ''} ${c.last_name || ''}</strong></td>
+            <td>${c.email || ''}</td>
+            <td>${formatForDisplay(c.phone)}</td>
+            <td>
+              <button class="action-btn info" onclick="openCustomerProfile('${c.id}')">Profile & Schedules</button>
+              <button class="action-btn info" onclick="openSendModal('${c.id}')">Send Msg</button>
+              <button class="action-btn warning" onclick="startCustEdit('${c.id}')">Edit</button>
+              <button class="action-btn danger" onclick="deleteCustomer('${c.id}')">Delete</button>
+            </td>
+          </tr>`;
+      });
+    }
+
+    async function saveCustomer() {
+      const first_name = document.getElementById('cust-first-name').value;
+      const last_name = document.getElementById('cust-last-name').value;
+      const email = document.getElementById('cust-email').value;
+      const rawPhone = document.getElementById('cust-phone').value;
+      const phone = formatToE164(rawPhone);
+
+      if (!first_name) return alert('First name required.');
+
+      if (editingCustId) {
+        const { error } = await supabaseClient.from('customers').update({ first_name, last_name, email, phone }).eq('id', editingCustId);
+        if (error) alert(error.message);
+        else {
+          await logActivity('Updated Patient', `Updated profile for ${first_name} ${last_name}`);
+          cancelCustEdit();
+          fetchCustomers();
+        }
+      } else {
+        const { error } = await supabaseClient.from('customers').insert([{ first_name, last_name, email, phone }]);
+        if (error) alert(error.message);
+        else {
+          await logActivity('Created Patient', `Added new patient ${first_name} ${last_name}`);
+          clearCustForm();
+          fetchCustomers();
+        }
       }
     }
 
-    // Handle SMS Dispatch
-    document.getElementById('smsForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const sendBtn = document.getElementById('sendBtn');
-      sendBtn.innerText = "Dispatching...";
-      sendBtn.disabled = true;
+    function startCustEdit(id) {
+      const c = customerStore.find(i => String(i.id) === String(id));
+      if (!c) return;
+      editingCustId = id;
+      document.getElementById('cust-first-name').value = c.first_name || '';
+      document.getElementById('cust-last-name').value = c.last_name || '';
+      document.getElementById('cust-email').value = c.email || '';
+      document.getElementById('cust-phone').value = formatForDisplay(c.phone) || '';
+      document.getElementById('cust-form-title').innerText = 'Edit Patient';
+      document.getElementById('cust-save-btn').innerText = 'Save Changes';
+      document.getElementById('cust-cancel-btn').classList.remove('hidden');
+    }
 
-      const recipientPhone = document.getElementById('recipientPhone').value;
-      const messageBody = document.getElementById('messageBody').value;
+    function cancelCustEdit() {
+      editingCustId = null;
+      clearCustForm();
+      document.getElementById('cust-form-title').innerText = 'Add Patient';
+      document.getElementById('cust-save-btn').innerText = 'Add Patient';
+      document.getElementById('cust-cancel-btn').classList.add('hidden');
+    }
 
+    function clearCustForm() {
+      document.getElementById('cust-first-name').value = '';
+      document.getElementById('cust-last-name').value = '';
+      document.getElementById('cust-email').value = '';
+      document.getElementById('cust-phone').value = '';
+    }
+
+    async function deleteCustomer(id) {
+      const c = customerStore.find(i => String(i.id) === String(id));
+      if (!confirm('Delete this patient?')) return;
+      const { error } = await supabaseClient.from('customers').delete().eq('id', id);
+      if (error) alert(error.message);
+      else {
+        await logActivity('Deleted Patient', `Removed patient ${c ? c.first_name : id}`);
+        fetchCustomers();
+      }
+    }
+
+    // --- MODULE 2: FULL-PAGE PATIENT PROFILE & SCHEDULING ---
+    async function openCustomerProfile(custId) {
+      currentProfileCustId = custId;
+      const cust = customerStore.find(c => String(c.id) === String(custId));
+      if (!cust) return alert('Patient not found.');
+
+      ['customers', 'templates', 'history'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden'));
+      document.getElementById('view-profile').classList.remove('hidden');
+
+      document.getElementById('profile-title').innerText = `${cust.first_name || ''} ${cust.last_name || ''}`;
+      document.getElementById('profile-subtitle').innerText = `Email: ${cust.email || 'N/A'} | Phone: ${formatForDisplay(cust.phone) || 'N/A'}`;
+
+      await fetchTemplatesQuietly();
+      const sel = document.getElementById('sched-template-select');
+      sel.innerHTML = '<option value="">-- Select Template (Optional) --</option>';
+      templateStore.forEach(t => { sel.innerHTML += `<option value="${t.id}">${t.title}</option>`; });
+
+      cancelSchedEdit();
+      loadCustomerSchedules(custId);
+      loadCustomerHistory(cust.phone);
+    }
+
+    function applySchedTemplateToPreview() {
+      const selectedId = document.getElementById('sched-template-select').value;
+      const cust = customerStore.find(c => String(c.id) === String(currentProfileCustId));
+      if (!selectedId || !cust) return;
+
+      const tmpl = templateStore.find(t => String(t.id) === String(selectedId));
+      if (!tmpl) return;
+
+      let text = tmpl.body;
+      text = text.replace(/\{first_name\}/g, cust.first_name || '');
+      text = text.replace(/\{last_name\}/g, cust.last_name || '');
+      text = text.replace(/\{email\}/g, cust.email || '');
+      text = text.replace(/\{phone\}/g, formatForDisplay(cust.phone) || '');
+
+      document.getElementById('sched-message-body').value = text;
+    }
+
+    function toggleCustomDatePicker() {
+      const type = document.getElementById('sched-type').value;
+      const singleContainer = document.getElementById('single-date-container');
+      const multiContainer = document.getElementById('multi-date-container');
+
+      if (type === 'multi_date') {
+        singleContainer.classList.add('hidden');
+        multiContainer.classList.remove('hidden');
+      } else {
+        singleContainer.classList.remove('hidden');
+        multiContainer.classList.add('hidden');
+      }
+    }
+
+    function addCustomDateToList() {
+      const val = document.getElementById('multi-date-input').value;
+      if (!val) return alert('Select a date and time first.');
+
+      const iso = new Date(val).toISOString();
+      if (customDatesList.includes(iso)) return alert('That timestamp is already in your list.');
+
+      customDatesList.push(iso);
+      customDatesList.sort();
+      document.getElementById('multi-date-input').value = '';
+      renderCustomDatesList();
+    }
+
+    function removeCustomDateFromList(index) {
+      customDatesList.splice(index, 1);
+      renderCustomDatesList();
+    }
+
+    function renderCustomDatesList() {
+      const ul = document.getElementById('custom-dates-list');
+      if (customDatesList.length === 0) {
+        return ul.innerHTML = '<li style="color: #94a3b8; list-style: none; margin-left: -15px;">No dates added yet.</li>';
+      }
+
+      ul.innerHTML = '';
+      customDatesList.forEach((iso, idx) => {
+        const display = new Date(iso).toLocaleString();
+        ul.innerHTML += `
+          <li style="margin-bottom: 4px;">
+            <strong>${display}</strong>
+            <button type="button" onclick="removeCustomDateFromList(${idx})" class="action-btn danger" style="padding: 1px 6px; font-size: 10px; margin-left: 10px;">Remove</button>
+          </li>`;
+      });
+    }
+
+    async function loadCustomerSchedules(custId) {
+      const tbody = document.getElementById('sched-list-body');
+      tbody.innerHTML = '<tr><td colspan="5">Loading schedules...</td></tr>';
+
+      const { data, error } = await supabaseClient
+        .from('scheduled_messages')
+        .select('*')
+        .eq('customer_id', String(custId))
+        .order('next_run_at', { ascending: true });
+
+      if (error || !data || data.length === 0) {
+        scheduleStore = [];
+        return tbody.innerHTML = '<tr><td colspan="5">No scheduled messages found. Create one above!</td></tr>';
+      }
+
+      scheduleStore = data;
+      tbody.innerHTML = '';
+      data.forEach(s => {
+        const isPaused = s.status === 'paused';
+        const nextRun = new Date(s.next_run_at).toLocaleString();
+        const displayType = s.schedule_type === 'multi_date' ? `MULTI-DATE (${s.pending_dates ? s.pending_dates.length : 0} left)` : s.schedule_type.toUpperCase();
+        
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${displayType}</strong></td>
+            <td>${nextRun}</td>
+            <td><span style="color:${isPaused ? '#e53e3e' : '#3ecf8e'}; font-weight:bold;">${s.status}</span></td>
+            <td>${s.message_body || ''}</td>
+            <td>
+              <button class="action-btn warning" onclick="startSchedEdit('${s.id}')">Edit</button>
+              <button class="action-btn ${isPaused ? 'info' : 'secondary'}" onclick="toggleScheduleStatus('${s.id}', '${s.status}')">${isPaused ? 'Start' : 'Pause'}</button>
+              <button class="action-btn danger" onclick="deleteSchedule('${s.id}')">Delete</button>
+            </td>
+          </tr>`;
+      });
+    }
+
+    function startSchedEdit(schedId) {
+      const s = scheduleStore.find(item => String(item.id) === String(schedId));
+      if (!s) return;
+
+      editingSchedId = schedId;
+      document.getElementById('sched-message-body').value = s.message_body || '';
+      document.getElementById('sched-type').value = s.schedule_type || 'one_time';
+
+      if (s.schedule_type === 'multi_date') {
+        customDatesList = Array.isArray(s.pending_dates) ? [...s.pending_dates] : [];
+        renderCustomDatesList();
+      } else {
+        customDatesList = [];
+        document.getElementById('sched-datetime').value = toDatetimeLocal(s.next_run_at);
+      }
+
+      toggleCustomDatePicker();
+
+      document.getElementById('sched-form-title').innerText = 'Edit Scheduled Message';
+      document.getElementById('sched-save-btn').innerText = 'Update Schedule';
+      document.getElementById('sched-cancel-btn').classList.remove('hidden');
+    }
+
+    function cancelSchedEdit() {
+      editingSchedId = null;
+      customDatesList = [];
+      document.getElementById('sched-message-body').value = '';
+      document.getElementById('sched-datetime').value = '';
+      document.getElementById('sched-template-select').value = '';
+      document.getElementById('sched-type').value = 'one_time';
+      
+      toggleCustomDatePicker();
+      renderCustomDatesList();
+
+      document.getElementById('sched-form-title').innerText = 'Schedule Recurring or One-Time SMS';
+      document.getElementById('sched-save-btn').innerText = 'Schedule Message';
+      document.getElementById('sched-cancel-btn').classList.add('hidden');
+    }
+
+    async function saveSchedule() {
+      const message_body = document.getElementById('sched-message-body').value;
+      const schedule_type = document.getElementById('sched-type').value;
+
+      if (!message_body) return alert('Please enter message text.');
+
+      let next_run_at = null;
+      let pending_dates = [];
+
+      if (schedule_type === 'multi_date') {
+        if (customDatesList.length === 0) return alert('Please add at least one date to your list.');
+        next_run_at = customDatesList[0];
+        pending_dates = [...customDatesList];
+      } else {
+        const rawDatetime = document.getElementById('sched-datetime').value;
+        if (!rawDatetime) return alert('Please select a dispatch date/time.');
+        next_run_at = new Date(rawDatetime).toISOString();
+      }
+
+      const payload = {
+        customer_id: String(currentProfileCustId),
+        message_body,
+        schedule_type,
+        next_run_at,
+        pending_dates,
+        status: 'active'
+      };
+
+      if (editingSchedId) {
+        const { error } = await supabaseClient.from('scheduled_messages').update({
+          message_body,
+          schedule_type,
+          next_run_at,
+          pending_dates
+        }).eq('id', editingSchedId);
+
+        if (error) alert(error.message);
+        else {
+          alert('Schedule updated successfully!');
+          cancelSchedEdit();
+          loadCustomerSchedules(currentProfileCustId);
+        }
+      } else {
+        const { error } = await supabaseClient.from('scheduled_messages').insert([payload]);
+
+        if (error) alert(error.message);
+        else {
+          alert('Message schedule created successfully!');
+          cancelSchedEdit();
+          loadCustomerSchedules(currentProfileCustId);
+        }
+      }
+    }
+
+    async function toggleScheduleStatus(schedId, currentStatus) {
+      const newStatus = currentStatus === 'paused' ? 'active' : 'paused';
+      await supabaseClient.from('scheduled_messages').update({ status: newStatus }).eq('id', schedId);
+      loadCustomerSchedules(currentProfileCustId);
+    }
+
+    async function deleteSchedule(schedId) {
+      if (!confirm('Cancel and delete this schedule?')) return;
+      await supabaseClient.from('scheduled_messages').delete().eq('id', schedId);
+      loadCustomerSchedules(currentProfileCustId);
+    }
+
+    async function loadCustomerHistory(phone) {
+      const tbody = document.getElementById('profile-history-body');
+      tbody.innerHTML = '<tr><td colspan="2">Loading history...</td></tr>';
+
+      const { data } = await supabaseClient
+        .from('activity_history')
+        .select('*')
+        .ilike('details', `%${phone}%`)
+        .order('created_at', { ascending: false });
+
+      if (!data || data.length === 0) {
+        return tbody.innerHTML = '<tr><td colspan="2">No past history recorded for this patient.</td></tr>';
+      }
+
+      tbody.innerHTML = '';
+      data.forEach(h => {
+        const time = new Date(h.created_at).toLocaleString();
+        tbody.innerHTML += `
+          <tr>
+            <td style="font-size:12px; color:#666; width:180px;">${time}</td>
+            <td><strong>${h.action}:</strong> ${h.details}</td>
+          </tr>`;
+      });
+    }
+
+    // --- MODULE 3: MESSAGE LIBRARY (TEMPLATES) ---
+    async function fetchTemplatesQuietly() {
+      const { data } = await supabaseClient.from('reminder_templates').select('*').order('title', { ascending: true });
+      templateStore = data || [];
+    }
+
+    async function fetchTemplates() {
+      const tbody = document.getElementById('template-list-body');
+      tbody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
+      const { data, error } = await supabaseClient.from('reminder_templates').select('*').order('created_at', { ascending: false });
+      if (error) return tbody.innerHTML = '<tr><td colspan="3">Error loading templates.</td></tr>';
+      templateStore = data || [];
+      if (templateStore.length === 0) return tbody.innerHTML = '<tr><td colspan="3">No templates found. Create your first one above!</td></tr>';
+      tbody.innerHTML = '';
+      templateStore.forEach(t => {
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${t.title}</strong></td>
+            <td>${t.body}</td>
+            <td>
+              <button class="action-btn warning" onclick="startTmplEdit('${t.id}')">Edit</button>
+              <button class="action-btn danger" onclick="deleteTemplate('${t.id}')">Delete</button>
+            </td>
+          </tr>`;
+      });
+    }
+
+    async function saveTemplate() {
+      const title = document.getElementById('tmpl-title').value;
+      const body = document.getElementById('tmpl-body').value;
+      if (!title || !body) return alert('Title and body are required.');
+
+      if (editingTmplId) {
+        const { error } = await supabaseClient.from('reminder_templates').update({ title, body }).eq('id', editingTmplId);
+        if (error) alert(error.message);
+        else {
+          await logActivity('Updated Template', `Modified template "${title}"`);
+          cancelTmplEdit();
+          fetchTemplates();
+        }
+      } else {
+        const { error } = await supabaseClient.from('reminder_templates').insert([{ title, body }]);
+        if (error) alert(error.message);
+        else {
+          await logActivity('Created Template', `Saved new template "${title}"`);
+          clearTmplForm();
+          fetchTemplates();
+        }
+      }
+    }
+
+    function startTmplEdit(id) {
+      const t = templateStore.find(i => String(i.id) === String(id));
+      if (!t) return;
+      editingTmplId = id;
+      document.getElementById('tmpl-title').value = t.title || '';
+      document.getElementById('tmpl-body').value = t.body || '';
+      document.getElementById('tmpl-form-title').innerText = 'Edit Template';
+      document.getElementById('tmpl-save-btn').innerText = 'Save Changes';
+      document.getElementById('tmpl-cancel-btn').classList.remove('hidden');
+    }
+
+    function cancelTmplEdit() {
+      editingTmplId = null;
+      clearTmplForm();
+      document.getElementById('tmpl-form-title').innerText = 'Add Reminder Template';
+      document.getElementById('tmpl-save-btn').innerText = 'Save Template';
+      document.getElementById('tmpl-cancel-btn').classList.add('hidden');
+    }
+
+    function clearTmplForm() {
+      document.getElementById('tmpl-title').value = '';
+      document.getElementById('tmpl-body').value = '';
+    }
+
+    async function deleteTemplate(id) {
+      const t = templateStore.find(i => String(i.id) === String(id));
+      if (!confirm('Delete this template?')) return;
+      const { error } = await supabaseClient.from('reminder_templates').delete().eq('id', id);
+      if (error) alert(error.message);
+      else {
+        await logActivity('Deleted Template', `Removed template "${t ? t.title : id}"`);
+        fetchTemplates();
+      }
+    }
+
+    // --- MODULE 4: SEND IMMEDIATE SMS MODAL ---
+    async function openSendModal(custId) {
+      activeModalCust = customerStore.find(c => String(c.id) === String(custId));
+      if (!activeModalCust) return alert('Patient not found.');
+
+      document.getElementById('modal-cust-name').innerText = `${activeModalCust.first_name || ''} ${activeModalCust.last_name || ''}`;
+      document.getElementById('modal-cust-phone').innerText = formatForDisplay(activeModalCust.phone) || 'No Phone Number';
+      document.getElementById('modal-message-preview').value = '';
+
+      await fetchTemplatesQuietly();
+      const select = document.getElementById('modal-template-select');
+      select.innerHTML = '<option value="">-- Choose a Template --</option>';
+
+      if (templateStore.length === 0) {
+        select.innerHTML = '<option value="">No saved templates available</option>';
+      } else {
+        templateStore.forEach(t => {
+          select.innerHTML += `<option value="${t.id}">${t.title}</option>`;
+        });
+      }
+
+      document.getElementById('send-modal').classList.remove('hidden');
+    }
+
+    function applyTemplateToPreview() {
+      const selectedId = document.getElementById('modal-template-select').value;
+      if (!selectedId || !activeModalCust) {
+        document.getElementById('modal-message-preview').value = '';
+        return;
+      }
+
+      const tmpl = templateStore.find(t => String(t.id) === String(selectedId));
+      if (!tmpl) return;
+
+      let text = tmpl.body;
+      text = text.replace(/\{first_name\}/g, activeModalCust.first_name || '');
+      text = text.replace(/\{last_name\}/g, activeModalCust.last_name || '');
+      text = text.replace(/\{email\}/g, activeModalCust.email || '');
+      text = text.replace(/\{phone\}/g, formatForDisplay(activeModalCust.phone) || '');
+
+      document.getElementById('modal-message-preview').value = text;
+    }
+
+    async function executeSendMessage() {
+      const messageText = document.getElementById('modal-message-preview').value;
+      if (!messageText) return alert('Message body cannot be empty.');
+      if (!activeModalCust || !activeModalCust.phone) return alert('Patient has no phone number listed.');
+
+      const custName = `${activeModalCust.first_name || ''} ${activeModalCust.last_name || ''}`;
+      
       try {
-        const response = await fetch('/api/send-sms', {
+        const res = await fetch('/api/send-sms', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            userId: currentUserId,
-            recipientPhone: recipientPhone,
-            messageBody: messageBody
+            phone: activeModalCust.phone,
+            message: messageText
           })
         });
 
-        const data = await response.json();
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to send SMS');
 
-        if (response.ok) {
-          alert("SMS dispatched successfully!");
-          document.getElementById('messageBody').value = "";
-          await loadUsageData(); // Refresh usage counter
-        } else {
-          alert("Failed to send: " + (data.message || data.error));
-        }
+        await logActivity('Sent SMS', `Sent to ${custName} (${activeModalCust.phone}): "${messageText}"`);
+
+        alert(`SMS successfully delivered to ${custName}!`);
+        closeSendModal();
       } catch (err) {
-        alert("Network error sending SMS.");
-      } finally {
-        sendBtn.innerText = "Send SMS Check-In";
-        sendBtn.disabled = false;
+        alert('SMS Send Error: ' + err.message);
       }
-    });
+    }
 
-    // Toggle Auto Upgrade
-    document.getElementById('autoUpgradeToggle').addEventListener('change', async (e) => {
-      await supabase
-        .from('customers')
-        .update({ auto_upgrade_enabled: e.target.checked })
-        .eq('user_id', currentUserId);
-    });
+    function closeSendModal() {
+      activeModalCust = null;
+      document.getElementById('send-modal').classList.add('hidden');
+    }
 
-    // Handle Logout
-    async function handleLogout() {
-      await supabase.auth.signOut();
-      window.location.href = '/login.html';
+    // --- MODULE 5: ACTIVITY HISTORY ---
+    async function fetchHistory() {
+      const tbody = document.getElementById('history-list-body');
+      tbody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
+      const { data, error } = await supabaseClient.from('activity_history').select('*').order('created_at', { ascending: false });
+      if (error) return tbody.innerHTML = '<tr><td colspan="3">Error loading activity logs.</td></tr>';
+      if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="3">No history recorded yet.</td></tr>';
+      tbody.innerHTML = '';
+      data.forEach(h => {
+        const time = new Date(h.created_at).toLocaleString();
+        tbody.innerHTML += `
+          <tr>
+            <td style="font-size:12px; color:#666;">${time}</td>
+            <td><strong>${h.action}</strong></td>
+            <td>${h.details || ''}</td>
+          </tr>`;
+      });
     }
   </script>
 </body>
