@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>It's Time 2 | Practice Dashboard</title>
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 24px; }
+
+    /* Layout Structure */
+    .app-container { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 320px; gap: 24px; }
+    
+    /* Top Bar */
+    header { max-width: 1100px; margin: 0 auto 24px auto; display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 16px 24px; border-radius: 12px; border: 1px solid var(--border); }
+    .logo { font-weight: 800; font-size: 1.2rem; color: var(--primary); }
+    .user-info { font-size: 0.9rem; color: var(--muted); display: flex; align-items: center; gap: 16px; }
+
+    /* Cards & Components */
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 24px; }
+    .card h2 { font-size: 1.1rem; margin-bottom: 16px; }
+
+    /* Form Fields */
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
+    .form-group input, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; }
+    .form-group textarea { height: 100px; resize: vertical; }
+
+    /* Buttons */
+    .btn { padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; transition: background 0.2s; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: #f1f5f9; color: var(--text); border: 1px solid var(--border); }
+
+    /* Usage Sidebar Bar */
+    .badge { background: #dbeafe; color: #1e40af; font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 999px; text-transform: uppercase; }
+    .progress-bar-bg { width: 100%; height: 10px; background: #e2e8f0; border-radius: 5px; overflow: hidden; margin: 12px 0; }
+    .progress-bar-fill { height: 100%; width: 0%; background: var(--primary); transition: width 0.3s ease; }
+    
+    /* Toggle Switch */
+    .toggle-card { background: #f1f5f9; border-radius: 8px; padding: 12px; display: flex; gap: 10px; cursor: pointer; margin-top: 16px; }
+    .toggle-card input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header>
+    <div class="logo">It's Time 2 App</div>
+    <div class="user-info">
+      <span id="userEmail">Loading practice...</span>
+      <button class="btn btn-secondary" onclick="handleLogout()" style="padding: 6px 12px; font-size: 0.85rem;">Sign Out</button>
+    </div>
+  </header>
+
+  <!-- Main Dashboard Grid -->
+  <div class="app-container">
+    
+    <!-- LEFT COLUMN: Patient Check-In & Dispatch Workflows -->
+    <main>
+      <!-- Quick SMS Sender -->
+      <section class="card">
+        <h2>Send Patient Reminder / Check-In</h2>
+        <form id="smsForm">
+          <div class="form-group">
+            <label for="recipientPhone">Patient Mobile Phone Number</label>
+            <input type="tel" id="recipientPhone" placeholder="+19739341956" required>
+          </div>
+          <div class="form-group">
+            <label for="messageBody">Reminder Message</label>
+            <textarea id="messageBody" placeholder="Hello John, this is a reminder from your clinic. It's time to check in!" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" id="sendBtn">Send SMS Check-In</button>
+        </form>
+      </section>
+
+      <!-- Sent SMS History / Queue -->
+      <section class="card">
+        <h2>Recent Check-In Activity</h2>
+        <div id="activityLog" style="font-size: 0.9rem; color: var(--muted);">
+          No messages dispatched this session.
+        </div>
+      </section>
+    </main>
+
+    <!-- RIGHT COLUMN: Billing, Quota & Usage Settings -->
+    <aside>
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 style="font-size: 1rem;">Subscription Plan</h3>
+          <span class="badge" id="planBadge">TRIAL</span>
+        </div>
+
+        <!-- Progress Quota -->
+        <div style="margin-top: 16px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+            <span>SMS Used This Month</span>
+            <span><strong id="smsSent">0</strong> / <span id="smsLimit">100</span></span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progressBar"></div>
+          </div>
+        </div>
+
+        <!-- Auto Upgrade Preference -->
+        <label class="toggle-card">
+          <input type="checkbox" id="autoUpgradeToggle">
+          <div style="font-size: 0.8rem;">
+            <strong>Enable Auto-Upgrade</strong>
+            <p style="color: var(--muted); margin-top: 2px;">Prevents service blocks when SMS limits are reached.</p>
+          </div>
+        </label>
+
+        <!-- Upgrade Action -->
+        <a href="/billing.html" class="btn btn-secondary" style="width: 100%; text-align: center; margin-top: 16px; text-decoration: none; display: block; font-size: 0.85rem;">
+          Manage Subscription
+        </a>
+      </div>
+    </aside>
+
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://yktwthagtgdzzkaypgqj.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY"; // Paste your anon key here
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentUserId = null;
+
+    // Load User & Usage Data
+    window.addEventListener('DOMContentLoaded', async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      currentUserId = user.id;
+      document.getElementById('userEmail').innerText = user.email;
+
+      await loadUsageData();
+    });
+
+    async function loadUsageData() {
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('user_id', currentUserId)
+        .single();
+
+      if (customer) {
+        document.getElementById('planBadge').innerText = (customer.plan_tier || 'trial').toUpperCase();
+        document.getElementById('smsSent').innerText = customer.sms_sent_this_month || 0;
+        document.getElementById('smsLimit').innerText = customer.sms_limit || 100;
+        document.getElementById('autoUpgradeToggle').checked = customer.auto_upgrade_enabled || false;
+
+        const percent = Math.min(100, Math.round(((customer.sms_sent_this_month || 0) / (customer.sms_limit || 100)) * 100));
+        document.getElementById('progressBar').style.width = `${percent}%`;
+      }
+    }
+
+    // Handle SMS Dispatch
+    document.getElementById('smsForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const sendBtn = document.getElementById('sendBtn');
+      sendBtn.innerText = "Dispatching...";
+      sendBtn.disabled = true;
+
+      const recipientPhone = document.getElementById('recipientPhone').value;
+      const messageBody = document.getElementById('messageBody').value;
+
+      try {
+        const response = await fetch('/api/send-sms', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUserId,
+            recipientPhone: recipientPhone,
+            messageBody: messageBody
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert("SMS dispatched successfully!");
+          document.getElementById('messageBody').value = "";
+          await loadUsageData(); // Refresh usage counter
+        } else {
+          alert("Failed to send: " + (data.message || data.error));
+        }
+      } catch (err) {
+        alert("Network error sending SMS.");
+      } finally {
+        sendBtn.innerText = "Send SMS Check-In";
+        sendBtn.disabled = false;
+      }
+    });
+
+    // Toggle Auto Upgrade
+    document.getElementById('autoUpgradeToggle').addEventListener('change', async (e) => {
+      await supabase
+        .from('customers')
+        .update({ auto_upgrade_enabled: e.target.checked })
+        .eq('user_id', currentUserId);
+    });
+
+    // Handle Logout
+    async function handleLogout() {
+      await supabase.auth.signOut();
+      window.location.href = '/login.html';
+    }
+  </script>
+</body>
+</html>
