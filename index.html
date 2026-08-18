@@ -401,7 +401,7 @@
       const digits = phone.replace(/\D/g, '');
       if (digits.length === 10) return `+1${digits}`;
       if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
-      if (phone.trim().startsWith('+')) return `+${digits}`;
+      if (phone.trim().startsWith('+')) return `+1${digits}`;
       return `+1${digits}`;
     }
 
@@ -469,7 +469,7 @@
       document.getElementById('dashboard').classList.remove('hidden');
       fetchPatients();
       fetchTemplatesQuietly();
-      fetchBillingDetails(); // 👈 Triggers trial popup check upon login
+      fetchBillingDetails();
     }
 
     // --- AUTHENTICATION ---
@@ -520,10 +520,17 @@
     async function fetchPatients() {
       const tbody = document.getElementById('customer-list-body');
       tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
-      const { data, error } = await supabaseClient.from('practices').select('*').order('created_at', { ascending: false });
-      if (error) return tbody.innerHTML = '<tr><td colspan="4">Error loading data.</td></tr>';
+      
+      const { data, error } = await supabaseClient
+        .from('patients')
+        .select('*')
+        .eq('user_id', currentUserId)
+        .order('created_at', { ascending: false });
+
+      if (error) return tbody.innerHTML = '<tr><td colspan="4">Error loading patients.</td></tr>';
       customerStore = data || [];
-      if (customerStore.length === 0) return tbody.innerHTML = '<tr><td colspan="4">No patients found.</td></tr>';
+      if (customerStore.length === 0) return tbody.innerHTML = '<tr><td colspan="4">No patients found. Add one above!</td></tr>';
+      
       tbody.innerHTML = '';
       customerStore.forEach(c => {
         tbody.innerHTML += `
@@ -551,7 +558,11 @@
       if (!first_name) return alert('First name required.');
 
       if (editingCustId) {
-        const { error } = await supabaseClient.from('practices').update({ first_name, last_name, email, phone }).eq('id', editingCustId);
+        const { error } = await supabaseClient
+          .from('patients')
+          .update({ first_name, last_name, email, phone })
+          .eq('id', editingCustId);
+
         if (error) alert(error.message);
         else {
           await logActivity('Updated Patient', `Updated profile for ${first_name} ${last_name}`);
@@ -559,7 +570,10 @@
           fetchPatients();
         }
       } else {
-        const { error } = await supabaseClient.from('practices').insert([{ first_name, last_name, email, phone, user_id: currentUserId }]);
+        const { error } = await supabaseClient
+          .from('patients')
+          .insert([{ first_name, last_name, email, phone, user_id: currentUserId }]);
+
         if (error) alert(error.message);
         else {
           await logActivity('Created Patient', `Added new patient ${first_name} ${last_name}`);
@@ -600,7 +614,12 @@
     async function deletePatient(id) {
       const c = customerStore.find(i => String(i.id) === String(id));
       if (!confirm('Delete this patient?')) return;
-      const { error } = await supabaseClient.from('practices').delete().eq('id', id);
+      
+      const { error } = await supabaseClient
+        .from('patients')
+        .delete()
+        .eq('id', id);
+
       if (error) alert(error.message);
       else {
         await logActivity('Deleted Patient', `Removed patient ${c ? c.first_name : id}`);
@@ -703,7 +722,7 @@
       const { data, error } = await supabaseClient
         .from('scheduled_messages')
         .select('*')
-        .eq('customer_id', String(custId))
+        .eq('patient_id', String(custId))
         .order('next_run_at', { ascending: true });
 
       if (error || !data || data.length === 0) {
@@ -792,7 +811,7 @@
       }
 
       const payload = {
-        customer_id: String(currentProfileCustId),
+        patient_id: String(currentProfileCustId),
         message_body,
         schedule_type,
         next_run_at,
