@@ -13,67 +13,83 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <style>
+    :root {
+      --brand-red: #E51A24;
+      --brand-blue: #0052FF;
+      --brand-green: #00B04F;
+      --brand-yellow: #F2B800;
+      --sidebar-bg: #121829;
+      --card-bg: #ffffff;
+    }
+
     * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; color: #333; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; color: #1e293b; }
     .hidden { display: none !important; }
 
     /* AUTH SCREEN */
-    #auth-section { max-width: 400px; margin: 40px auto; padding: 25px; background: white; border: 1px solid #ddd; border-radius: 8px; width: 90%; }
-    input, textarea, select, button { display: block; width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 6px; border: 1px solid #ccc; font-family: inherit; font-size: 15px; }
-    button { background-color: #3ecf8e; color: white; border: none; font-weight: bold; cursor: pointer; min-height: 44px; }
-    button.secondary { background-color: #666; }
-    button.danger { background-color: #e53e3e; }
-    button.warning { background-color: #dd6b20; }
-    button.info { background-color: #3182ce; }
-    button.link-btn { background: none; color: #0066cc; border: none; text-decoration: underline; padding: 5px; margin-bottom: 10px; cursor: pointer; text-align: right; font-weight: normal; min-height: auto; }
+    #auth-section { max-width: 400px; margin: 50px auto; padding: 30px; background: white; border-top: 5px solid var(--brand-yellow); border-radius: 12px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    input, textarea, select, button { display: block; width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 15px; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--brand-blue); box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.15); }
+    
+    button { background-color: var(--brand-blue); color: white; border: none; font-weight: bold; cursor: pointer; min-height: 44px; transition: opacity 0.2s ease; }
+    button:hover { opacity: 0.92; }
+    button.secondary { background-color: #64748b; }
+    button.danger { background-color: var(--brand-red); }
+    button.warning { background-color: var(--brand-yellow); color: #1e293b; }
+    button.success { background-color: var(--brand-green); }
+    button.info { background-color: var(--brand-blue); }
+    button.link-btn { background: none; color: var(--brand-blue); border: none; text-decoration: underline; padding: 5px; margin-bottom: 10px; cursor: pointer; text-align: right; font-weight: normal; min-height: auto; }
 
     /* DASHBOARD RESPONSIVE LAYOUT */
     #dashboard { display: flex; flex-direction: column; min-height: 100vh; }
     
     /* SIDEBAR / TOPNAV */
-    .sidebar { width: 100%; background-color: #1e293b; color: white; padding: 15px; display: flex; flex-direction: flex-row; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    .sidebar { width: 100%; background-color: var(--sidebar-bg); color: white; padding: 15px; display: flex; flex-direction: flex-row; justify-content: space-between; align-items: center; flex-wrap: wrap; }
     .sidebar-header { margin: 0; display: flex; align-items: center; gap: 10px; }
-    .sidebar-header h3 { margin: 0; padding: 0; font-size: 18px; color: #3ecf8e; font-weight: bold; }
+    .sidebar-header h3 { margin: 0; padding: 0; font-size: 20px; color: #ffffff; font-weight: bold; }
+    .sidebar-header span.accent { color: var(--brand-red); }
+    .sidebar-header span.accent-2 { color: var(--brand-blue); }
+
     .nav-group { display: flex; gap: 5px; width: 100%; margin-top: 10px; overflow-x: auto; padding-bottom: 5px; }
-    .nav-item { padding: 8px 14px; color: #cbd5e1; text-decoration: none; display: inline-block; cursor: pointer; transition: 0.2s; font-size: 14px; border-radius: 4px; white-space: nowrap; }
-    .nav-item:hover, .nav-item.active { background-color: #334155; color: white; font-weight: bold; }
-    .sidebar-footer { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 10px; padding-top: 10px; border-top: 1px solid #334155; font-size: 12px; }
+    .nav-item { padding: 10px 16px; color: #94a3b8; text-decoration: none; display: inline-block; cursor: pointer; transition: 0.2s; font-size: 14px; border-radius: 6px; white-space: nowrap; font-weight: 500; }
+    .nav-item:hover { color: #ffffff; background-color: #1e293b; }
+    .nav-item.active { background-color: #1e293b; color: #ffffff; font-weight: bold; border-left: 4px solid var(--brand-yellow); }
+    .sidebar-footer { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 10px; padding-top: 10px; border-top: 1px solid #1e293b; font-size: 12px; }
 
     /* MAIN CONTENT AREA */
-    .main-content { flex: 1; padding: 15px; background-color: #ffffff; width: 100%; }
+    .main-content { flex: 1; padding: 20px; background-color: #ffffff; width: 100%; }
     
     /* RESPONSIVE TABLES & CONTAINERS */
-    .table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 15px; }
+    .table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
     table { width: 100%; border-collapse: collapse; min-width: 500px; }
-    th, td { border: 1px solid #e2e8f0; padding: 8px 10px; text-align: left; font-size: 13px; }
-    th { background-color: #f1f5f9; }
-    .action-btn { display: inline-block; width: auto; padding: 6px 10px; margin-bottom: 4px; font-size: 12px; margin-right: 2px; }
+    th, td { border-bottom: 1px solid #e2e8f0; padding: 12px 14px; text-align: left; font-size: 14px; }
+    th { background-color: #f8fafc; font-weight: 600; color: #475569; }
+    .action-btn { display: inline-block; width: auto; padding: 6px 12px; margin-bottom: 4px; font-size: 12px; margin-right: 2px; border-radius: 4px; }
 
     /* FLEX RESPONSIVE GRID HELPERS */
     .form-row-flex { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
     .btn-group-flex { display: flex; flex-direction: row; gap: 8px; }
 
     /* MODAL POPUPS */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 10px; }
-    .modal-content { background: white; padding: 20px; width: 100%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 24, 41, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 10px; }
+    .modal-content { background: white; padding: 25px; width: 100%; max-width: 500px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; border-top: 5px solid var(--brand-blue); }
 
     /* BILLING / USAGE UI STYLES */
-    .billing-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-    .progress-bar-bg { width: 100%; height: 12px; background: #cbd5e1; border-radius: 6px; overflow: hidden; margin: 10px 0; }
-    .progress-bar-fill { height: 100%; width: 0%; background: #3ecf8e; transition: width 0.3s ease, background-color 0.3s ease; }
-    .badge-plan { background: #dbeafe; color: #1e40af; font-size: 12px; font-weight: bold; padding: 4px 8px; border-radius: 4px; text-transform: uppercase; }
+    .billing-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+    .progress-bar-bg { width: 100%; height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 10px 0; }
+    .progress-bar-fill { height: 100%; width: 0%; background: var(--brand-green); transition: width 0.3s ease, background-color 0.3s ease; }
+    .badge-plan { background: #dbeafe; color: var(--brand-blue); font-size: 12px; font-weight: bold; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; border: 1px solid rgba(0, 82, 255, 0.2); }
     .grid-plans { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 15px; }
 
     /* DESKTOP MEDIA QUERIES (768px and up) */
     @media (min-width: 768px) {
       #dashboard { flex-direction: row; }
-      .sidebar { width: 230px; flex-direction: column; justify-content: flex-start; padding: 20px 0; align-items: stretch; }
-      .sidebar-header { padding: 0 20px; margin-bottom: 25px; }
+      .sidebar { width: 240px; flex-direction: column; justify-content: flex-start; padding: 25px 0; align-items: stretch; }
+      .sidebar-header { padding: 0 20px; margin-bottom: 30px; }
       .nav-group { flex-direction: column; width: 100%; margin-top: 0; overflow-x: visible; padding-bottom: 0; }
       .nav-item { padding: 12px 20px; border-radius: 0; display: block; }
-      .nav-item.active { border-left: 4px solid #3ecf8e; }
-      .sidebar-footer { margin-top: auto; padding: 20px; border-top: 1px solid #334155; flex-direction: column; align-items: flex-start; }
-      .main-content { padding: 30px; }
+      .sidebar-footer { margin-top: auto; padding: 20px; border-top: 1px solid #1e293b; flex-direction: column; align-items: flex-start; }
+      .main-content { padding: 35px; }
       .form-row-flex { flex-direction: row; align-items: flex-end; }
       .grid-plans { grid-template-columns: 1fr 1fr; }
     }
@@ -83,9 +99,9 @@
 
   <!-- AUTHENTICATION SECTION -->
   <div id="auth-section">
-    <div style="text-align: center; margin-bottom: 15px;">
-      <img src="logo.png" alt="It's Time 2 Logo" style="width: 48px; height: 48px; object-fit: contain; vertical-align: middle;" onerror="this.style.display='none'">
-      <h2 style="margin-top: 8px;">It's Time 2</h2>
+    <div style="text-align: center; margin-bottom: 20px;">
+      <img src="logo.png" alt="It's Time 2 Logo" style="width: 72px; height: 72px; object-fit: contain; vertical-align: middle;" onerror="this.style.display='none'">
+      <h2 style="margin-top: 10px; font-size: 26px; color: #0f172a;"><span style="color: var(--brand-red);">It's</span> <span style="color: var(--brand-blue);">Time 2</span></h2>
     </div>
     <input type="email" id="email" placeholder="Email address">
     
@@ -108,8 +124,8 @@
     <!-- NAVIGATION BAR / SIDEBAR -->
     <div class="sidebar">
       <div class="sidebar-header">
-        <img src="logo.png" alt="It's Time 2 Logo" style="width: 32px; height: 32px; object-fit: contain;" onerror="this.style.display='none'">
-        <h3>It's Time 2</h3>
+        <img src="logo.png" alt="It's Time 2 Logo" style="width: 38px; height: 38px; object-fit: contain;" onerror="this.style.display='none'">
+        <h3><span class="accent">It's</span> <span class="accent-2">Time 2</span></h3>
       </div>
 
       <div class="nav-group">
@@ -120,8 +136,8 @@
       </div>
 
       <div class="sidebar-footer">
-        <p style="margin: 0 0 5px 0; color: #94a3b8;">User: <strong id="user-email" style="color:white;"></strong></p>
-        <button onclick="logout()" class="secondary" style="margin-bottom:0; min-height:36px; padding: 4px 10px; width: auto;">Log Out</button>
+        <p style="margin: 0 0 8px 0; color: #94a3b8;">User: <strong id="user-email" style="color:white;"></strong></p>
+        <button onclick="logout()" class="secondary" style="margin-bottom:0; min-height:36px; padding: 4px 12px; width: auto; border-radius: 4px;">Log Out</button>
       </div>
     </div>
 
@@ -130,16 +146,16 @@
 
       <!-- 1. PATIENTS DIRECTORY VIEW -->
       <div id="view-customers">
-        <h2 id="cust-form-title" style="margin-top:0;">Add Patient</h2>
+        <h2 id="cust-form-title" style="margin-top:0; color: #0f172a;">Add Patient</h2>
         <input type="text" id="cust-first-name" placeholder="First Name">
         <input type="text" id="cust-last-name" placeholder="Last Name">
         <input type="email" id="cust-email" placeholder="Patient Email">
         <input type="tel" id="cust-phone" placeholder="Patient Phone (e.g. 973-934-1956)">
         
-        <button id="cust-save-btn" onclick="savePatient()">Add Patient</button>
+        <button id="cust-save-btn" onclick="savePatient()" class="success">Add Patient</button>
         <button id="cust-cancel-btn" onclick="cancelCustEdit()" class="secondary hidden">Cancel Edit</button>
 
-        <hr style="margin: 25px 0;">
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #e2e8f0;">
         <h2>Patient Directory</h2>
         <div class="table-container">
           <table>
@@ -156,24 +172,24 @@
         <button onclick="switchTab('customers')" class="secondary action-btn" style="padding: 8px 16px; margin-bottom: 20px;">← Back to Patient Directory</button>
         
         <h2 id="profile-title" style="margin-top:0;">Patient Profile</h2>
-        <p id="profile-subtitle" style="color: #666; margin-top: -10px; margin-bottom: 20px; font-size: 14px;"></p>
+        <p id="profile-subtitle" style="color: #64748b; margin-top: -10px; margin-bottom: 20px; font-size: 14px;"></p>
         
         <!-- SCHEDULE NEW OR EDIT MESSAGE FORM -->
-        <div style="background: #f8fafc; padding: 15px; border-radius: 6px; margin-bottom: 25px; border: 1px solid #e2e8f0;">
-          <h3 id="sched-form-title" style="margin-top:0; margin-bottom: 12px;">Schedule Recurring or One-Time SMS</h3>
+        <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #e2e8f0; border-left: 4px solid var(--brand-blue);">
+          <h3 id="sched-form-title" style="margin-top:0; margin-bottom: 12px; color: #0f172a;">Schedule Recurring or One-Time SMS</h3>
           
-          <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Template (Optional):</label>
+          <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">Template (Optional):</label>
           <select id="sched-template-select" onchange="applySchedTemplateToPreview()" style="margin-bottom: 12px;">
             <option value="">-- Select Template --</option>
           </select>
 
-          <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Message Text:</label>
+          <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">Message Text:</label>
           <textarea id="sched-message-body" rows="3" placeholder="Message content..." style="margin-bottom: 12px;"></textarea>
           
           <!-- FREQUENCY & MULTI-DATE CONTROLLER -->
           <div class="form-row-flex">
             <div style="flex: 1;">
-              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Frequency:</label>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">Frequency:</label>
               <select id="sched-type" onchange="toggleCustomDatePicker()" style="margin-bottom:0;">
                 <option value="one_time">One-time</option>
                 <option value="daily">Daily</option>
@@ -185,7 +201,7 @@
 
             <!-- SINGLE DATE PICKER -->
             <div id="single-date-container" style="flex: 1;">
-              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Dispatch Date/Time:</label>
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">Dispatch Date/Time:</label>
               <input type="datetime-local" id="sched-datetime" style="margin-bottom:0;">
             </div>
 
@@ -194,7 +210,7 @@
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:6px;">Add Dates to Schedule:</label>
               <div style="display: flex; gap: 8px; margin-bottom: 10px;">
                 <input type="datetime-local" id="multi-date-input" style="margin-bottom:0; flex: 1;">
-                <button type="button" onclick="addCustomDateToList()" style="width: auto; height: 44px; margin-bottom:0; background-color: #3182ce; white-space: nowrap;">+ Add Date</button>
+                <button type="button" onclick="addCustomDateToList()" style="width: auto; height: 44px; margin-bottom:0; background-color: var(--brand-blue); white-space: nowrap;">+ Add Date</button>
               </div>
 
               <div style="max-height: 120px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px; background: #f8fafc;">
@@ -206,7 +222,7 @@
           </div>
 
           <div class="btn-group-flex" style="margin-top: 15px;">
-            <button id="sched-save-btn" onclick="saveSchedule()" style="width: auto; margin-bottom:0; background-color: #3ecf8e;">Schedule Message</button>
+            <button id="sched-save-btn" onclick="saveSchedule()" class="success" style="width: auto; margin-bottom:0;">Schedule Message</button>
             <button id="sched-cancel-btn" onclick="cancelSchedEdit()" class="secondary hidden" style="width: auto; margin-bottom:0;">Cancel Edit</button>
           </div>
         </div>
@@ -240,10 +256,10 @@
         <input type="text" id="tmpl-title" placeholder="Template Title (e.g., 24h Appointment Reminder)">
         <textarea id="tmpl-body" rows="4" placeholder="Template Message (Use tags: {first_name}, {last_name}, {email}, {phone})"></textarea>
         
-        <button id="tmpl-save-btn" onclick="saveTemplate()">Save Template</button>
+        <button id="tmpl-save-btn" onclick="saveTemplate()" class="success">Save Template</button>
         <button id="tmpl-cancel-btn" onclick="cancelTmplEdit()" class="secondary hidden">Cancel Edit</button>
 
-        <hr style="margin: 25px 0;">
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #e2e8f0;">
         <h2>Saved Reminder Templates</h2>
         <div class="table-container">
           <table>
@@ -258,7 +274,7 @@
       <!-- 4. ACTIVITY HISTORY VIEW -->
       <div id="view-history" class="hidden">
         <h2 style="margin-top:0;">Activity History</h2>
-        <p style="color: #666; font-size: 14px;">Log of account actions, patient updates, and sent messages.</p>
+        <p style="color: #64748b; font-size: 14px;">Log of account actions, patient updates, and sent messages.</p>
         <div class="table-container">
           <table>
             <thead>
@@ -272,7 +288,7 @@
       <!-- 5. BILLING & PLAN VIEW -->
       <div id="view-billing" class="hidden">
         <h2 style="margin-top:0;">Subscription & Usage</h2>
-        <p style="color: #666; font-size: 14px;">Monitor your monthly SMS quota and manage subscription tiers.</p>
+        <p style="color: #64748b; font-size: 14px;">Monitor your monthly SMS quota and manage subscription tiers.</p>
         
         <div class="billing-card">
           <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -341,8 +357,8 @@
             <button onclick="triggerCheckout('starter')" class="info" style="margin-bottom: 0;">Upgrade to Starter</button>
           </div>
 
-          <div class="billing-card" style="background: white; border: 2px solid #3ecf8e;">
-            <h4 style="margin-top: 0; color: #3ecf8e;">Pro Practice</h4>
+          <div class="billing-card" style="background: white; border: 2px solid var(--brand-blue);">
+            <h4 style="margin-top: 0; color: var(--brand-blue);">Pro Practice</h4>
             <p style="font-size: 24px; font-weight: bold; margin: 10px 0;">$79 <span style="font-size: 14px; font-weight: normal; color: #64748b;">/ month</span></p>
             <p style="font-size: 13px; color: #64748b;">Includes 5,000 SMS check-ins per month.</p>
             <button onclick="triggerCheckout('pro')" style="margin-bottom: 0;">Upgrade to Pro</button>
@@ -357,26 +373,26 @@
   <div id="send-modal" class="modal-overlay hidden">
     <div class="modal-content">
       <h3 style="margin-top: 0;">Send SMS Message</h3>
-      <p style="font-size: 14px; color: #666;">To: <strong id="modal-cust-name"></strong> (<span id="modal-cust-phone"></span>)</p>
+      <p style="font-size: 14px; color: #64748b;">To: <strong id="modal-cust-name" style="color:#0f172a;"></strong> (<span id="modal-cust-phone"></span>)</p>
 
-      <label style="font-size: 12px; font-weight: bold; margin-bottom: 4px; display: block;">Select Template:</label>
+      <label style="font-size: 12px; font-weight: bold; margin-bottom: 4px; display: block; color: #475569;">Select Template:</label>
       <select id="modal-template-select" onchange="applyTemplateToPreview()">
         <option value="">-- Choose a Template --</option>
       </select>
 
-      <label style="font-size: 12px; font-weight: bold; margin-bottom: 4px; display: block; margin-top: 10px;">Message Preview (Editable):</label>
+      <label style="font-size: 12px; font-weight: bold; margin-bottom: 4px; display: block; margin-top: 10px; color: #475569;">Message Preview (Editable):</label>
       <textarea id="modal-message-preview" rows="5" placeholder="Select a template above to generate message..."></textarea>
 
-      <button onclick="executeSendMessage()">Send SMS</button>
+      <button onclick="executeSendMessage()" class="success">Send SMS</button>
       <button onclick="closeSendModal()" class="secondary">Cancel</button>
     </div>
   </div>
 
   <!-- TRIAL / UNPAID PLAN POPUP MODAL -->
   <div id="trial-modal" class="modal-overlay hidden">
-    <div class="modal-content" style="text-align: center;">
-      <h2 style="margin-top: 0; color: #dd6b20;">⚠️ You are on a Trial Plan</h2>
-      <p style="font-size: 14px; color: #666; margin: 15px 0;">
+    <div class="modal-content" style="text-align: center; border-top: 5px solid var(--brand-yellow);">
+      <h2 style="margin-top: 0; color: #b45309;">⚠️ You are on a Trial Plan</h2>
+      <p style="font-size: 14px; color: #64748b; margin: 15px 0;">
         Your account is currently limited to <strong>100 SMS messages</strong> per month. Upgrade your plan to unlock higher dispatch limits and prevent delivery interruptions.
       </p>
   
@@ -386,7 +402,7 @@
         <strong id="trial-modal-sent">0</strong> / <span id="trial-modal-limit">100</span> SMS
       </div>
   
-      <button onclick="switchTab('billing'); closeTrialModal();" style="background-color: #3ecf8e; margin-bottom: 8px;">
+      <button onclick="switchTab('billing'); closeTrialModal();" style="background-color: var(--brand-blue); margin-bottom: 8px;">
         Upgrade Plan Now
       </button>
       <button onclick="closeTrialModal()" class="secondary">
@@ -394,6 +410,12 @@
       </button>
     </div>
   </div>
+
+  <footer style="text-align: center; padding: 20px 0; font-size: 12px; color: #64748b; background-color: #f4f6f9;">
+    &copy; 2026 It's Time 2. All rights reserved. | 
+    <a href="privacy.html" target="_blank" style="color: #64748b; text-decoration: underline;">Privacy Policy</a> | 
+    <a href="terms.html" target="_blank" style="color: #64748b; text-decoration: underline;">Terms of Service</a>
+  </footer>
 
   <script>
     const SUPABASE_URL = 'https://yktwthagtgdzzkaypgqj.supabase.co';
@@ -777,7 +799,7 @@
           <tr>
             <td><strong>${displayType}</strong></td>
             <td>${nextRun}</td>
-            <td><span style="color:${isPaused ? '#e53e3e' : '#3ecf8e'}; font-weight:bold;">${s.status}</span></td>
+            <td><span style="color:${isPaused ? '#e53e3e' : '#00B04F'}; font-weight:bold;">${s.status}</span></td>
             <td>${s.message_body || ''}</td>
             <td>
               <button class="action-btn warning" onclick="startSchedEdit('${s.id}')">Edit</button>
@@ -1128,7 +1150,7 @@
       const bar = document.getElementById('billing-progress-bar');
       if (bar) {
         bar.style.width = `${percent}%`;
-        bar.style.backgroundColor = percent > 90 ? '#ef4444' : '#3ecf8e';
+        bar.style.backgroundColor = percent > 90 ? '#E51A24' : '#00B04F';
       }
     
       // 2. Load Saved BYOC Gateway Settings
@@ -1174,7 +1196,7 @@
     async function triggerCheckout(planTier) {
       if (!currentUserId) return alert('Please log in first.');
       const autoUpgrade = document.getElementById('billing-auto-upgrade').checked;
-    
+
       try {
         const res = await fetch('/api/create-checkout-session', {
           method: 'POST',
@@ -1185,24 +1207,15 @@
             autoUpgrade: autoUpgrade
           })
         });
-    
-        const rawText = await res.text();
-        let data;
-        try {
-          data = JSON.parse(rawText);
-        } catch (e) {
-          throw new Error(`Server response error: ${rawText}`);
-        }
-    
-        if (!res.ok) throw new Error(data.error || 'Failed to initialize payment.');
-    
+
+        const data = await res.json();
         if (data.url) {
           window.location.href = data.url;
         } else {
-          alert('Checkout initiation failed: No redirect URL returned.');
+          alert('Checkout initiation failed: ' + (data.error || 'Unknown error'));
         }
       } catch (err) {
-        alert('Checkout Error: ' + err.message);
+        alert('Network error initiating payment session.');
       }
     }
 
