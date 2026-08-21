@@ -535,9 +535,16 @@
         recordActivity();
         currentUserId = session.user.id;
         showApp(session.user.email);
+      } else {
+        showLoginForm();
       }
     });
-
+    
+    function showLoginForm() {
+      document.getElementById('auth-section').classList.remove('hidden');
+      document.getElementById('dashboard').classList.add('hidden');
+    }
+    
     function showApp(email) {
       document.getElementById('user-email').innerText = email;
       document.getElementById('auth-section').classList.add('hidden');
@@ -546,7 +553,7 @@
       fetchTemplatesQuietly();
       fetchBillingDetails();
     }
-
+    
     // --- AUTHENTICATION ---
     async function signUp() {
       const email = document.getElementById('email').value;
@@ -556,7 +563,7 @@
       if (error) alert(error.message);
       else alert('Success! You can now log in.');
     }
-
+    
     async function login() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
@@ -568,16 +575,20 @@
         showApp(data.user.email); 
       }
     }
-
+    
     async function logout(wasExpired = false) {
       await supabaseClient.auth.signOut();
       localStorage.removeItem('lastActivityTimestamp');
       currentUserId = null;
-      document.getElementById('auth-section').classList.remove('hidden');
-      document.getElementById('dashboard').classList.add('hidden');
-      if (wasExpired) alert('Logged out automatically due to 1 hour of inactivity.');
+      
+      if (wasExpired) {
+        alert('Logged out automatically due to 1 hour of inactivity.');
+      }
+      
+      // Redirect back to root sales landing page
+      window.location.href = '/';
     }
-
+    
     async function resetPassword() {
       const email = document.getElementById('email').value;
       if (!email) return alert('Enter email address.');
