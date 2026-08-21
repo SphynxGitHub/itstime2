@@ -221,6 +221,22 @@
             </div>
           </div>
 
+          <!-- RECURRENCE LIMIT CONTROLS -->
+          <div class="form-row-flex" id="recurrence-limit-container" style="margin-top: 10px;">
+            <div style="flex: 1;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">End Condition:</label>
+              <select id="sched-recurrence-type" onchange="toggleRecurrenceInput()" style="margin-bottom:0;">
+                <option value="indefinite">Until Canceled</option>
+                <option value="fixed_count">Fixed Number of Times</option>
+              </select>
+            </div>
+          
+            <div id="recurrence-count-wrapper" class="hidden" style="flex: 1;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">Total Number of Messages:</label>
+              <input type="number" id="sched-recurrence-count" min="1" placeholder="e.g. 5" style="margin-bottom:0;">
+            </div>
+          </div>
+
           <div class="btn-group-flex" style="margin-top: 15px;">
             <button id="sched-save-btn" onclick="saveSchedule()" class="success" style="width: auto; margin-bottom:0;">Schedule Message</button>
             <button id="sched-cancel-btn" onclick="cancelSchedEdit()" class="secondary hidden" style="width: auto; margin-bottom:0;">Cancel Edit</button>
@@ -776,24 +792,33 @@
     async function loadPatientSchedules(custId) {
       const tbody = document.getElementById('sched-list-body');
       tbody.innerHTML = '<tr><td colspan="5">Loading schedules...</td></tr>';
-
+    
+      // Added .neq('status', 'completed') so ended schedules auto-clear
       const { data, error } = await supabaseClient
         .from('scheduled_messages')
         .select('*')
         .eq('patient_id', String(custId))
+        .neq('status', 'completed') 
         .order('next_run_at', { ascending: true });
-
+    
       if (error || !data || data.length === 0) {
         scheduleStore = [];
-        return tbody.innerHTML = '<tr><td colspan="5">No scheduled messages found. Create one above!</td></tr>';
+        return tbody.innerHTML = '<tr><td colspan="5">No active scheduled messages found. Create one above!</td></tr>';
       }
-
+    
       scheduleStore = data;
       tbody.innerHTML = '';
       data.forEach(s => {
         const isPaused = s.status === 'paused';
         const nextRun = new Date(s.next_run_at).toLocaleString();
-        const displayType = s.schedule_type === 'multi_date' ? `MULTI-DATE (${s.pending_dates ? s.pending_dates.length : 0} left)` : s.schedule_type.toUpperCase();
+        
+        // Display remaining run count badge if fixed count
+        let displayType = s.schedule_type.toUpperCase();
+        if (s.schedule_type === 'multi_date') {
+          displayType = `MULTI-DATE (${s.pending_dates ? s.pending_dates.length : 0} left)`;
+        } else if (s.recurrence_type === 'fixed_count' && s.recurrences_remaining !== null) {
+          displayType += ` (${s.recurrences_remaining} left)`;
+        }
         
         tbody.innerHTML += `
           <tr>
@@ -808,6 +833,83 @@
             </td>
           </tr>`;
       });
+    }
+
+    function toggleRecurrenceInput() {
+      const type = document.getElementById('sched-type').value;
+      const recurrenceType = document.getElementById('sched-recurrence-type').value;
+      const limitContainer = document.getElementById('recurrence-limit-container');
+      const countWrapper = document.getElementById('recurrence-count-wrapper');
+    
+      // Hide recurrence limits for one-time or custom multi-date messages
+      if (type === 'one_time' || type === 'multi_date') {
+        limitContainer.classList.add('hidden');
+        return;
+      }
+    
+      limitContainer.classList.remove('hidden');
+      if (recurrenceType === 'fixed_count') {
+        countWrapper.classList.remove('hidden');
+      } else {
+        countWrapper.classList.add('hidden');
+      }
+    }
+    
+    // Ensure toggleRecurrenceInput() triggers when schedule frequency changes
+    document.getElementById('sched-type').addEventListener('change', () => {
+      toggleCustomDatePicker();
+      toggleRecurrenceInput();
+    });
+    
+    async function saveSchedule() {
+      const message_body = document.getElementById('sched-message-body').value;
+      const schedule_type = document.getElementById('sched-type').value;
+      const recurrence_type = document.getElementById('sched-recurrence-type').value;
+      const countInput = document.getElementById('sched-recurrence-count').value;
+    
+      if (!message_body) return alert('Please enter message text.');
+    
+      let next_run_at = null;
+      let pending_dates = [];
+      let recurrences_remaining = null;
+    
+      if (schedule_type === 'multi_date') {
+        if (customDatesList.length === 0) return alert('Please add at least one date to your list.');
+        next_run_at = customDatesList[0];
+        pending_dates = [...customDatesList];
+      } else {
+        const rawDatetime = document.getElementById('sched-datetime').value;
+        if (!rawDatetime) return alert('Please select a dispatch date/time.');
+        next_run_at = new Date(rawDatetime).toISOString();
+      }
+    
+      if (schedule_type !== 'one_time' && schedule_type !== 'multi_date') {
+        if (recurrence_type === 'fixed_count') {
+          if (!countInput || parseInt(countInput, 10) < 1) return alert('Enter a valid number of recurrences.');
+          recurrences_remaining = parseInt(countInput, 10);
+        }
+      }
+    
+      const payload = {
+        patient_id: String(currentProfileCustId),
+        message_body,
+        schedule_type,
+        recurrence_type: schedule_type === 'one_time' || schedule_type === 'multi_date' ? 'indefinite' : recurrence_type,
+        recurrences_remaining,
+        next_run_at,
+        pending_dates,
+        status: 'active'
+      };
+    
+      if (editingSchedId) {
+        const { error } = await supabaseClient.from('scheduled_messages').update(payload).eq('id', editingSchedId);
+        if (error) alert(error.message);
+        else { alert('Schedule updated successfully!'); cancelSchedEdit(); loadPatientSchedules(currentProfileCustId); }
+      } else {
+        const { error } = await supabaseClient.from('scheduled_messages').insert([payload]);
+        if (error) alert(error.message);
+        else { alert('Message schedule created successfully!'); cancelSchedEdit(); loadPatientSchedules(currentProfileCustId); }
+      }
     }
 
     function startSchedEdit(schedId) {
