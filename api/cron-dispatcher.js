@@ -51,32 +51,36 @@ export default async function handler(req, res) {
       // 3. Update next run date or mark complete based on frequency
       if (sendRes.ok) {
         let updatePayload = {};
-
+      
         if (msg.schedule_type === 'one_time') {
           updatePayload = { status: 'completed' };
-        } else if (msg.schedule_type === 'daily') {
-          const next = new Date(msg.next_run_at);
-          next.setDate(next.getDate() + 1);
-          updatePayload = { next_run_at: next.toISOString() };
-        } else if (msg.schedule_type === 'weekly') {
-          const next = new Date(msg.next_run_at);
-          next.setDate(next.getDate() + 7);
-          updatePayload = { next_run_at: next.toISOString() };
         } else if (msg.schedule_type === 'multi_date' && Array.isArray(msg.pending_dates)) {
           const remaining = msg.pending_dates.filter(d => new Date(d) > new Date());
-          if (remaining.length > 0) {
-            updatePayload = { next_run_at: remaining[0], pending_dates: remaining };
+          updatePayload = remaining.length > 0 
+            ? { next_run_at: remaining[0], pending_dates: remaining }
+            : { status: 'completed' };
+        } else {
+          // RECURRING LOGIC (Daily, Weekly, Monthly)
+          let hasCountLimit = msg.recurrence_type === 'fixed_count' && msg.recurrences_remaining !== null;
+          let newRemaining = hasCountLimit ? msg.recurrences_remaining - 1 : null;
+      
+          if (hasCountLimit && newRemaining <= 0) {
+            updatePayload = { status: 'completed', recurrences_remaining: 0 };
           } else {
-            updatePayload = { status: 'completed' };
+            const next = new Date(msg.next_run_at);
+            if (msg.schedule_type === 'daily') next.setDate(next.getDate() + 1);
+            if (msg.schedule_type === 'weekly') next.setDate(next.getDate() + 7);
+            if (msg.schedule_type === 'monthly') next.setMonth(next.getMonth() + 1);
+      
+            updatePayload = {
+              next_run_at: next.toISOString(),
+              recurrences_remaining: newRemaining
+            };
           }
         }
-
-        await supabase
-          .from('scheduled_messages')
-          .update(updatePayload)
-          .eq('id', msg.id);
+      
+        await supabase.from('scheduled_messages').update(updatePayload).eq('id', msg.id);
       }
-
       results.push({ id: msg.id, success: sendRes.ok, detail: sendData });
     }
 
