@@ -1,9 +1,10 @@
 {
   "cleanUrls": true,
-  "rewrites": [
-    { "source": "/", "destination": "/index.html" },
-    { "source": "/sales", "destination": "/index.html" },
-    { "source": "/app", "destination": "/app.html" },
-    { "source": "/api/:path*", "destination": "/api/:path*.js" }
+  "trailingSlash": false,
+  "routes": [
+    { "src": "/sales", "dest": "/index.html" },
+    { "src": "/app", "dest": "/app.html" },
+    { "src": "/api/(.*)", "dest": "/api/$1.js" },
+    { "src": "/(.*)", "dest": "/$1" }
   ]
 }
