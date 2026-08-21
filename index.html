@@ -7,7 +7,25 @@
   
   <link rel="icon" type="image/png" href="logo.png">
 
+  <!-- SUPABASE & LUCIDE ICONS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- AUTO-REDIRECT LOGGED IN USERS TO APP -->
+  <script>
+    (async function checkAuthAndRedirect() {
+      const SUPABASE_URL = 'https://yktwthagtgdzzkaypgqj.supabase.co';
+      const SUPABASE_ANON_KEY = 'sb_publishable_onP87pGhzbxdWjnDoOnJAA_XCAiOJFx';
+      
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // If user is already logged in, skip sales page and go to dashboard
+      if (session) {
+        window.location.replace('/app');
+      }
+    })();
+  </script>
 
   <style>
     :root {
@@ -95,7 +113,7 @@
 
   <header>
     <div class="nav-container">
-      <a href="#" class="logo-brand">
+      <a href="/" class="logo-brand">
         <img src="logo.png" alt="It's Time 2 Logo" onerror="this.style.display='none'">
         <h1><span style="color: var(--brand-red);">It's</span> <span style="color: var(--brand-green);">Time</span> <span style="color: var(--brand-blue);">2</span></h1>
       </a>
@@ -103,8 +121,8 @@
         <a href="#features">Features</a>
         <a href="#compliance">Compliance</a>
         <a href="#pricing">Pricing</a>
-        <a href="https://itstime2.vercel.app" class="btn-login">Log In</a>
-        <a href="https://itstime2.vercel.app" class="btn-signup">Get Started</a>
+        <a href="/app" class="btn-login">Log In</a>
+        <a href="/app" class="btn-signup">Get Started</a>
       </div>
     </div>
   </header>
@@ -117,7 +135,7 @@
       <h2>Reliable Patient SMS Reminders & Custom Multi-Date Scheduling</h2>
       <p>Reduce missed appointments, streamline patient check-ins, and deliver automated follow-up care instructions with a secure, mobile-first practice messaging dashboard.</p>
       <div class="hero-buttons">
-        <a href="https://itstime2.vercel.app" class="btn-primary">
+        <a href="/app" class="btn-primary">
           Start Free Trial <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
         </a>
         <a href="#features" class="btn-secondary">
@@ -214,7 +232,7 @@
           <li><i data-lucide="check"></i> Try it out with no risk</li>
           <li><i data-lucide="check"></i> Standard Practice Support</li>
         </ul>
-        <a href="https://itstime2.vercel.app" class="btn-secondary" style="width: 100%; justify-content: center;">Start $4 Trial</a>
+        <a href="/app" class="btn-secondary" style="width: 100%; justify-content: center;">Start $4 Trial</a>
       </div>
 
       <div class="price-card">
@@ -226,7 +244,7 @@
           <li><i data-lucide="check"></i> Message Template Library</li>
           <li><i data-lucide="check"></i> Standard Practice Support</li>
         </ul>
-        <a href="https://itstime2.vercel.app" class="btn-secondary" style="width: 100%; justify-content: center;">Choose Starter</a>
+        <a href="/app" class="btn-secondary" style="width: 100%; justify-content: center;">Choose Starter</a>
       </div>
 
       <div class="price-card featured">
@@ -239,7 +257,7 @@
           <li><i data-lucide="check"></i> Full Activity Audit History</li>
           <li><i data-lucide="check"></i> Priority Practice Support</li>
         </ul>
-        <a href="https://itstime2.vercel.app" class="btn-primary" style="width: 100%; justify-content: center;">Choose Pro</a>
+        <a href="/app" class="btn-primary" style="width: 100%; justify-content: center;">Choose Pro</a>
       </div>
 
     </div>
@@ -260,7 +278,7 @@
   </footer>
 
   <script>
-    lucide.createIcons();
+    if (window.lucide) lucide.createIcons();
   </script>
 </body>
 </html>
