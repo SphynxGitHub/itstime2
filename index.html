@@ -190,7 +190,7 @@
           <div class="form-row-flex">
             <div style="flex: 1;">
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">Frequency:</label>
-              <select id="sched-type" onchange="toggleCustomDatePicker()" style="margin-bottom:0;">
+              <select id="sched-type" onchange="toggleScheduleFormOptions()" style="margin-bottom:0;">
                 <option value="one_time">One-time</option>
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
@@ -222,7 +222,7 @@
           </div>
 
           <!-- RECURRENCE LIMIT CONTROLS -->
-          <div class="form-row-flex" id="recurrence-limit-container" style="margin-top: 10px;">
+          <div class="form-row-flex hidden" id="recurrence-limit-container" style="margin-top: 10px;">
             <div style="flex: 1;">
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">End Condition:</label>
               <select id="sched-recurrence-type" onchange="toggleRecurrenceInput()" style="margin-bottom:0;">
@@ -740,6 +740,11 @@
       document.getElementById('sched-message-body').value = text;
     }
 
+    function toggleScheduleFormOptions() {
+      toggleCustomDatePicker();
+      toggleRecurrenceInput();
+    }
+
     function toggleCustomDatePicker() {
       const type = document.getElementById('sched-type').value;
       const singleContainer = document.getElementById('single-date-container');
@@ -751,6 +756,27 @@
       } else {
         singleContainer.classList.remove('hidden');
         multiContainer.classList.add('hidden');
+      }
+    }
+
+    function toggleRecurrenceInput() {
+      const type = document.getElementById('sched-type').value;
+      const recurrenceType = document.getElementById('sched-recurrence-type').value;
+      const limitContainer = document.getElementById('recurrence-limit-container');
+      const countWrapper = document.getElementById('recurrence-count-wrapper');
+
+      if (type === 'one_time' || type === 'multi_date') {
+        limitContainer.classList.add('hidden');
+        countWrapper.classList.add('hidden');
+        return;
+      }
+
+      limitContainer.classList.remove('hidden');
+
+      if (recurrenceType === 'fixed_count') {
+        countWrapper.classList.remove('hidden');
+      } else {
+        countWrapper.classList.add('hidden');
       }
     }
 
@@ -792,27 +818,25 @@
     async function loadPatientSchedules(custId) {
       const tbody = document.getElementById('sched-list-body');
       tbody.innerHTML = '<tr><td colspan="5">Loading schedules...</td></tr>';
-    
-      // Added .neq('status', 'completed') so ended schedules auto-clear
+
       const { data, error } = await supabaseClient
         .from('scheduled_messages')
         .select('*')
         .eq('patient_id', String(custId))
         .neq('status', 'completed') 
         .order('next_run_at', { ascending: true });
-    
+
       if (error || !data || data.length === 0) {
         scheduleStore = [];
         return tbody.innerHTML = '<tr><td colspan="5">No active scheduled messages found. Create one above!</td></tr>';
       }
-    
+
       scheduleStore = data;
       tbody.innerHTML = '';
       data.forEach(s => {
         const isPaused = s.status === 'paused';
         const nextRun = new Date(s.next_run_at).toLocaleString();
         
-        // Display remaining run count badge if fixed count
         let displayType = s.schedule_type.toUpperCase();
         if (s.schedule_type === 'multi_date') {
           displayType = `MULTI-DATE (${s.pending_dates ? s.pending_dates.length : 0} left)`;
@@ -835,83 +859,6 @@
       });
     }
 
-    function toggleRecurrenceInput() {
-      const type = document.getElementById('sched-type').value;
-      const recurrenceType = document.getElementById('sched-recurrence-type').value;
-      const limitContainer = document.getElementById('recurrence-limit-container');
-      const countWrapper = document.getElementById('recurrence-count-wrapper');
-    
-      // Hide recurrence limits for one-time or custom multi-date messages
-      if (type === 'one_time' || type === 'multi_date') {
-        limitContainer.classList.add('hidden');
-        return;
-      }
-    
-      limitContainer.classList.remove('hidden');
-      if (recurrenceType === 'fixed_count') {
-        countWrapper.classList.remove('hidden');
-      } else {
-        countWrapper.classList.add('hidden');
-      }
-    }
-    
-    // Ensure toggleRecurrenceInput() triggers when schedule frequency changes
-    document.getElementById('sched-type').addEventListener('change', () => {
-      toggleCustomDatePicker();
-      toggleRecurrenceInput();
-    });
-    
-    async function saveSchedule() {
-      const message_body = document.getElementById('sched-message-body').value;
-      const schedule_type = document.getElementById('sched-type').value;
-      const recurrence_type = document.getElementById('sched-recurrence-type').value;
-      const countInput = document.getElementById('sched-recurrence-count').value;
-    
-      if (!message_body) return alert('Please enter message text.');
-    
-      let next_run_at = null;
-      let pending_dates = [];
-      let recurrences_remaining = null;
-    
-      if (schedule_type === 'multi_date') {
-        if (customDatesList.length === 0) return alert('Please add at least one date to your list.');
-        next_run_at = customDatesList[0];
-        pending_dates = [...customDatesList];
-      } else {
-        const rawDatetime = document.getElementById('sched-datetime').value;
-        if (!rawDatetime) return alert('Please select a dispatch date/time.');
-        next_run_at = new Date(rawDatetime).toISOString();
-      }
-    
-      if (schedule_type !== 'one_time' && schedule_type !== 'multi_date') {
-        if (recurrence_type === 'fixed_count') {
-          if (!countInput || parseInt(countInput, 10) < 1) return alert('Enter a valid number of recurrences.');
-          recurrences_remaining = parseInt(countInput, 10);
-        }
-      }
-    
-      const payload = {
-        patient_id: String(currentProfileCustId),
-        message_body,
-        schedule_type,
-        recurrence_type: schedule_type === 'one_time' || schedule_type === 'multi_date' ? 'indefinite' : recurrence_type,
-        recurrences_remaining,
-        next_run_at,
-        pending_dates,
-        status: 'active'
-      };
-    
-      if (editingSchedId) {
-        const { error } = await supabaseClient.from('scheduled_messages').update(payload).eq('id', editingSchedId);
-        if (error) alert(error.message);
-        else { alert('Schedule updated successfully!'); cancelSchedEdit(); loadPatientSchedules(currentProfileCustId); }
-      } else {
-        const { error } = await supabaseClient.from('scheduled_messages').insert([payload]);
-        if (error) alert(error.message);
-        else { alert('Message schedule created successfully!'); cancelSchedEdit(); loadPatientSchedules(currentProfileCustId); }
-      }
-    }
-
     function startSchedEdit(schedId) {
       const s = scheduleStore.find(item => String(item.id) === String(schedId));
       if (!s) return;
@@ -919,6 +866,8 @@
       editingSchedId = schedId;
       document.getElementById('sched-message-body').value = s.message_body || '';
       document.getElementById('sched-type').value = s.schedule_type || 'one_time';
+      document.getElementById('sched-recurrence-type').value = s.recurrence_type || 'indefinite';
+      document.getElementById('sched-recurrence-count').value = s.recurrences_remaining || '';
 
       if (s.schedule_type === 'multi_date') {
         customDatesList = Array.isArray(s.pending_dates) ? [...s.pending_dates] : [];
@@ -928,7 +877,7 @@
         document.getElementById('sched-datetime').value = toDatetimeLocal(s.next_run_at);
       }
 
-      toggleCustomDatePicker();
+      toggleScheduleFormOptions();
 
       document.getElementById('sched-form-title').innerText = 'Edit Scheduled Message';
       document.getElementById('sched-save-btn').innerText = 'Update Schedule';
@@ -942,8 +891,10 @@
       document.getElementById('sched-datetime').value = '';
       document.getElementById('sched-template-select').value = '';
       document.getElementById('sched-type').value = 'one_time';
+      document.getElementById('sched-recurrence-type').value = 'indefinite';
+      document.getElementById('sched-recurrence-count').value = '';
       
-      toggleCustomDatePicker();
+      toggleScheduleFormOptions();
       renderCustomDatesList();
 
       document.getElementById('sched-form-title').innerText = 'Schedule Recurring or One-Time SMS';
@@ -954,11 +905,14 @@
     async function saveSchedule() {
       const message_body = document.getElementById('sched-message-body').value;
       const schedule_type = document.getElementById('sched-type').value;
+      const recurrence_type = document.getElementById('sched-recurrence-type').value;
+      const countInput = document.getElementById('sched-recurrence-count').value;
 
       if (!message_body) return alert('Please enter message text.');
 
       let next_run_at = null;
       let pending_dates = [];
+      let recurrences_remaining = null;
 
       if (schedule_type === 'multi_date') {
         if (customDatesList.length === 0) return alert('Please add at least one date to your list.');
@@ -970,23 +924,26 @@
         next_run_at = new Date(rawDatetime).toISOString();
       }
 
+      if (schedule_type !== 'one_time' && schedule_type !== 'multi_date') {
+        if (recurrence_type === 'fixed_count') {
+          if (!countInput || parseInt(countInput, 10) < 1) return alert('Enter a valid number of recurrences.');
+          recurrences_remaining = parseInt(countInput, 10);
+        }
+      }
+
       const payload = {
         patient_id: String(currentProfileCustId),
         message_body,
         schedule_type,
+        recurrence_type: schedule_type === 'one_time' || schedule_type === 'multi_date' ? 'indefinite' : recurrence_type,
+        recurrences_remaining,
         next_run_at,
         pending_dates,
         status: 'active'
       };
 
       if (editingSchedId) {
-        const { error } = await supabaseClient.from('scheduled_messages').update({
-          message_body,
-          schedule_type,
-          next_run_at,
-          pending_dates
-        }).eq('id', editingSchedId);
-
+        const { error } = await supabaseClient.from('scheduled_messages').update(payload).eq('id', editingSchedId);
         if (error) alert(error.message);
         else {
           alert('Schedule updated successfully!');
@@ -995,7 +952,6 @@
         }
       } else {
         const { error } = await supabaseClient.from('scheduled_messages').insert([payload]);
-
         if (error) alert(error.message);
         else {
           alert('Message schedule created successfully!');
