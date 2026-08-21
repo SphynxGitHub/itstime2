@@ -365,6 +365,23 @@
           <div id="provider-instructions" style="margin-top: 15px; font-size: 13px; color: #64748b;"></div>
         </div>
 
+        <!-- DEDICATED NUMBER PROVISIONER -->
+        <div style="margin-top: 15px; padding: 15px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px;">
+          <h4 style="margin-top:0;">Get a Dedicated Practice Phone Number</h4>
+          <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">Select an area code to choose a dedicated SMS number for your practice.</p>
+          
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="area-code-input" placeholder="e.g. 973" maxlength="3" style="width: 100px; margin-bottom:0;">
+            <button onclick="searchAvailableNumbers()" class="info" style="width: auto; margin-bottom:0;">Search Numbers</button>
+          </div>
+        
+          <div id="number-results-container" class="hidden" style="margin-top: 12px;">
+            <label style="font-size: 12px; font-weight: bold;">Available Numbers:</label>
+            <select id="available-numbers-select" style="margin-bottom: 8px;"></select>
+            <button onclick="buySelectedNumber()" class="success" style="width: auto;">Provision Selected Number</button>
+          </div>
+        </div>
+
         <h3>Upgrade Subscription Plan</h3>
         <div class="grid-plans">
           <div class="billing-card" style="background: white;">
@@ -1290,6 +1307,47 @@
     }
 
     // --- MODULE 7: BYOC GATEWAY CONTROLLER ---
+
+    async function searchAvailableNumbers() {
+      const areaCode = document.getElementById('area-code-input').value;
+      if (!areaCode || areaCode.length !== 3) return alert('Enter a valid 3-digit area code.');
+    
+      const res = await fetch('/api/provision-number', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'search', areaCode })
+      });
+    
+      const data = await res.json();
+      if (!res.ok) return alert('Search failed: ' + data.error);
+    
+      const select = document.getElementById('available-numbers-select');
+      select.innerHTML = '';
+      data.numbers.forEach(num => {
+        select.innerHTML += `<option value="${num}">${formatForDisplay(num)}</option>`;
+      });
+    
+      document.getElementById('number-results-container').classList.remove('hidden');
+    }
+    
+    async function buySelectedNumber() {
+      const phoneNumber = document.getElementById('available-numbers-select').value;
+      if (!confirm(`Provision ${formatForDisplay(phoneNumber)} as your practice sending number?`)) return;
+    
+      const res = await fetch('/api/provision-number', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUserId, action: 'buy', phoneNumber })
+      });
+    
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Success! Dedicated number ${formatForDisplay(data.phoneNumber)} is active for your practice.`);
+        fetchBillingDetails();
+      } else {
+        alert('Provisioning failed: ' + data.error);
+      }
+    }
 
     function toggleProviderFields() {
       const provider = document.getElementById('provider-select').value;
