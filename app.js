@@ -193,9 +193,9 @@ async function fetchPatients() {
     .eq('user_id', currentUserId)
     .order('created_at', { ascending: false });
 
-  if (error) return tbody.innerHTML = '<tr><td colspan="4">Error loading patients.</td></tr>';
+  if (error) return tbody.innerHTML = '<tr><td colspan="4">Error loading contacts.</td></tr>';
   customerStore = data || [];
-  if (customerStore.length === 0) return tbody.innerHTML = '<tr><td colspan="4">No patients found. Add one above!</td></tr>';
+  if (customerStore.length === 0) return tbody.innerHTML = '<tr><td colspan="4">No contacts found. Add one above!</td></tr>';
   
   tbody.innerHTML = '';
   customerStore.forEach(c => {
@@ -231,7 +231,7 @@ async function savePatient() {
 
     if (error) alert(error.message);
     else {
-      await logActivity('Updated Patient', `Updated profile for ${first_name} ${last_name}`);
+      await logActivity('Updated Contact', `Updated profile for ${first_name} ${last_name}`);
       cancelCustEdit();
       fetchPatients();
     }
@@ -242,7 +242,7 @@ async function savePatient() {
 
     if (error) alert(error.message);
     else {
-      await logActivity('Created Patient', `Added new patient ${first_name} ${last_name}`);
+      await logActivity('Created Contact', `Added new patient ${first_name} ${last_name}`);
       clearCustForm();
       fetchPatients();
     }
@@ -257,7 +257,7 @@ function startCustEdit(id) {
   document.getElementById('cust-last-name').value = c.last_name || '';
   document.getElementById('cust-email').value = c.email || '';
   document.getElementById('cust-phone').value = formatForDisplay(c.phone) || '';
-  document.getElementById('cust-form-title').innerText = 'Edit Patient';
+  document.getElementById('cust-form-title').innerText = 'Edit Contact';
   document.getElementById('cust-save-btn').innerText = 'Save Changes';
   document.getElementById('cust-cancel-btn').classList.remove('hidden');
 }
@@ -265,8 +265,8 @@ function startCustEdit(id) {
 function cancelCustEdit() {
   editingCustId = null;
   clearCustForm();
-  document.getElementById('cust-form-title').innerText = 'Add Patient';
-  document.getElementById('cust-save-btn').innerText = 'Add Patient';
+  document.getElementById('cust-form-title').innerText = 'Add Contact';
+  document.getElementById('cust-save-btn').innerText = 'Add Contact';
   document.getElementById('cust-cancel-btn').classList.add('hidden');
 }
 
@@ -279,7 +279,7 @@ function clearCustForm() {
 
 async function deletePatient(id) {
   const c = customerStore.find(i => String(i.id) === String(id));
-  if (!confirm('Delete this patient?')) return;
+  if (!confirm('Delete this contact?')) return;
   
   const { error } = await supabaseClient
     .from('patients')
@@ -288,7 +288,7 @@ async function deletePatient(id) {
 
   if (error) alert(error.message);
   else {
-    await logActivity('Deleted Patient', `Removed patient ${c ? c.first_name : id}`);
+    await logActivity('Deleted Contact', `Removed contact ${c ? c.first_name : id}`);
     fetchPatients();
   }
 }
@@ -297,7 +297,7 @@ async function deletePatient(id) {
 async function openPatientProfile(custId) {
   currentProfileCustId = custId;
   const cust = customerStore.find(c => String(c.id) === String(custId));
-  if (!cust) return alert('Patient not found.');
+  if (!cust) return alert('Contact not found.');
 
   ['customers', 'templates', 'history', 'billing'].forEach(t => {
     const el = document.getElementById(`view-${t}`);
@@ -599,7 +599,7 @@ async function loadPatientHistory(phone) {
     .order('created_at', { ascending: false });
 
   if (!data || data.length === 0) {
-    return tbody.innerHTML = '<tr><td colspan="2">No past history recorded for this patient.</td></tr>';
+    return tbody.innerHTML = '<tr><td colspan="2">No past history recorded for this contact.</td></tr>';
   }
 
   tbody.innerHTML = '';
@@ -703,7 +703,7 @@ async function deleteTemplate(id) {
 // --- MODULE 4: SEND IMMEDIATE SMS MODAL ---
 async function openSendModal(custId) {
   activeModalCust = customerStore.find(c => String(c.id) === String(custId));
-  if (!activeModalCust) return alert('Patient not found.');
+  if (!activeModalCust) return alert('Contact not found.');
 
   document.getElementById('modal-cust-name').innerText = `${activeModalCust.first_name || ''} ${activeModalCust.last_name || ''}`;
   document.getElementById('modal-cust-phone').innerText = formatForDisplay(activeModalCust.phone) || 'No Phone Number';
@@ -746,7 +746,7 @@ function applyTemplateToPreview() {
 async function executeSendMessage() {
   const messageText = document.getElementById('modal-message-preview').value;
   if (!messageText) return alert('Message body cannot be empty.');
-  if (!activeModalCust || !activeModalCust.phone) return alert('Patient has no phone number listed.');
+  if (!activeModalCust || !activeModalCust.phone) return alert('Contact has no phone number listed.');
   if (!currentUserId) return alert('User session expired. Please log in again.');
 
   const custName = `${activeModalCust.first_name || ''} ${activeModalCust.last_name || ''}`;
