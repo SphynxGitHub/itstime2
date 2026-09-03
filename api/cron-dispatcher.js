@@ -2,7 +2,6 @@ const twilio = require('twilio');
 const { createClient } = require('@supabase/supabase-js');
 
 module.exports = async function handler(req, res) {
-  // Guarantee JSON responses even on crashes
   res.setHeader('Content-Type', 'application/json');
 
   try {
@@ -39,34 +38,101 @@ module.exports = async function handler(req, res) {
       const patient = msg.patients;
       if (!patient || !patient.phone) continue;
 
-      // Check practice gateway setup
+      // Fetch practice gateway configuration
       const { data: practice } = await supabase
         .from('practices')
         .select('*')
         .eq('user_id', patient.user_id)
         .maybeSingle();
 
-      const accountSid = practice?.provider_account_sid || process.env.TWILIO_ACCOUNT_SID;
-      const authToken = practice?.provider_api_key || process.env.TWILIO_AUTH_TOKEN;
-      const sendingNumber = practice?.provider_phone_number || process.env.TWILIO_PHONE_NUMBER;
+      const providerType = practice?.provider_type || 'system';
+      const toPhone = patient.phone;
+      const messageBody = msg.message_body;
 
-      if (!accountSid || !authToken) {
-        console.error(`Missing Twilio keys for practice associated with patient ${patient.id}`);
-        continue;
+      // -----------------------------------------------------------------
+      // GATEWAY ROUTING LOGIC
+      // -----------------------------------------------------------------
+
+      if (providerType === 'quo') {
+        // --- QUO (OPENPHONE) API ROUTE ---
+        const quoApiKey = practice?.provider_api_key;
+        const quoPhoneNumber = practice?.provider_phone_number;
+
+        if (!quoApiKey || !quoPhoneNumber) {
+          console.error(`Missing Quo API Key or Phone for practice associated with patient ${patient.id}`);
+          continue;
+        }
+
+        const quoRes = await fetch('https://api.openphone.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Authorization': quoApiKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            content: messageBody,
+            from: quoPhoneNumber,
+            to: [toPhone]
+          })
+        });
+
+        if (!quoRes.ok) {
+          const quoError = await quoRes.text();
+          console.error(`Quo Dispatch Error for patient ${patient.id}:`, quoError);
+          continue;
+        }
+
+      } else if (providerType === 'telnyx') {
+        // --- TELNYX API ROUTE ---
+        const telnyxApiKey = practice?.provider_api_key;
+        const telnyxPhoneNumber = practice?.provider_phone_number;
+
+        if (!telnyxApiKey || !telnyxPhoneNumber) {
+          console.error(`Missing Telnyx API Key or Phone for practice associated with patient ${patient.id}`);
+          continue;
+        }
+
+        const telnyxRes = await fetch('https://api.telnyx.com/v2/messages', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${telnyxApiKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            text: messageBody,
+            from: telnyxPhoneNumber,
+            to: toPhone
+          })
+        });
+
+        if (!telnyxRes.ok) {
+          const telnyxError = await telnyxRes.text();
+          console.error(`Telnyx Dispatch Error for patient ${patient.id}:`, telnyxError);
+          continue;
+        }
+
+      } else {
+        // --- TWILIO ROUTE (SYSTEM BUILT-IN OR BYOC TWILIO) ---
+        const accountSid = practice?.provider_account_sid || process.env.TWILIO_ACCOUNT_SID;
+        const authToken = practice?.provider_api_key || process.env.TWILIO_AUTH_TOKEN;
+        const sendingNumber = practice?.provider_phone_number || process.env.TWILIO_PHONE_NUMBER;
+
+        if (!accountSid || !authToken) {
+          console.error(`Missing Twilio credentials for patient ${patient.id}`);
+          continue;
+        }
+
+        const client = twilio(accountSid, authToken);
+        await client.messages.create({
+          body: messageBody,
+          from: sendingNumber,
+          to: toPhone
+        });
       }
-
-      const client = twilio(accountSid, authToken);
-
-      // Send SMS
-      await client.messages.create({
-        body: msg.message_body,
-        from: sendingNumber,
-        to: patient.phone
-      });
 
       processedCount++;
 
-      // Increment practice usage count
+      // Increment practice usage counter
       if (practice) {
         await supabase
           .from('practices')
