@@ -1,92 +1,133 @@
-import { createClient } from '@supabase/supabase-js';
+const twilio = require('twilio');
+const { createClient } = require('@supabase/supabase-js');
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+module.exports = async function handler(req, res) {
+  // Always set JSON content type
+  res.setHeader('Content-Type', 'application/json');
 
-export default async function handler(req, res) {
-  // Optional: Verify Vercel Cron Secret to protect the endpoint
-  const authHeader = req.headers.authorization;
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return res.status(500).json({ error: 'Missing Supabase environment variables on server.' });
   }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
     const now = new Date().toISOString();
 
-    // 1. Fetch due scheduled messages
-    const { data: dueMessages, error } = await supabase
+    // 1. Fetch active due messages
+    const { data: messages, error: fetchError } = await supabase
       .from('scheduled_messages')
       .select('*, patients(*)')
       .eq('status', 'active')
       .lte('next_run_at', now);
 
-    if (error) throw error;
-    if (!dueMessages || dueMessages.length === 0) {
-      return res.status(200).json({ message: 'No pending messages due.' });
+    if (fetchError) {
+      return res.status(500).json({ error: `Database query failed: ${fetchError.message}` });
     }
 
-    const results = [];
+    if (!messages || messages.length === 0) {
+      return res.status(200).json({ success: true, processed: 0, message: 'No messages due.' });
+    }
 
-    // 2. Dispatch each due message
-    for (const msg of dueMessages) {
+    let processedCount = 0;
+
+    for (const msg of messages) {
       const patient = msg.patients;
       if (!patient || !patient.phone) continue;
 
-      // Trigger your existing SMS dispatcher logic
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${req.headers.host}`;
-      const sendRes = await fetch(`${appUrl}/api/send-sms`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: patient.user_id,
-          phone: patient.phone,
-          message: msg.message_body
-        })
+      // Get practice custom gateway details if present
+      const { data: practice } = await supabase
+        .from('practices')
+        .select('*')
+        .eq('user_id', patient.user_id)
+        .maybeSingle();
+
+      const accountSid = practice?.provider_account_sid || process.env.TWILIO_ACCOUNT_SID;
+      const authToken = practice?.provider_api_key || process.env.TWILIO_AUTH_TOKEN;
+      const sendingNumber = practice?.provider_phone_number || process.env.TWILIO_PHONE_NUMBER;
+
+      if (!accountSid || !authToken) {
+        console.error(`Missing Twilio keys for practice associated with patient ${patient.id}`);
+        continue;
+      }
+
+      const client = twilio(accountSid, authToken);
+
+      // Send SMS
+      await client.messages.create({
+        body: msg.message_body,
+        from: sendingNumber,
+        to: patient.phone
       });
 
-      const sendData = await sendRes.json();
+      processedCount++;
 
-      // 3. Update next run date or mark complete based on frequency
-      if (sendRes.ok) {
-        let updatePayload = {};
-      
-        if (msg.schedule_type === 'one_time') {
-          updatePayload = { status: 'completed' };
-        } else if (msg.schedule_type === 'multi_date' && Array.isArray(msg.pending_dates)) {
-          const remaining = msg.pending_dates.filter(d => new Date(d) > new Date());
-          updatePayload = remaining.length > 0 
-            ? { next_run_at: remaining[0], pending_dates: remaining }
-            : { status: 'completed' };
-        } else {
-          // RECURRING LOGIC (Daily, Weekly, Monthly)
-          let hasCountLimit = msg.recurrence_type === 'fixed_count' && msg.recurrences_remaining !== null;
-          let newRemaining = hasCountLimit ? msg.recurrences_remaining - 1 : null;
-      
-          if (hasCountLimit && newRemaining <= 0) {
-            updatePayload = { status: 'completed', recurrences_remaining: 0 };
-          } else {
-            const next = new Date(msg.next_run_at);
-            if (msg.schedule_type === 'daily') next.setDate(next.getDate() + 1);
-            if (msg.schedule_type === 'weekly') next.setDate(next.getDate() + 7);
-            if (msg.schedule_type === 'monthly') next.setMonth(next.getMonth() + 1);
-      
-            updatePayload = {
-              next_run_at: next.toISOString(),
-              recurrences_remaining: newRemaining
-            };
-          }
-        }
-      
-        await supabase.from('scheduled_messages').update(updatePayload).eq('id', msg.id);
+      // Update practice monthly usage count
+      if (practice) {
+        await supabase
+          .from('practices')
+          .update({ sms_sent_this_month: (practice.sms_sent_this_month || 0) + 1 })
+          .eq('id', practice.id);
       }
-      results.push({ id: msg.id, success: sendRes.ok, detail: sendData });
+
+      // Update schedule status / next run date
+      if (msg.schedule_type === 'one_time') {
+        await supabase
+          .from('scheduled_messages')
+          .update({ status: 'completed' })
+          .eq('id', msg.id);
+      } else if (msg.schedule_type === 'multi_date') {
+        const remainingDates = (msg.pending_dates || []).slice(1);
+        if (remainingDates.length > 0) {
+          await supabase
+            .from('scheduled_messages')
+            .update({
+              next_run_at: remainingDates[0],
+              pending_dates: remainingDates
+            })
+            .eq('id', msg.id);
+        } else {
+          await supabase
+            .from('scheduled_messages')
+            .update({ status: 'completed', pending_dates: [] })
+            .eq('id', msg.id);
+        }
+      } else {
+        let newRecurRemaining = msg.recurrences_remaining;
+        let nextStatus = 'active';
+
+        if (msg.recurrence_type === 'fixed_count' && newRecurRemaining !== null) {
+          newRecurRemaining -= 1;
+          if (newRecurRemaining <= 0) nextStatus = 'completed';
+        }
+
+        const nextDate = calculateNextRunDate(msg.next_run_at, msg.schedule_type);
+
+        await supabase
+          .from('scheduled_messages')
+          .update({
+            next_run_at: nextDate.toISOString(),
+            recurrences_remaining: newRecurRemaining,
+            status: nextStatus
+          })
+          .eq('id', msg.id);
+      }
     }
 
-    return res.status(200).json({ processed: results.length, results });
-
+    return res.status(200).json({ success: true, processed: processedCount });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error('Cron Runtime Error:', err);
+    return res.status(500).json({ error: err.message || 'Internal Server Error' });
   }
+};
+
+function calculateNextRunDate(currentRunIso, type) {
+  const d = new Date(currentRunIso);
+  if (type === 'daily') d.setDate(d.getDate() + 1);
+  if (type === 'weekly') d.setDate(d.getDate() + 7);
+  if (type === 'monthly') d.setMonth(d.getMonth() + 1);
+  return d;
 }
