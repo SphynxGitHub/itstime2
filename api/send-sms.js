@@ -1,131 +1,148 @@
-import { createClient } from '@supabase/supabase-js';
+const twilio = require('twilio');
+const { createClient } = require('@supabase/supabase-js');
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+module.exports = async function handler(req, res) {
+  res.setHeader('Content-Type', 'application/json');
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  // 1. Safe Body Parsing
-  let body = req.body;
-  if (typeof body === 'string') {
-    try { body = JSON.parse(body); } catch (e) { body = {}; }
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
-  body = body || {};
 
-  const { userId, phone, message } = body;
+  const { userId, phone, message } = req.body;
 
-  if (!userId) return res.status(400).json({ error: 'Missing userId parameter.' });
-  if (!phone) return res.status(400).json({ error: 'Missing phone number parameter.' });
-  if (!message) return res.status(400).json({ error: 'Missing message content.' });
-
-  // 2. Format Phone Number
-  const phoneStr = String(phone);
-  let cleanDigits = phoneStr.replace(/\D/g, '');
-  let formattedPhone = phoneStr;
-  if (cleanDigits.length === 10) formattedPhone = `+1${cleanDigits}`;
-  else if (cleanDigits.length === 11 && cleanDigits.startsWith('1')) formattedPhone = `+${cleanDigits}`;
+  if (!userId || !phone || !message) {
+    return res.status(400).json({ error: 'Missing required fields: userId, phone, and message are required.' });
+  }
 
   try {
-    // 3. Fetch Practice Settings Safely
-    let { data: practice } = await supabase
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return res.status(500).json({ 
+        error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in Vercel Environment Variables.' 
+      });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // 1. Fetch practice gateway configuration for this user
+    const { data: practice, error: practiceError } = await supabase
       .from('practices')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle();
 
-    // Auto-create Practice Record if Missing
-    if (!practice) {
-      const { data: newPractice } = await supabase
-        .from('practices')
-        .insert([{ user_id: userId, plan_tier: 'trial', sms_limit: 100, sms_sent_this_month: 0, provider_type: 'system' }])
-        .select()
-        .single();
-      
-      practice = newPractice || { plan_tier: 'trial', sms_limit: 100, sms_sent_this_month: 0, provider_type: 'system' };
+    if (practiceError) {
+      return res.status(500).json({ error: `Failed to load practice profile: ${practiceError.message}` });
     }
 
-    // 4. Monthly Quota Check
-    if ((practice.sms_sent_this_month || 0) >= (practice.sms_limit || 100)) {
-      if (!practice.auto_upgrade_enabled) {
-        return res.status(403).json({ 
-          error: 'LIMIT_REACHED', 
-          message: 'Monthly SMS quota reached. Enable Auto-Upgrade or upgrade your plan to continue.' 
+    const providerType = practice?.provider_type || 'system';
+
+    // Check usage limits before dispatching
+    const sentCount = practice?.sms_sent_this_month || 0;
+    const smsLimit = practice?.sms_limit || 100;
+
+    if (sentCount >= smsLimit && !practice?.auto_upgrade_enabled) {
+      return res.status(403).json({ 
+        error: 'Monthly SMS limit reached. Please upgrade your plan or enable auto-upgrade.' 
+      });
+    }
+
+    // -----------------------------------------------------------------
+    // GATEWAY ROUTING LOGIC
+    // -----------------------------------------------------------------
+
+    if (providerType === 'quo') {
+      // --- QUO (OPENPHONE) API ROUTE ---
+      const quoApiKey = practice?.provider_api_key;
+      const quoPhoneNumber = practice?.provider_phone_number;
+
+      if (!quoApiKey || !quoPhoneNumber) {
+        return res.status(400).json({ 
+          error: 'Quo Gateway selected, but API Key or Phone Number is missing in settings.' 
         });
       }
-    }
 
-    const provider = practice.provider_type || 'system';
-    let messageSid = null;
-
-    // --- OPTION A: BYOC TWILIO ---
-    if (provider === 'twilio' && practice.provider_account_sid && practice.provider_api_key) {
-      const auth = Buffer.from(`${practice.provider_account_sid}:${practice.provider_api_key}`).toString('base64');
-      const params = new URLSearchParams({ To: formattedPhone, From: practice.provider_phone_number, Body: message });
-
-      const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${practice.provider_account_sid}/Messages.json`, {
+      const quoRes = await fetch('https://api.openphone.com/v1/messages', {
         method: 'POST',
-        headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString()
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Custom Twilio send failed');
-      messageSid = data.sid;
-    } 
-
-    // --- OPTION B: BYOC QUO (Formerly OpenPhone) ---
-    else if (provider === 'quo' && practice.provider_api_key) {
-      // Ensure key has 'Bearer ' prefix
-      const authHeader = practice.provider_api_key.startsWith('Bearer ') 
-        ? practice.provider_api_key 
-        : `Bearer ${practice.provider_api_key}`;
-
-      const response = await fetch('https://api.openphone.com/v1/messages', {
-        method: 'POST',
-        headers: { 
-          'Authorization': authHeader, 
-          'Content-Type': 'application/json' 
+        headers: {
+          'Authorization': quoApiKey,
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ 
-          content: message, 
-          from: practice.provider_phone_number, 
-          to: [formattedPhone] 
+        body: JSON.stringify({
+          content: message,
+          from: quoPhoneNumber,
+          to: [phone]
         })
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || data.error || 'Quo dispatch failed');
+      if (!quoRes.ok) {
+        const quoError = await quoRes.text();
+        return res.status(500).json({ error: `Quo Dispatch Error: ${quoError}` });
       }
-      messageSid = data.data?.id || 'quo_sent';
-    }
-      
-    // --- OPTION C: DEFAULT MASTER TWILIO GATEWAY ---
-    else {
-      const auth = Buffer.from(`${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64');
-      const params = new URLSearchParams({ To: formattedPhone, MessagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID, Body: message });
 
-      const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${process.env.TWILIO_ACCOUNT_SID}/Messages.json`, {
+    } else if (providerType === 'telnyx') {
+      // --- TELNYX API ROUTE ---
+      const telnyxApiKey = practice?.provider_api_key;
+      const telnyxPhoneNumber = practice?.provider_phone_number;
+
+      if (!telnyxApiKey || !telnyxPhoneNumber) {
+        return res.status(400).json({ 
+          error: 'Telnyx Gateway selected, but API Key or Phone Number is missing in settings.' 
+        });
+      }
+
+      const telnyxRes = await fetch('https://api.telnyx.com/v2/messages', {
         method: 'POST',
-        headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString()
+        headers: {
+          'Authorization': `Bearer ${telnyxApiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          text: message,
+          from: telnyxPhoneNumber,
+          to: phone
+        })
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Master Twilio send failed');
-      messageSid = data.sid;
+
+      if (!telnyxRes.ok) {
+        const telnyxError = await telnyxRes.text();
+        return res.status(500).json({ error: `Telnyx Dispatch Error: ${telnyxError}` });
+      }
+
+    } else {
+      // --- TWILIO ROUTE (SYSTEM BUILT-IN OR BYOC TWILIO) ---
+      const accountSid = practice?.provider_account_sid || process.env.TWILIO_ACCOUNT_SID;
+      const authToken = practice?.provider_api_key || process.env.TWILIO_AUTH_TOKEN;
+      const sendingNumber = practice?.provider_phone_number || process.env.TWILIO_PHONE_NUMBER;
+
+      if (!accountSid || !authToken || !sendingNumber) {
+        return res.status(400).json({ 
+          error: 'Twilio Gateway credentials missing in practice settings or server environment.' 
+        });
+      }
+
+      const client = twilio(accountSid, authToken);
+      await client.messages.create({
+        body: message,
+        from: sendingNumber,
+        to: phone
+      });
     }
 
-    // 5. Increment Usage Counter
-    await supabase
-      .from('practices')
-      .update({ sms_sent_this_month: (practice.sms_sent_this_month || 0) + 1 })
-      .eq('user_id', userId);
+    // 2. Increment monthly usage counter
+    if (practice) {
+      await supabase
+        .from('practices')
+        .update({ sms_sent_this_month: sentCount + 1 })
+        .eq('id', practice.id);
+    }
 
-    return res.status(200).json({ success: true, sid: messageSid });
+    return res.status(200).json({ success: true, message: 'SMS delivered successfully.' });
 
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error('Send SMS Error:', err);
+    return res.status(500).json({ error: err.message || 'Internal Server Error' });
   }
-}
+};
