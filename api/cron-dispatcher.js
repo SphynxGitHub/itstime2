@@ -2,19 +2,20 @@ const twilio = require('twilio');
 const { createClient } = require('@supabase/supabase-js');
 
 module.exports = async function handler(req, res) {
-  // Always set JSON content type
+  // Guarantee JSON responses even on crashes
   res.setHeader('Content-Type', 'application/json');
 
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    return res.status(500).json({ error: 'Missing Supabase environment variables on server.' });
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
   try {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      return res.status(500).json({ 
+        error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in Vercel Environment Variables.' 
+      });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const now = new Date().toISOString();
 
     // 1. Fetch active due messages
@@ -25,7 +26,7 @@ module.exports = async function handler(req, res) {
       .lte('next_run_at', now);
 
     if (fetchError) {
-      return res.status(500).json({ error: `Database query failed: ${fetchError.message}` });
+      return res.status(500).json({ error: `Supabase query failed: ${fetchError.message}` });
     }
 
     if (!messages || messages.length === 0) {
@@ -38,7 +39,7 @@ module.exports = async function handler(req, res) {
       const patient = msg.patients;
       if (!patient || !patient.phone) continue;
 
-      // Get practice custom gateway details if present
+      // Check practice gateway setup
       const { data: practice } = await supabase
         .from('practices')
         .select('*')
@@ -65,7 +66,7 @@ module.exports = async function handler(req, res) {
 
       processedCount++;
 
-      // Update practice monthly usage count
+      // Increment practice usage count
       if (practice) {
         await supabase
           .from('practices')
@@ -73,7 +74,7 @@ module.exports = async function handler(req, res) {
           .eq('id', practice.id);
       }
 
-      // Update schedule status / next run date
+      // Schedule updates
       if (msg.schedule_type === 'one_time') {
         await supabase
           .from('scheduled_messages')
@@ -119,8 +120,8 @@ module.exports = async function handler(req, res) {
 
     return res.status(200).json({ success: true, processed: processedCount });
   } catch (err) {
-    console.error('Cron Runtime Error:', err);
-    return res.status(500).json({ error: err.message || 'Internal Server Error' });
+    console.error('Cron Execution Exception:', err);
+    return res.status(500).json({ error: err.message || 'Serverless Execution Exception' });
   }
 };
 
