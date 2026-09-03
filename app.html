@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>It's Time 2 - Patient Care & Messaging Dashboard</title>
+  <title>It's Time 2 - Contact Communication & Messaging Dashboard</title>
   
   <!-- FAVICON LINK -->
   <link rel="icon" type="image/png" href="logo.png">
@@ -134,7 +134,7 @@
       </div>
 
       <div class="nav-group">
-        <a class="nav-item active" id="nav-customers" onclick="switchTab('customers')">Patients</a>
+        <a class="nav-item active" id="nav-customers" onclick="switchTab('customers')">Contacts</a>
         <a class="nav-item" id="nav-templates" onclick="switchTab('templates')">Message Library</a>
         <a class="nav-item" id="nav-history" onclick="switchTab('history')">Activity History</a>
         <a class="nav-item" id="nav-billing" onclick="switchTab('billing')">Billing & Plan</a>
@@ -151,17 +151,17 @@
 
       <!-- 1. PATIENTS DIRECTORY VIEW -->
       <div id="view-customers">
-        <h2 id="cust-form-title" style="margin-top:0; color: #0f172a;">Add Patient</h2>
+        <h2 id="cust-form-title" style="margin-top:0; color: #0f172a;">Add Contact</h2>
         <input type="text" id="cust-first-name" placeholder="First Name">
         <input type="text" id="cust-last-name" placeholder="Last Name">
-        <input type="email" id="cust-email" placeholder="Patient Email">
-        <input type="tel" id="cust-phone" placeholder="Patient Phone (e.g. 555-555-5555)">
+        <input type="email" id="cust-email" placeholder="Contact Email">
+        <input type="tel" id="cust-phone" placeholder="Contact Phone (e.g. 555-555-5555)">
         
-        <button id="cust-save-btn" onclick="savePatient()" class="success">Add Patient</button>
+        <button id="cust-save-btn" onclick="saveContact()" class="success">Add Contact</button>
         <button id="cust-cancel-btn" onclick="cancelCustEdit()" class="secondary hidden">Cancel Edit</button>
 
         <hr style="margin: 30px 0; border: none; border-top: 1px solid #e2e8f0;">
-        <h2>Patient Directory</h2>
+        <h2>Contact Directory</h2>
         <div class="table-container">
           <table>
             <thead>
@@ -174,9 +174,9 @@
 
       <!-- 2. PATIENT PROFILE PAGE (FULL PAGE VIEW) -->
       <div id="view-profile" class="hidden">
-        <button onclick="switchTab('customers')" class="secondary action-btn" style="padding: 8px 16px; margin-bottom: 20px;">← Back to Patient Directory</button>
+        <button onclick="switchTab('customers')" class="secondary action-btn" style="padding: 8px 16px; margin-bottom: 20px;">← Back to Contact Directory</button>
         
-        <h2 id="profile-title" style="margin-top:0;">Patient Profile</h2>
+        <h2 id="profile-title" style="margin-top:0;">Contact Profile</h2>
         <p id="profile-subtitle" style="color: #64748b; margin-top: -10px; margin-bottom: 20px; font-size: 14px;"></p>
         
         <!-- SCHEDULE NEW OR EDIT MESSAGE FORM -->
@@ -260,7 +260,7 @@
         </div>
 
         <!-- PATIENT HISTORY -->
-        <h3 style="margin-bottom: 10px;">Patient Interaction History</h3>
+        <h3 style="margin-bottom: 10px;">Contact Interaction History</h3>
         <div class="table-container">
           <table>
             <thead>
@@ -295,7 +295,7 @@
       <!-- 4. ACTIVITY HISTORY VIEW -->
       <div id="view-history" class="hidden">
         <h2 style="margin-top:0;">Activity History</h2>
-        <p style="color: #64748b; font-size: 14px;">Log of account actions, patient updates, and sent messages.</p>
+        <p style="color: #64748b; font-size: 14px;">Log of account actions, contact updates, and sent messages.</p>
         <div class="table-container">
           <table>
             <thead>
