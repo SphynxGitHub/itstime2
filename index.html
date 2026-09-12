@@ -32,18 +32,28 @@
 
   <header>
     <div class="nav-container">
+      <!-- Brand Logo & Name -->
       <a href="/" class="logo-brand">
         <img src="logo.png" alt="It's Time 2 Logo" onerror="this.style.display='none'">
-        <h1><span style="color: var(--brand-red);">It's</span> <span style="color: var(--brand-green);">Time</span> <span style="color: var(--brand-blue);">2</span></h1>
+        <h1>It's Time 2</h1>
       </a>
-      <div class="nav-links">
-        <a href="#features">Features</a>
-        <a href="#compliance">Compliance</a>
-        <a href="#pricing">Pricing</a>
+  
+      <!-- Top Action Buttons & Mobile Toggle -->
+      <div class="header-actions">
         <a href="/app" class="btn-login">Log In</a>
-        <a href="/app" class="btn-signup">Get Started</a>
+        <a href="/app" class="btn-signup">Sign Up</a>
+        <button class="hamburger-toggle" id="menuToggle" aria-label="Toggle Navigation">
+          <i data-lucide="menu" style="width: 24px; height: 24px;"></i>
+        </button>
       </div>
     </div>
+  
+    <!-- Navigation Menu (Collapsible on Mobile) -->
+    <nav class="nav-links hidden-mobile" id="navLinks">
+      <a href="#features">Features</a>
+      <a href="#compliance">Compliance</a>
+      <a href="#pricing">Pricing</a>
+    </nav>
   </header>
 
   <section class="hero">
@@ -198,6 +208,26 @@
 
   <script>
     if (window.lucide) lucide.createIcons();
+  </script>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleBtn = document.getElementById('menuToggle');
+      const navLinks = document.getElementById('navLinks');
+  
+      if (toggleBtn && navLinks) {
+        toggleBtn.addEventListener('click', () => {
+          navLinks.classList.toggle('hidden-mobile');
+        });
+  
+        // Auto-close menu when clicking a link
+        navLinks.querySelectorAll('a').forEach(link => {
+          link.addEventListener('click', () => {
+            navLinks.classList.add('hidden-mobile');
+          });
+        });
+      }
+    });
   </script>
 </body>
 </html>
