@@ -91,7 +91,7 @@
           <div class="table-scroll">
           <table>
             <thead>
-              <tr><th>Name</th><th>Email</th><th>Phone</th><th>Actions</th></tr>
+              <tr><th style="width:18%;">Name</th><th style="width:27%;">Email</th><th style="width:18%;">Phone</th><th style="width:37%;">Actions</th></tr>
             </thead>
             <tbody id="customer-list-body"><tr><td colspan="4">Loading...</td></tr></tbody>
           </table>
@@ -104,7 +104,13 @@
         <button onclick="switchTab('customers')" class="secondary action-btn" style="padding: 8px 16px; margin-bottom: 20px;">← Back to Contact Directory</button>
         
         <h2 id="profile-title" style="margin-top:0;">Contact Profile</h2>
-        <p id="profile-subtitle" style="color: #64748b; margin-top: -10px; margin-bottom: 20px; font-size: 14px;"></p>
+        <p id="profile-subtitle" style="color: #64748b; margin-top: -10px; margin-bottom: 12px; font-size: 14px;"></p>
+
+        <!-- CONTACT-LEVEL ACTIONS (moved here from the Contact Directory table) -->
+        <div class="btn-group-flex" style="margin-bottom: 20px;">
+          <button onclick="editContactFromProfile()" class="secondary" style="width: auto; margin-bottom:0;">Edit Contact</button>
+          <button onclick="deleteContactFromProfile()" class="danger" style="width: auto; margin-bottom:0;">Delete Contact</button>
+        </div>
         
         <!-- SCHEDULE NEW OR EDIT MESSAGE FORM -->
         <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #e2e8f0; border-left: 4px solid var(--brand-blue);">
@@ -181,7 +187,7 @@
           <div class="table-scroll">
           <table>
             <thead>
-              <tr><th>Frequency</th><th>Next Run</th><th>Status</th><th>Message Text</th><th>Actions</th></tr>
+              <tr><th style="width:14%;">Frequency</th><th style="width:16%;">Next Run</th><th style="width:12%;">Status</th><th style="width:26%;">Message Text</th><th style="width:32%;">Actions</th></tr>
             </thead>
             <tbody id="sched-list-body"><tr><td colspan="5">Loading...</td></tr></tbody>
           </table>
@@ -217,7 +223,7 @@
           <div class="table-scroll">
           <table>
             <thead>
-              <tr><th>Title</th><th>Message Preview</th><th>Actions</th></tr>
+              <tr><th style="width:25%;">Title</th><th style="width:38%;">Message Preview</th><th style="width:37%;">Actions</th></tr>
             </thead>
             <tbody id="template-list-body"><tr><td colspan="3">Loading...</td></tr></tbody>
           </table>
@@ -229,6 +235,28 @@
       <div id="view-history" class="hidden">
         <h2 style="margin-top:0;">Activity History</h2>
         <p style="color: #64748b; font-size: 14px;">Log of account actions, contact updates, and sent messages.</p>
+
+        <!-- FILTER BY ACTIVITY TYPE & DATE RANGE -->
+        <div class="form-row-flex" style="margin-bottom: 18px; align-items: flex-end;">
+          <div style="flex: 1; min-width: 180px;">
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">Activity Type:</label>
+            <select id="history-filter-type" onchange="applyHistoryFilters()" style="margin-bottom:0;">
+              <option value="">All Activity Types</option>
+            </select>
+          </div>
+          <div style="flex: 1; min-width: 140px;">
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">From:</label>
+            <input type="date" id="history-filter-from" onchange="applyHistoryFilters()" style="margin-bottom:0;">
+          </div>
+          <div style="flex: 1; min-width: 140px;">
+            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">To:</label>
+            <input type="date" id="history-filter-to" onchange="applyHistoryFilters()" style="margin-bottom:0;">
+          </div>
+          <div style="flex: 0 0 auto;">
+            <button type="button" onclick="clearHistoryFilters()" class="secondary" style="width:auto; margin-bottom:0;">Clear Filters</button>
+          </div>
+        </div>
+
         <div class="table-container">
           <div class="table-scroll">
           <table>
