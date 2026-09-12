@@ -163,7 +163,7 @@
 
   /* Navigation Bar - Mobile First */
   header { 
-    background-color: var(--brand-yellow); 
+    background-color: var(--brand-red); 
     border-bottom: 4px solid var(--border-toy); 
     position: sticky; 
     top: 0; 
@@ -237,7 +237,11 @@
   
   .btn-login { 
     background-color: #FFFFFF !important; 
-    border: 2px solid var(--border-toy) !important; 
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 3px solid var(--border-toy) !important;
+    border-radius: 12px !important;
     color: var(--dark-bg) !important; 
     box-shadow: var(--toy-shadow-dark);
     padding: 6px 12px !important;
@@ -246,6 +250,11 @@
   
   .btn-signup { 
     background-color: var(--brand-green) !important; 
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 3px solid var(--border-toy) !important;
+    border-radius: 12px !important;
     color: #ffffff !important; 
     border: 2px solid var(--border-toy) !important;
     box-shadow: var(--toy-shadow-dark);
