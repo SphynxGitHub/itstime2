@@ -176,6 +176,8 @@
     margin: 0 auto; 
     padding: 10px 14px; 
     display: flex; 
+    flex-wrap: wrap; /* Allows mobile dropdown menu to wrap underneath */
+    justify-content: space-between;
     flex-direction: column; /* Stack logo & nav links vertically on mobile */
     gap: 10px;
     align-items: center; 
@@ -184,25 +186,27 @@
   .logo-brand { display: flex; align-items: center; gap: 8px; text-decoration: none; }
   .logo-brand img { width: 32px; height: 32px; object-fit: contain; }
   .logo-brand h1 { font-size: 20px; font-weight: 800; margin: 0; color: #FFFFFF; text-shadow: 2px 2px 0px var(--border-toy); }
-  
-  /* Horizontal Touch-Scrollable Links Bar */
-  .nav-links { 
-    display: flex; 
-    gap: 8px; 
-    align-items: center; 
-    width: 100%;
-    overflow-x: auto; /* Enable smooth horizontal swipe on small screens */
-    padding-bottom: 4px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none; /* Hide scrollbar Firefox */
+
+  .brand-title { 
+    display: none; /* Hidden on mobile to save space */
+    font-size: 20px; 
+    font-weight: 800; 
+    margin: 0; 
+    color: #FFFFFF; 
+    text-shadow: 2px 2px 0px var(--border-toy); 
   }
 
   /* Mobile Dropdown Nav Links */
   .nav-links {
     display: flex;
     flex-direction: column;
+    align-items: center; 
+    width: 100%;
     background-color: #B00F17; /* Slightly darker engine red */
     border-top: 3px dashed var(--brand-yellow);
+    overflow-x: auto; /* Enable smooth horizontal swipe on small screens */
+     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Hide scrollbar Firefox */
     padding: 10px 16px;
     gap: 8px;
   }
@@ -228,13 +232,12 @@
     border: 2px solid var(--border-toy);
   }
 
-  /* Header Right Actions (Log In, Sign Up, Hamburger) */
-  .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  /* Right Actions Container */
+  .header-actions { 
+    display: flex; 
+    align-items: center; 
+    gap: 6px; 
   }
-  
   .btn-login { 
     background-color: #FFFFFF !important; 
     font-weight: 800 !important;
@@ -564,16 +567,29 @@
   @media (min-width: 768px) {
    .logo-brand img { width: 36px; height: 36px; }
     .logo-brand h1 { font-size: 22px; }
-  
+
+    /* Show full text title alongside image logo on desktop */
+    .brand-title { 
+      display: inline-block; 
+      font-size: 22px; 
+    }
+      
     /* Hide Hamburger Toggle on Desktop */
     .hamburger-toggle { display: none !important; }
   
     /* Display Links Inline next to Brand & Buttons on Desktop */
     header { display: flex; align-items: center; }
+
+    /* Right-Aligned Desktop Buttons */
+    .header-actions {
+      margin-left: auto;
+      gap: 10px;
+    }
     
     .nav-container {
       width: 100%;
       padding: 12px 20px;
+      flex-wrap: nowrap;
     }
   
     .nav-links, .nav-links.hidden-mobile {
