@@ -91,8 +91,20 @@
   button.secondary, .btn-secondary {
     background-color: var(--brand-yellow) !important;
     color: var(--dark-bg) !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 3px solid var(--border-toy) !important;
+    border-radius: 12px !important;
     box-shadow: var(--toy-shadow-yellow) !important;
     border: 3px solid var(--border-toy) !important;
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
   }
 
   button.danger {
@@ -191,7 +203,7 @@
     background-color: var(--brand-green) !important; 
     color: #ffffff !important; 
     border: 2px solid var(--border-toy) !important;
-    box-shadow: var(--toy-shadow-green);
+    box-shadow: var(--toy-shadow-dark);
   }
 
   /* Hero Banner */
