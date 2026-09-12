@@ -698,28 +698,32 @@
   }
 
   /* The Actions cell (always last, when a row has one) becomes its own
-     full-width row underneath the other data, with its buttons laid out in
-     a small wrapping row/grid instead of a narrow squeezed column. Contact
-     rows now only carry 2 buttons (Profile & Schedules, Send Msg) since
-     Edit/Delete moved to the profile page — both stay visible here. */
+     full-width row underneath the other data. Buttons are stacked as plain
+     block elements (not a flex row) — a block element at width:100% cannot
+     overflow its parent no matter how long its text is, which side-by-side
+     flex-wrap kept failing to guarantee in practice. Contact rows now only
+     carry 2 buttons (Profile & Schedules, Send Msg) since Edit/Delete moved
+     to the profile page. */
   td:has(.action-btn), th:has(.action-btn) {
     flex: 1 1 100%;
     width: 100%;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    min-width: 0;
     margin-top: 6px;
     padding-top: 10px;
     border-top: 1px dashed #e2e8f0;
   }
 
   td .action-btn {
-    display: inline-flex;
-    width: auto;
-    flex: 1 1 auto;
-    min-width: 110px;
-    justify-content: center;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    white-space: normal;
+    word-break: break-word;
     text-align: center;
+    margin-bottom: 8px;
+  }
+
+  td .action-btn:last-child {
     margin-bottom: 0;
   }
 
