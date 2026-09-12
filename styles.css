@@ -666,9 +666,13 @@
   table, thead, tbody {
     display: block;
     width: 100%;
+    min-width: 0; /* overrides the desktop table's min-width: 500px, which
+                     was silently forcing every row (and everything in it)
+                     to be at least 500px wide on phone-sized screens */
   }
 
   table thead {
+
     display: none; /* column labels aren't needed once rows become cards */
   }
 
@@ -698,16 +702,20 @@
   }
 
   /* The Actions cell (always last, when a row has one) becomes its own
-     full-width row underneath the other data. Buttons are stacked as plain
-     block elements (not a flex row) — a block element at width:100% cannot
-     overflow its parent no matter how long its text is, which side-by-side
-     flex-wrap kept failing to guarantee in practice. Contact rows now only
-     carry 2 buttons (Profile & Schedules, Send Msg) since Edit/Delete moved
-     to the profile page. */
+     full-width row underneath the other data. Buttons sit in a CSS grid
+     with two fixed equal columns (not flex-wrap, which kept mis-measuring
+     button text and overflowing) — grid columns are a hard 50/50 split of
+     the cell's own width, so buttons cannot exceed it regardless of their
+     text. A 3rd/4th button (e.g. on the Schedule table) simply wraps to
+     the next row. Contact rows only carry 2 buttons (Profile & Schedules,
+     Send Msg) since Edit/Delete moved to the profile page. */
   td:has(.action-btn), th:has(.action-btn) {
     flex: 1 1 100%;
     width: 100%;
     min-width: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
     margin-top: 6px;
     padding-top: 10px;
     border-top: 1px dashed #e2e8f0;
@@ -720,11 +728,9 @@
     white-space: normal;
     word-break: break-word;
     text-align: center;
-    margin-bottom: 8px;
-  }
-
-  td .action-btn:last-child {
     margin-bottom: 0;
+    padding-left: 8px;
+    padding-right: 8px;
   }
 
   /* Stack the schedule-form frequency/date fields on phones instead of
