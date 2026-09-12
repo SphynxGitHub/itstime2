@@ -18,6 +18,7 @@ let customerStore = [];
 let templateStore = [];
 let scheduleStore = [];
 let customDatesList = [];
+let historyStore = [];
 
 // --- VISIBILITY TOGGLE (LUCIDE) ---
 function toggleVisibility(inputId, btn) {
@@ -207,8 +208,6 @@ async function fetchPatients() {
         <td>
           <button class="action-btn info" onclick="openPatientProfile('${c.id}')">Profile & Schedules</button>
           <button class="action-btn info" onclick="openSendModal('${c.id}')">Send Msg</button>
-          <button class="action-btn warning" onclick="startCustEdit('${c.id}')">Edit</button>
-          <button class="action-btn danger" onclick="deletePatient('${c.id}')">Delete</button>
         </td>
       </tr>`;
   });
@@ -290,6 +289,33 @@ async function deletePatient(id) {
   else {
     await logActivity('Deleted Contact', `Removed contact ${c ? c.first_name : id}`);
     fetchPatients();
+  }
+}
+
+// --- Contact-level actions triggered from the Profile page instead of the
+// Contact Directory table row (Edit / Delete now live here only) ---
+function editContactFromProfile() {
+  if (!currentProfileCustId) return;
+  startCustEdit(currentProfileCustId);
+  switchTab('customers');
+}
+
+async function deleteContactFromProfile() {
+  if (!currentProfileCustId) return;
+  const c = customerStore.find(i => String(i.id) === String(currentProfileCustId));
+  if (!confirm('Delete this contact? This cannot be undone.')) return;
+
+  const { error } = await supabaseClient
+    .from('patients')
+    .delete()
+    .eq('id', currentProfileCustId);
+
+  if (error) {
+    alert(error.message);
+  } else {
+    await logActivity('Deleted Contact', `Removed contact ${c ? c.first_name : currentProfileCustId}`);
+    currentProfileCustId = null;
+    switchTab('customers');
   }
 }
 
@@ -786,9 +812,33 @@ async function fetchHistory() {
   tbody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
   const { data, error } = await supabaseClient.from('activity_history').select('*').order('created_at', { ascending: false });
   if (error) return tbody.innerHTML = '<tr><td colspan="3">Error loading activity logs.</td></tr>';
-  if (!data || data.length === 0) return tbody.innerHTML = '<tr><td colspan="3">No history recorded yet.</td></tr>';
+  historyStore = data || [];
+  populateHistoryTypeFilter();
+  renderHistoryRows(historyStore);
+}
+
+// Populates the "Activity Type" filter dropdown from whatever action values
+// actually exist in the fetched history, so it never drifts out of sync
+// with the action strings logActivity() happens to produce.
+function populateHistoryTypeFilter() {
+  const select = document.getElementById('history-filter-type');
+  if (!select) return;
+  const currentValue = select.value;
+  const uniqueTypes = [...new Set(historyStore.map(h => h.action).filter(Boolean))].sort();
+  select.innerHTML = '<option value="">All Activity Types</option>' +
+    uniqueTypes.map(t => `<option value="${t}">${t}</option>`).join('');
+  if (uniqueTypes.includes(currentValue)) select.value = currentValue;
+}
+
+function renderHistoryRows(rows) {
+  const tbody = document.getElementById('history-list-body');
+  if (!tbody) return;
+  if (!rows || rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3">No activity matches the selected filters.</td></tr>';
+    return;
+  }
   tbody.innerHTML = '';
-  data.forEach(h => {
+  rows.forEach(h => {
     const time = new Date(h.created_at).toLocaleString();
     tbody.innerHTML += `
       <tr>
@@ -797,6 +847,44 @@ async function fetchHistory() {
         <td>${h.details || ''}</td>
       </tr>`;
   });
+}
+
+// Filters the already-fetched history client-side (no re-query needed) by
+// activity type and/or a from/to date range, then re-renders the table.
+function applyHistoryFilters() {
+  const typeEl = document.getElementById('history-filter-type');
+  const fromEl = document.getElementById('history-filter-from');
+  const toEl = document.getElementById('history-filter-to');
+
+  const typeVal = typeEl ? typeEl.value : '';
+  const fromVal = fromEl ? fromEl.value : '';
+  const toVal = toEl ? toEl.value : '';
+
+  let filtered = historyStore;
+
+  if (typeVal) {
+    filtered = filtered.filter(h => h.action === typeVal);
+  }
+  if (fromVal) {
+    const fromDate = new Date(fromVal + 'T00:00:00');
+    filtered = filtered.filter(h => new Date(h.created_at) >= fromDate);
+  }
+  if (toVal) {
+    const toDate = new Date(toVal + 'T23:59:59');
+    filtered = filtered.filter(h => new Date(h.created_at) <= toDate);
+  }
+
+  renderHistoryRows(filtered);
+}
+
+function clearHistoryFilters() {
+  const typeEl = document.getElementById('history-filter-type');
+  const fromEl = document.getElementById('history-filter-from');
+  const toEl = document.getElementById('history-filter-to');
+  if (typeEl) typeEl.value = '';
+  if (fromEl) fromEl.value = '';
+  if (toEl) toEl.value = '';
+  renderHistoryRows(historyStore);
 }
 
 // --- MODULE 6: BILLING & SUBSCRIPTION CONTROLLER ---
