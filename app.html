@@ -237,23 +237,25 @@
         <p style="color: #64748b; font-size: 14px;">Log of account actions, contact updates, and sent messages.</p>
 
         <!-- FILTER BY ACTIVITY TYPE & DATE RANGE -->
-        <div class="form-row-flex" style="margin-bottom: 18px; align-items: flex-end;">
-          <div style="flex: 1; min-width: 180px;">
-            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">Activity Type:</label>
-            <select id="history-filter-type" onchange="applyHistoryFilters()" style="margin-bottom:0;">
-              <option value="">All Activity Types</option>
-            </select>
-          </div>
-          <div style="flex: 1; min-width: 140px;">
-            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">From:</label>
-            <input type="date" id="history-filter-from" onchange="applyHistoryFilters()" style="margin-bottom:0;">
-          </div>
-          <div style="flex: 1; min-width: 140px;">
-            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">To:</label>
-            <input type="date" id="history-filter-to" onchange="applyHistoryFilters()" style="margin-bottom:0;">
-          </div>
-          <div style="flex: 0 0 auto;">
-            <button type="button" onclick="clearHistoryFilters()" class="secondary" style="width:auto; margin-bottom:0;">Clear Filters</button>
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="form-row-flex" style="align-items: flex-end;">
+            <div style="flex: 1; min-width: 180px;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">Activity Type:</label>
+              <select id="history-filter-type" onchange="applyHistoryFilters()" style="margin-bottom:0;">
+                <option value="">All Activity Types</option>
+              </select>
+            </div>
+            <div style="flex: 1; min-width: 140px;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">From:</label>
+              <input type="date" id="history-filter-from" onchange="applyHistoryFilters()" style="margin-bottom:0;">
+            </div>
+            <div style="flex: 1; min-width: 140px;">
+              <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">To:</label>
+              <input type="date" id="history-filter-to" onchange="applyHistoryFilters()" style="margin-bottom:0;">
+            </div>
+            <div style="flex: 0 0 auto;">
+              <button type="button" onclick="clearHistoryFilters()" class="secondary" style="width:auto; margin-bottom:0;">Clear Filters</button>
+            </div>
           </div>
         </div>
 
