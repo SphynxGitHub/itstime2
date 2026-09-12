@@ -1,1186 +1,886 @@
+:root {
+    /* Toy Train Palette */
+    --brand-red: #E51A24;
+    --brand-blue: #0052FF;
+    --brand-green: #00B04F;
+    --brand-yellow: #F2B800;
+    --dark-bg: #121829;
+    
+    /* Vibrant Layout Backgrounds */
+    --page-bg: #EAF2FF;             /* Soft playful blue backdrop */
+    --card-bg: #FFFFFF;
+    --border-toy: #1D2338;          /* High-contrast border outline */
+    
+    /* Chunky Toy Box Shadows */
+    --toy-shadow-red: 0 6px 0px #B00F17;
+    --toy-shadow-blue: 0 6px 0px #003BCC;
+    --toy-shadow-yellow: 0 6px 0px #B88C00;
+    --toy-shadow-green: 0 6px 0px #007A37;
+    --toy-shadow-dark: 0 6px 0px #090C15;
+    
+    /* App Specific Token Mappings */
+    --sidebar-bg: var(--brand-red);
+  }
+
+  * { box-sizing: border-box; }
+  
+  /* Base Body with Track Pattern Accent */
+  body {
+    background-color: var(--page-bg);
+    background-image: radial-gradient(var(--brand-yellow) 15%, transparent 16%);
+    background-size: 24px 24px;
+    color: var(--dark-bg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  .hidden { display: none !important; }
+
+  /* ==========================================================================
+     GLOBAL TOY COMPONENTS (BUTTONS, CARDS, INPUTS)
+     ========================================================================== */
+  
+  /* Cards - Chunky Wooden/Plastic Blocks */
+  .card, .dashboard-card, #auth-section, .billing-card {
+    background: var(--card-bg) !important;
+    border: 3px solid var(--border-toy) !important;
+    border-radius: 18px !important;
+    box-shadow: var(--toy-shadow-dark) !important;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  /* Alternating Block Top Borders (Toy Cars) */
+  .card:nth-child(4n+1) { border-top: 10px solid var(--brand-red) !important; }
+  .card:nth-child(4n+2) { border-top: 10px solid var(--brand-blue) !important; }
+  .card:nth-child(4n+3) { border-top: 10px solid var(--brand-green) !important; }
+  .card:nth-child(4n+4) { border-top: 10px solid var(--brand-yellow) !important; }
+
+  /* Interactive Toy Buttons */
+  button, .btn-primary {
+    background-color: var(--brand-green) !important;
+    color: #FFFFFF !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 3px solid var(--border-toy) !important;
+    border-radius: 12px !important;
+    box-shadow: var(--toy-shadow-green) !important;
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+  }
+  
+  button:hover, .btn-primary:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+
+  button:active, .btn-primary:active {
+    transform: translateY(4px) !important;
+    box-shadow: 0 2px 0px #007A37 !important;
+  }
+  
+  /* Button Variants */
+  button.secondary, .btn-secondary {
+    background-color: var(--brand-yellow) !important;
+    color: var(--dark-bg) !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 3px solid var(--border-toy) !important;
+    border-radius: 12px !important;
+    box-shadow: var(--toy-shadow-yellow) !important;
+    border: 3px solid var(--border-toy) !important;
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+  }
+
+  button.danger {
+    background-color: var(--brand-red) !important;
+    color: #ffffff !important;
+    box-shadow: var(--toy-shadow-red) !important;
+  }
+
+  button.info {
+    background-color: var(--brand-blue) !important;
+    color: #ffffff !important;
+    box-shadow: var(--toy-shadow-blue) !important;
+  }
+
+  button.link-btn {
+    background: none !important;
+    color: var(--brand-blue) !important;
+    border: none !important;
+    box-shadow: none !important;
+    text-decoration: underline;
+    text-transform: none;
+    padding: 5px;
+  }
+
+  /* Form Inputs */
+  input, select, textarea {
+    display: block;
+    width: 100%;
+    margin-bottom: 12px;
+    padding: 12px;
+    border: 2.5px solid var(--border-toy) !important;
+    border-radius: 10px !important;
+    font-weight: 600;
+    font-size: 15px;
+    background-color: #FAFAFA;
+    font-family: inherit;
+  }
+  
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--brand-blue) !important;
+    box-shadow: 0 0 0 4px rgba(0, 82, 255, 0.25) !important;
+    background-color: #FFFFFF;
+  }
+
+  /* Train Track Dividers */
+  hr, .track-divider {
+    border: none;
+    border-top: 4px dashed var(--brand-yellow);
+    margin: 24px 0;
+  }
+
+  /* Generic responsive row/group helpers used across the dashboard forms
+     (schedule form, A2P form, billing plan grid, save/cancel button rows) */
+  .form-row-flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 0;
+    width: 100%;
+  }
+
+  .btn-group-flex {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .grid-plans {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-top: 15px;
+  }
+
 /* ==========================================================================
-   IT'S TIME 2 — APPLICATION CONTROLLER (app.js)
-   ========================================================================== */
+     LANDING & SALES PAGE STYLES (INDEX.HTML)
+     ========================================================================== */
 
-const SUPABASE_URL = 'https://yktwthagtgdzzkaypgqj.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_onP87pGhzbxdWjnDoOnJAA_XCAiOJFx';
-
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const ONE_HOUR_MS = 60 * 60 * 1000;
-
-let currentUserId = null;
-let editingCustId = null;
-let editingTmplId = null;
-let editingSchedId = null;
-let activeModalCust = null;
-let currentProfileCustId = null;
-let customerStore = [];
-let templateStore = [];
-let scheduleStore = [];
-let customDatesList = [];
-let historyStore = [];
-
-// --- VISIBILITY TOGGLE (LUCIDE) ---
-function toggleVisibility(inputId, btn) {
-  const input = document.getElementById(inputId);
-  if (!input) return;
-  
-  const icon = btn.querySelector('i');
-  if (input.type === 'password') {
-    input.type = 'text';
-    if (icon) icon.setAttribute('data-lucide', 'eye-off');
-  } else {
-    input.type = 'password';
-    if (icon) icon.setAttribute('data-lucide', 'eye');
+  /* Navigation Bar - Mobile First */
+  header { 
+    background-color: var(--brand-red); 
+    border-bottom: 4px solid var(--border-toy); 
+    position: sticky; 
+    top: 0; 
+    z-index: 100; 
+    box-shadow: 0 4px 0px rgba(0,0,0,0.15);
   }
-  if (window.lucide) lucide.createIcons();
-}
-
-// --- PHONE FORMATTING HELPERS ---
-function formatToE164(phone) {
-  if (!phone) return '';
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length === 10) return `+1${digits}`;
-  if (digits.length === 11 && digits.startsWith('1')) return `+${digits}`;
-  if (phone.trim().startsWith('+')) return `+1${digits}`;
-  return `+1${digits}`;
-}
-
-function formatForDisplay(phone) {
-  if (!phone) return '';
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length === 11 && digits.startsWith('1')) {
-    return `+1 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
-  }
-  if (digits.length === 10) {
-    return `+1 (${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-  }
-  return phone;
-}
-
-function toDatetimeLocal(isoString) {
-  if (!isoString) return '';
-  const date = new Date(isoString);
-  const offset = date.getTimezoneOffset() * 60000;
-  return (new Date(date.getTime() - offset)).toISOString().slice(0, 16);
-}
-
-// --- ACTIVITY TRACKER & AUTO-LOGOUT ---
-function recordActivity() { 
-  localStorage.setItem('lastActivityTimestamp', Date.now().toString()); 
-}
-
-function checkInactivity() {
-  const last = localStorage.getItem('lastActivityTimestamp');
-  if (last && Date.now() - parseInt(last, 10) > ONE_HOUR_MS) { 
-    logout(true); 
-    return true; 
-  }
-  return false;
-}
-['mousemove', 'keydown', 'click', 'touchstart'].forEach(evt => window.addEventListener(evt, recordActivity));
-
-// --- NAVIGATION CONTROLLER ---
-function switchTab(tabName) {
-  cancelSchedEdit();
-  ['customers', 'profile', 'templates', 'history', 'billing'].forEach(t => {
-    const el = document.getElementById(`view-${t}`);
-    if (el) el.classList.add('hidden');
-    const nav = document.getElementById(`nav-${t}`);
-    if (nav) nav.classList.remove('active');
-  });
-
-  const activeEl = document.getElementById(`view-${tabName}`);
-  if (activeEl) activeEl.classList.remove('hidden');
-  const activeNav = document.getElementById(`nav-${tabName}`);
-  if (activeNav) activeNav.classList.add('active');
-
-  if (tabName === 'customers') fetchPatients();
-  if (tabName === 'templates') fetchTemplates();
-  if (tabName === 'history') fetchHistory();
-  if (tabName === 'billing') fetchBillingDetails();
-}
-
-// --- SESSION & ROUTING INITIALIZATION ---
-window.addEventListener('DOMContentLoaded', async () => {
-  if (window.lucide) lucide.createIcons();
-  if (checkInactivity()) return;
   
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  
-  if (session) {
-    recordActivity();
-    currentUserId = session.user.id;
-    showApp(session.user.email);
-  } else {
-    showLoginForm();
+  .nav-container { 
+    max-width: 1100px; 
+    margin: 0 auto; 
+    padding: 10px 14px; 
+    display: flex; 
+    flex-wrap: nowrap; /* Allows mobile dropdown menu to wrap underneath */
+    justify-content: space-between;
+    gap: 10px;
+    align-items: center; 
   }
-});
 
-function showLoginForm() {
-  const authSec = document.getElementById('auth-section');
-  const dash = document.getElementById('dashboard');
-  if (authSec) authSec.classList.remove('hidden');
-  if (dash) dash.classList.add('hidden');
-}
+  .logo-brand { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+  .logo-brand img { width: 32px; height: 32px; object-fit: contain; }
+  .logo-brand h1 { font-size: 20px; font-weight: 800; margin: 0; color: #FFFFFF; text-shadow: 2px 2px 0px var(--border-toy); }
 
-function showApp(email) {
-  const userEmail = document.getElementById('user-email');
-  const authSec = document.getElementById('auth-section');
-  const dash = document.getElementById('dashboard');
+  .brand-title { 
+    display: none; /* Hidden on mobile to save space */
+    font-size: 20px; 
+    font-weight: 800; 
+    margin: 0; 
+    color: #FFFFFF; 
+    text-shadow: 2px 2px 0px var(--border-toy); 
+  }
 
-  if (userEmail) userEmail.innerText = email;
-  if (authSec) authSec.classList.add('hidden');
-  if (dash) dash.classList.remove('hidden');
+  /* Mobile Dropdown Nav Links */
+  .nav-links {
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    width: 100%;
+    background-color: #B00F17; /* Slightly darker engine red */
+    border-top: 3px dashed var(--brand-yellow);
+    overflow-x: auto; /* Enable smooth horizontal swipe on small screens */
+     -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Hide scrollbar Firefox */
+    padding: 10px 16px;
+    gap: 8px;
+  }
+  
+  .nav-links.hidden-mobile {
+    display: none;
+  }
+  
+  .nav-links a {
+    text-decoration: none;
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 800;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 2px solid transparent;
+  }
+  
+  .nav-links a:hover {
+    background-color: var(--brand-yellow);
+    color: var(--dark-bg);
+    border: 2px solid var(--border-toy);
+  }
 
-  fetchPatients();
-  fetchTemplatesQuietly();
-  fetchBillingDetails();
-}
+  /* Right Actions Container */
+  .header-actions { 
+    display: flex; 
+    align-items: center; 
+    gap: 6px; 
+    flex-shrink: 0;
+  }
+  .btn-login { 
+    background-color: #FFFFFF !important; 
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 3px solid var(--border-toy) !important;
+    border-radius: 12px !important;
+    color: var(--dark-bg) !important; 
+    box-shadow: var(--toy-shadow-dark);
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+  }
+  
+  .btn-signup { 
+    background-color: var(--brand-green) !important; 
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 3px solid var(--border-toy) !important;
+    border-radius: 12px !important;
+    color: #ffffff !important; 
+    border: 2px solid var(--border-toy) !important;
+    box-shadow: var(--toy-shadow-dark);
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+  }
 
-// --- AUTHENTICATION ---
-async function signUp() {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  if (!email || !password) return alert('Enter email and password.');
-  const { error } = await supabaseClient.auth.signUp({ email, password });
-  if (error) alert(error.message);
-  else alert('Success! You can now log in.');
-}
+  /* Hamburger Toggle Button */
+  .hamburger-toggle {
+    background-color: var(--brand-yellow) !important;
+    color: var(--dark-bg) !important;
+    border: 2px solid var(--border-toy) !important;
+    box-shadow: 0 3px 0px var(--border-toy) !important;
+    padding: 6px !important;
+    margin-bottom: 0 !important;
+    min-height: auto !important;
+    border-radius: 8px !important;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-async function login() {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-  if (error) alert(error.message);
-  else { 
-    recordActivity(); 
-    currentUserId = data.user.id;
-    showApp(data.user.email); 
+  /* Hero Banner */
+  .hero { 
+    padding: 40px 16px 40px; 
+    text-align: center; 
+    background: transparent;
+  }
+  
+  .hero-container { 
+    max-width: 850px; 
+    margin: 0 auto; 
+    background: #FFFFFF;
+    border: 4px solid var(--border-toy);
+    border-radius: 24px;
+    padding: 24px 16px;
+    box-shadow: var(--toy-shadow-dark);
+  }
+  
+  .badge-pill { 
+    display: inline-flex; 
+    align-items: center; 
+    gap: 6px; 
+    background-color: var(--brand-yellow); 
+    color: var(--dark-bg); 
+    font-size: 12px; 
+    font-weight: 800; 
+    padding: 6px 14px; 
+    border-radius: 20px; 
+    text-transform: uppercase; 
+    border: 2px solid var(--border-toy);
+    box-shadow: 0 3px 0px var(--border-toy);
+    margin-bottom: 16px; 
+  }
+  
+  .hero h2 { font-size: 28px; font-weight: 900; color: var(--dark-bg); margin: 0 0 16px 0; line-height: 1.2; }
+  .hero p { font-size: 15px; color: #475569; margin: 0 0 24px 0; font-weight: 600; }
+  .hero-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  /* Feature Grid Blocks */
+  .features { padding: 40px 16px; max-width: 1100px; margin: 0 auto; }
+  .section-title { text-align: center; margin-bottom: 30px; }
+  .section-title h3 { font-size: 24px; color: var(--dark-bg); font-weight: 900; margin: 0 0 10px 0; }
+  .section-title p { font-size: 14px; color: #475569; font-weight: 600; }
+  
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+  
+  .feature-card { 
+    background-color: #ffffff; 
+    border: 3px solid var(--border-toy); 
+    border-radius: 16px; 
+    padding: 20px; 
+    box-shadow: var(--toy-shadow-dark);
+    position: relative;
+  }
+
+  .feature-card:nth-child(3n+1) { border-top: 8px solid var(--brand-red); }
+  .feature-card:nth-child(3n+2) { border-top: 8px solid var(--brand-blue); }
+  .feature-card:nth-child(3n+3) { border-top: 8px solid var(--brand-green); }
+
+  .feature-icon-box { 
+    display: inline-flex; 
+    align-items: center; 
+    justify-content: center; 
+    background: var(--brand-yellow); 
+    width: 48px; 
+    height: 48px; 
+    border-radius: 12px; 
+    border: 2px solid var(--border-toy);
+    color: var(--dark-bg); 
+    margin-bottom: 12px; 
+    box-shadow: 0 3px 0px var(--border-toy);
+  }
+  
+  .feature-card h4 { font-size: 18px; font-weight: 800; color: var(--dark-bg); margin: 0 0 8px 0; }
+  .feature-card p { font-size: 14px; color: #475569; font-weight: 500; }
+
+  /* Trust & Compliance Banner */
+  .trust-banner { 
+    background-color: var(--dark-bg); 
+    color: #ffffff; 
+    padding: 40px 16px; 
+    text-align: center;
+    border-top: 4px solid var(--border-toy);
+    border-bottom: 4px solid var(--border-toy);
+  }
+  
+  .trust-container { max-width: 900px; margin: 0 auto; }
+  .trust-container h3 { font-size: 22px; margin: 0 0 12px 0; color: var(--brand-yellow); font-weight: 800; }
+  .trust-container p { font-size: 14px; color: #cbd5e1; margin: 0 0 20px 0; }
+  .trust-badges { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; font-size: 13px; font-weight: 700; }
+  .trust-badge-item { 
+    display: inline-flex; 
+    align-items: center; 
+    gap: 8px; 
+    background: #1E293B; 
+    padding: 6px 12px; 
+    border-radius: 12px; 
+    border: 2px solid #334155;
+  }
+
+  /* Pricing Section Blocks */
+  .pricing { padding: 40px 16px; max-width: 950px; margin: 0 auto; }
+  .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-top: 24px; }
+  
+  .price-card { 
+    background: #ffffff; 
+    border: 3.5px solid var(--border-toy); 
+    border-radius: 20px; 
+    padding: 24px 16px; 
+    text-align: center; 
+    position: relative; 
+    box-shadow: var(--toy-shadow-dark);
+  }
+  
+  .price-card.featured { 
+    border: 4px solid var(--brand-blue); 
+    box-shadow: var(--toy-shadow-blue);
+  }
+  
+  .price-card .popular-tag { 
+    position: absolute; 
+    top: -14px; 
+    left: 50%; 
+    transform: translateX(-50%); 
+    background: var(--brand-yellow); 
+    color: var(--dark-bg); 
+    font-size: 11px; 
+    font-weight: 900; 
+    padding: 4px 12px; 
+    border-radius: 12px; 
+    border: 2px solid var(--border-toy);
+    text-transform: uppercase; 
+  }
+  
+  .price-title { font-size: 20px; font-weight: 800; color: var(--dark-bg); margin: 0 0 8px 0; }
+  .price-amount { font-size: 34px; font-weight: 900; color: var(--brand-blue); margin: 0 0 12px 0; }
+  .price-amount span { font-size: 13px; font-weight: 600; color: #64748b; }
+  .price-features { list-style: none; padding: 0; margin: 0 0 20px 0; text-align: left; font-size: 13px; font-weight: 600; }
+  .price-features li { padding: 8px 0; border-bottom: 2px dashed #e2e8f0; display: flex; align-items: center; gap: 8px; }
+
+  /* Footer */
+  footer { 
+    background-color: #FFFFFF; 
+    border-top: 4px solid var(--border-toy); 
+    padding: 24px 16px; 
+    font-size: 13px; 
+    font-weight: 600;
+    color: #64748b; 
+  }
+  
+  .footer-container { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+  .footer-links a { color: var(--brand-blue); text-decoration: none; font-weight: 700; }
+  .footer-links a:hover { text-decoration: underline; }
+
+  /* ==========================================================================
+     APP DASHBOARD STYLES (APP.HTML & BILLING.HTML)
+     ========================================================================== */
+
+  #auth-section { 
+    max-width: 400px; 
+    /* Mobile: keep a side gutter instead of running edge-to-edge (auto margins
+       collapse to 0 once the card stretches to fill a narrow viewport) */
+    margin: 30px 16px; 
+    padding: 20px; 
+    border-top: 10px solid var(--brand-yellow) !important; 
+  }
+
+  #dashboard { display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* App Dashboard Header Navigation */
+  .sidebar { 
+    width: 100%; 
+    background-color: var(--brand-red) !important; 
+    color: white; 
+    padding: 12px 14px; 
+    display: flex; 
+    flex-direction: column; /* Stack header elements on mobile */
+    align-items: stretch; 
+    gap: 10px;
+    border-bottom: 4px solid var(--border-toy);
+    box-shadow: 0 4px 0px rgba(0,0,0,0.15);
+    box-sizing: border-box;
+  }
+  
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sidebar-header h3 { margin: 0; font-size: 20px; color: #ffffff; font-weight: 900; text-shadow: 2px 2px 0px var(--border-toy); }
+
+  /* Collapsible panel (nav links + user/logout) toggled by the hamburger on
+     mobile. On desktop it's invisible as a box (display:contents) so its
+     children lay out exactly as direct children of .sidebar, same as before. */
+  .sidebar-menu-panel {
+    display: contents;
+  }
+
+  /* Sidebar footer (user email + logout) - base/mobile rules live here so the
+     email can't overflow narrow screens before the desktop override kicks in */
+  .sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .sidebar-footer p {
+    max-width: 100%;
+    word-break: break-all;
+  }
+
+  /* Dashboard nav tabs */
+  .nav-group { 
+    display: flex; 
+    gap: 8px; 
+    width: 100%; 
+    margin-top: 0; 
+    overflow-x: auto; 
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .nav-group::-webkit-scrollbar { display: none; }
+  
+  .nav-item { 
+    padding: 8px 14px; 
+    color: #ffffff; 
+    text-decoration: none; 
+    display: inline-block; 
+    cursor: pointer; 
+    font-size: 13px; 
+    border-radius: 10px; 
+    font-weight: 700; 
+    border: 2px solid transparent;
+    white-space: nowrap; /* Prevent tab titles from line breaking */
+    flex-shrink: 0;
+  }
+  
+  .nav-item:hover { background-color: rgba(255,255,255,0.2); }
+  
+  .nav-item.active { 
+    background-color: var(--brand-yellow) !important; 
+    color: var(--dark-bg) !important; 
+    font-weight: 900; 
+    border: 2px solid var(--border-toy);
+    box-shadow: 0 3px 0px var(--border-toy);
+  }
+
+  .main-content { flex: 1; padding: 16px; background-color: transparent; width: 100%; min-width: 0; }
+
+  /* .table-container clips to the rounded card shape (overflow: hidden).
+     The actual horizontal scrolling happens one level in, on .table-scroll —
+     splitting these two responsibilities is what guarantees wide table
+     content (like a row of action buttons) can never visually escape the
+     card, regardless of how wide the content ends up being. */
+  .table-container { 
+    width: 100%; 
+    max-width: 100%;
+    margin-top: 15px; 
+    border-radius: 14px; 
+    border: 3px solid var(--border-toy); 
+    background: #FFFFFF;
+    box-shadow: var(--toy-shadow-dark);
+    overflow: hidden;
+  }
+
+  .table-scroll {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  table { width: 100%; border-collapse: collapse; min-width: 500px; }
+  th, td { border-bottom: 2px solid #e2e8f0; padding: 10px 12px; text-align: left; font-size: 13px; font-weight: 600; }
+  th { background-color: #F1F5F9; font-weight: 800; color: var(--dark-bg); }
+  
+  .action-btn { 
+    display: inline-block; 
+    width: auto; 
+    padding: 6px 12px; 
+    margin-bottom: 4px; 
+    font-size: 12px; 
+    border-radius: 8px; 
+    min-height: auto;
+  }
+
+  .modal-overlay { 
+    position: fixed; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%; 
+    background: rgba(18, 24, 41, 0.75); 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    z-index: 1000; 
+    padding: 10px; 
+  }
+  
+  .modal-content { 
+    background: white; 
+    padding: 20px; 
+    width: 100%; 
+    max-width: 500px; 
+    max-height: 90vh;
+    overflow-y: auto;
+    border-radius: 18px; 
+    border: 4px solid var(--border-toy);
+    box-shadow: 0 10px 0px rgba(0,0,0,0.3); 
+    border-top: 10px solid var(--brand-blue); 
+  }
+
+  .progress-bar-bg { width: 100%; height: 14px; background: #e2e8f0; border-radius: 8px; border: 2px solid var(--border-toy); overflow: hidden; }
+  .progress-bar-fill { height: 100%; width: 0%; background: var(--brand-green); transition: width 0.3s ease; }
+  .badge-plan { background: var(--brand-yellow); color: var(--dark-bg); font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 10px; border: 2px solid var(--border-toy); }
+
+  /* ==========================================================================
+     MOBILE MEDIA QUERIES (767 and down) + DESKTOP MEDIA QUERIES (768px and up)
+     ========================================================================== */
+  /* Mobile Dropdown Position Fix */
+@media (max-width: 767px) {
+  .nav-links {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    flex-direction: column;
+    background-color: #B00F17;
+    border-top: 3px dashed var(--brand-yellow);
+    border-bottom: 4px solid var(--border-toy);
+    padding: 10px 16px;
+    gap: 8px;
+    margin: 0;
+  }
+  
+  .nav-links.hidden-mobile {
+    display: none !important;
+  }
+
+  /* Reflow each table row into a compact "card" on mobile: the first cells
+     (Name/Email/Phone, or whatever the row's non-action data is) sit
+     together on one line, and the last cell — always Actions where it
+     exists — drops to its own full-width row underneath with its buttons
+     laid out in a small wrapping grid, instead of being squeezed into a
+     narrow column or stacked as tall full-width bars. */
+  table, thead, tbody {
+    display: block;
+    width: 100%;
+  }
+
+  table thead {
+    display: none; /* column labels aren't needed once rows become cards */
+  }
+
+  tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 6px 14px;
+    width: 100%;
+    padding: 14px 0;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  tr:last-child {
+    border-bottom: none;
+  }
+
+  td, th {
+    display: block;
+    border: none;
+    padding: 0;
+    flex: 1 1 auto;
+    min-width: 100px;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* The Actions cell (always last, when a row has one) becomes its own
+     full-width row underneath the other data, with its buttons laid out in
+     a small wrapping row/grid instead of a narrow squeezed column. Contact
+     rows now only carry 2 buttons (Profile & Schedules, Send Msg) since
+     Edit/Delete moved to the profile page — both stay visible here. */
+  td:has(.action-btn), th:has(.action-btn) {
+    flex: 1 1 100%;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
+  }
+
+  td .action-btn {
+    display: inline-flex;
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 110px;
+    justify-content: center;
+    text-align: center;
+    margin-bottom: 0;
+  }
+
+  /* Stack the schedule-form frequency/date fields on phones instead of
+     letting them squeeze into a row */
+  .form-row-flex {
+    flex-direction: column;
+  }
+
+  /* Give the two billing plan cards a bit less demanded width on small phones */
+  .grid-plans {
+    grid-template-columns: 1fr;
+  }
+
+  /* Dashboard header collapses to a compact bar (logo + hamburger), exactly
+     like the marketing site's header. Tapping the hamburger reveals the nav
+     tabs and the user/logout row as a dropdown panel instead of showing
+     everything at once. */
+  .sidebar-menu-panel {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .sidebar-menu-panel.open {
+    display: flex;
+  }
+
+  .sidebar-menu-panel .nav-group {
+    flex-direction: column;
+    overflow-x: visible;
+    margin-top: 10px;
+  }
+
+  .sidebar-menu-panel .nav-item {
+    white-space: normal;
+    text-align: left;
+  }
+
+  .sidebar-menu-panel .sidebar-footer {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 3px dashed var(--brand-yellow);
   }
 }
 
-async function logout(wasExpired = false) {
-  await supabaseClient.auth.signOut();
-  localStorage.removeItem('lastActivityTimestamp');
-  currentUserId = null;
-  
-  if (wasExpired) alert('Logged out automatically due to 1 hour of inactivity.');
-  window.location.href = '/';
-}
+@media (min-width: 768px) {
+   .logo-brand img { width: 36px; height: 36px; }
+    .logo-brand h1 { font-size: 22px; }
 
-async function resetPassword() {
-  const email = document.getElementById('email').value;
-  if (!email) return alert('Enter email address.');
-  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
-  if (error) alert(error.message);
-  else alert('Reset link sent!');
-}
-
-// --- ACTIVITY LOGGING HELPER ---
-async function logActivity(action, details) {
-  await supabaseClient.from('activity_history').insert([{ action, details }]);
-}
-
-// --- MODULE 1: PATIENTS DIRECTORY ---
-async function fetchPatients() {
-  const tbody = document.getElementById('customer-list-body');
-  if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="4">Loading...</td></tr>';
-  
-  const { data, error } = await supabaseClient
-    .from('patients')
-    .select('*')
-    .eq('user_id', currentUserId)
-    .order('created_at', { ascending: false });
-
-  if (error) return tbody.innerHTML = '<tr><td colspan="4">Error loading contacts.</td></tr>';
-  customerStore = data || [];
-  if (customerStore.length === 0) return tbody.innerHTML = '<tr><td colspan="4">No contacts found. Add one above!</td></tr>';
-  
-  tbody.innerHTML = '';
-  customerStore.forEach(c => {
-    tbody.innerHTML += `
-      <tr>
-        <td><strong>${c.first_name || ''} ${c.last_name || ''}</strong></td>
-        <td>${c.email || ''}</td>
-        <td>${formatForDisplay(c.phone)}</td>
-        <td>
-          <button class="action-btn info" onclick="openPatientProfile('${c.id}')">Profile & Schedules</button>
-          <button class="action-btn info" onclick="openSendModal('${c.id}')">Send Msg</button>
-        </td>
-      </tr>`;
-  });
-}
-
-async function savePatient() {
-  const first_name = document.getElementById('cust-first-name').value;
-  const last_name = document.getElementById('cust-last-name').value;
-  const email = document.getElementById('cust-email').value;
-  const rawPhone = document.getElementById('cust-phone').value;
-  const phone = formatToE164(rawPhone);
-
-  if (!first_name) return alert('First name required.');
-
-  if (editingCustId) {
-    const { error } = await supabaseClient
-      .from('patients')
-      .update({ first_name, last_name, email, phone })
-      .eq('id', editingCustId);
-
-    if (error) alert(error.message);
-    else {
-      await logActivity('Updated Contact', `Updated profile for ${first_name} ${last_name}`);
-      cancelCustEdit();
-      fetchPatients();
+    /* Show full text title alongside image logo on desktop */
+    .brand-title { 
+      display: inline-block; 
+      font-size: 22px; 
     }
-  } else {
-    const { error } = await supabaseClient
-      .from('patients')
-      .insert([{ first_name, last_name, email, phone, user_id: currentUserId }]);
-
-    if (error) alert(error.message);
-    else {
-      await logActivity('Created Contact', `Added new patient ${first_name} ${last_name}`);
-      clearCustForm();
-      fetchPatients();
-    }
-  }
-}
-
-function startCustEdit(id) {
-  const c = customerStore.find(i => String(i.id) === String(id));
-  if (!c) return;
-  editingCustId = id;
-  document.getElementById('cust-first-name').value = c.first_name || '';
-  document.getElementById('cust-last-name').value = c.last_name || '';
-  document.getElementById('cust-email').value = c.email || '';
-  document.getElementById('cust-phone').value = formatForDisplay(c.phone) || '';
-  document.getElementById('cust-form-title').innerText = 'Edit Contact';
-  document.getElementById('cust-save-btn').innerText = 'Save Changes';
-  document.getElementById('cust-cancel-btn').classList.remove('hidden');
-}
-
-function cancelCustEdit() {
-  editingCustId = null;
-  clearCustForm();
-  document.getElementById('cust-form-title').innerText = 'Add Contact';
-  document.getElementById('cust-save-btn').innerText = 'Add Contact';
-  document.getElementById('cust-cancel-btn').classList.add('hidden');
-}
-
-function clearCustForm() {
-  document.getElementById('cust-first-name').value = '';
-  document.getElementById('cust-last-name').value = '';
-  document.getElementById('cust-email').value = '';
-  document.getElementById('cust-phone').value = '';
-}
-
-async function deletePatient(id) {
-  const c = customerStore.find(i => String(i.id) === String(id));
-  if (!confirm('Delete this contact?')) return;
+      
+    /* Hide Hamburger Toggle on Desktop */
+    .hamburger-toggle { display: none !important; }
   
-  const { error } = await supabaseClient
-    .from('patients')
-    .delete()
-    .eq('id', id);
+    /* Display Links Inline next to Brand & Buttons on Desktop */
+    header { display: flex; align-items: center; }
 
-  if (error) alert(error.message);
-  else {
-    await logActivity('Deleted Contact', `Removed contact ${c ? c.first_name : id}`);
-    fetchPatients();
-  }
-}
-
-// --- Contact-level actions triggered from the Profile page instead of the
-// Contact Directory table row (Edit / Delete now live here only) ---
-function editContactFromProfile() {
-  if (!currentProfileCustId) return;
-  startCustEdit(currentProfileCustId);
-  switchTab('customers');
-}
-
-async function deleteContactFromProfile() {
-  if (!currentProfileCustId) return;
-  const c = customerStore.find(i => String(i.id) === String(currentProfileCustId));
-  if (!confirm('Delete this contact? This cannot be undone.')) return;
-
-  const { error } = await supabaseClient
-    .from('patients')
-    .delete()
-    .eq('id', currentProfileCustId);
-
-  if (error) {
-    alert(error.message);
-  } else {
-    await logActivity('Deleted Contact', `Removed contact ${c ? c.first_name : currentProfileCustId}`);
-    currentProfileCustId = null;
-    switchTab('customers');
-  }
-}
-
-// --- MODULE 2: FULL-PAGE PATIENT PROFILE & SCHEDULING ---
-async function openPatientProfile(custId) {
-  currentProfileCustId = custId;
-  const cust = customerStore.find(c => String(c.id) === String(custId));
-  if (!cust) return alert('Contact not found.');
-
-  ['customers', 'templates', 'history', 'billing'].forEach(t => {
-    const el = document.getElementById(`view-${t}`);
-    if (el) el.classList.add('hidden');
-  });
-  document.getElementById('view-profile').classList.remove('hidden');
-
-  document.getElementById('profile-title').innerText = `${cust.first_name || ''} ${cust.last_name || ''}`;
-  document.getElementById('profile-subtitle').innerText = `Email: ${cust.email || 'N/A'} | Phone: ${formatForDisplay(cust.phone) || 'N/A'}`;
-
-  await fetchTemplatesQuietly();
-  const sel = document.getElementById('sched-template-select');
-  sel.innerHTML = '<option value="">-- Select Template (Optional) --</option>';
-  templateStore.forEach(t => { sel.innerHTML += `<option value="${t.id}">${t.title}</option>`; });
-
-  cancelSchedEdit();
-  loadPatientSchedules(custId);
-  loadPatientHistory(cust.phone);
-}
-
-function applySchedTemplateToPreview() {
-  const selectedId = document.getElementById('sched-template-select').value;
-  const cust = customerStore.find(c => String(c.id) === String(currentProfileCustId));
-  if (!selectedId || !cust) return;
-
-  const tmpl = templateStore.find(t => String(t.id) === String(selectedId));
-  if (!tmpl) return;
-
-  let text = tmpl.body;
-  text = text.replace(/\{first_name\}/g, cust.first_name || '');
-  text = text.replace(/\{last_name\}/g, cust.last_name || '');
-  text = text.replace(/\{email\}/g, cust.email || '');
-  text = text.replace(/\{phone\}/g, formatForDisplay(cust.phone) || '');
-
-  document.getElementById('sched-message-body').value = text;
-}
-
-function toggleScheduleFormOptions() {
-  toggleCustomDatePicker();
-  toggleRecurrenceInput();
-}
-
-function toggleCustomDatePicker() {
-  const type = document.getElementById('sched-type').value;
-  const singleContainer = document.getElementById('single-date-container');
-  const multiContainer = document.getElementById('multi-date-container');
-
-  if (type === 'multi_date') {
-    if (singleContainer) singleContainer.classList.add('hidden');
-    if (multiContainer) multiContainer.classList.remove('hidden');
-  } else {
-    if (singleContainer) singleContainer.classList.remove('hidden');
-    if (multiContainer) multiContainer.classList.add('hidden');
-  }
-}
-
-function toggleRecurrenceInput() {
-  const type = document.getElementById('sched-type').value;
-  const recurrenceTypeSelect = document.getElementById('sched-recurrence-type');
-  const limitContainer = document.getElementById('recurrence-limit-container');
-  const countWrapper = document.getElementById('recurrence-count-wrapper');
-
-  if (!limitContainer || !countWrapper || !recurrenceTypeSelect) return;
-
-  const recurrenceType = recurrenceTypeSelect.value;
-
-  if (type === 'one_time' || type === 'multi_date') {
-    limitContainer.classList.add('hidden');
-    countWrapper.classList.add('hidden');
-    return;
-  }
-
-  limitContainer.classList.remove('hidden');
-
-  if (recurrenceType === 'fixed_count') {
-    countWrapper.classList.remove('hidden');
-  } else {
-    countWrapper.classList.add('hidden');
-  }
-}
-
-function addCustomDateToList() {
-  const val = document.getElementById('multi-date-input').value;
-  if (!val) return alert('Select a date and time first.');
-
-  const iso = new Date(val).toISOString();
-  if (customDatesList.includes(iso)) return alert('That timestamp is already in your list.');
-
-  customDatesList.push(iso);
-  customDatesList.sort();
-  document.getElementById('multi-date-input').value = '';
-  renderCustomDatesList();
-}
-
-function removeCustomDateFromList(index) {
-  customDatesList.splice(index, 1);
-  renderCustomDatesList();
-}
-
-function renderCustomDatesList() {
-  const ul = document.getElementById('custom-dates-list');
-  if (!ul) return;
-
-  if (customDatesList.length === 0) {
-    return ul.innerHTML = '<li style="color: #94a3b8; list-style: none; margin-left: -15px;">No dates added yet.</li>';
-  }
-
-  ul.innerHTML = '';
-  customDatesList.forEach((iso, idx) => {
-    const display = new Date(iso).toLocaleString();
-    ul.innerHTML += `
-      <li style="margin-bottom: 4px;">
-        <strong>${display}</strong>
-        <button type="button" onclick="removeCustomDateFromList(${idx})" class="action-btn danger" style="padding: 1px 6px; font-size: 10px; margin-left: 10px;">Remove</button>
-      </li>`;
-  });
-}
-
-async function loadPatientSchedules(custId) {
-  const tbody = document.getElementById('sched-list-body');
-  if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="5">Loading schedules...</td></tr>';
-
-  const { data, error } = await supabaseClient
-    .from('scheduled_messages')
-    .select('*')
-    .eq('patient_id', String(custId))
-    .neq('status', 'completed') 
-    .order('next_run_at', { ascending: true });
-
-  if (error || !data || data.length === 0) {
-    scheduleStore = [];
-    return tbody.innerHTML = '<tr><td colspan="5">No active scheduled messages found. Create one above!</td></tr>';
-  }
-
-  scheduleStore = data;
-  tbody.innerHTML = '';
-  data.forEach(s => {
-    const isPaused = s.status === 'paused';
-    const nextRun = new Date(s.next_run_at).toLocaleString();
+    /* Right-Aligned Desktop Buttons */
+    .header-actions {
+      margin-left: auto;
+      gap: 10px;
+    }
     
-    let displayType = s.schedule_type.toUpperCase();
-    if (s.schedule_type === 'multi_date') {
-      displayType = `MULTI-DATE (${s.pending_dates ? s.pending_dates.length : 0} left)`;
-    } else if (s.recurrence_type === 'fixed_count' && s.recurrences_remaining !== null) {
-      displayType += ` (${s.recurrences_remaining} left)`;
+    .nav-container {
+      width: 100%;
+      padding: 12px 20px;
+      flex-wrap: nowrap;
+      gap: 20px;
+    }
+  
+    .nav-links, .nav-links.hidden-mobile {
+      display: flex !important;
+      position: static;
+      flex-direction: row;
+      width: auto !important;
+      background-color: transparent;
+      border: none;
+      padding: 0;
+      margin: 0;
+      gap: 16px;
+    }
+  
+    .nav-links a {
+      background-color: transparent;
+      padding: 8px 14px;
+      font-size: 14px;
+    }
+  
+    .btn-login, .btn-signup {
+      padding: 8px 16px !important;
+      font-size: 14px !important;
+    }
+
+    /* Desktop Hero & Features */
+    .hero { padding: 80px 20px 60px; }
+    .hero-container { padding: 40px 25px; }
+    .hero h2 { font-size: 46px; }
+    .hero p { font-size: 18px; }
+    .features, .pricing { padding: 60px 20px; }
+    .section-title h3 { font-size: 32px; }
+
+    /* Auth card recentres with its own horizontal breathing room on desktop */
+    #auth-section { margin: 30px auto; }
+
+    /* Desktop Dashboard Layout */
+    #dashboard { flex-direction: row; }
+    
+    .sidebar { 
+      width: 240px; 
+      flex-direction: column; 
+      justify-content: flex-start; 
+      padding: 25px 0; 
+      align-items: stretch; 
+      border-right: 4px solid var(--border-toy);
+      border-bottom: none;
+      gap: 0;
+      
     }
     
-    tbody.innerHTML += `
-      <tr>
-        <td><strong>${displayType}</strong></td>
-        <td>${nextRun}</td>
-        <td><span style="color:${isPaused ? '#e53e3e' : '#00B04F'}; font-weight:bold;">${s.status}</span></td>
-        <td>${s.message_body || ''}</td>
-        <td>
-          <button class="action-btn warning" onclick="startSchedEdit('${s.id}')">Edit</button>
-          <button class="action-btn ${isPaused ? 'info' : 'secondary'}" onclick="toggleScheduleStatus('${s.id}', '${s.status}')">${isPaused ? 'Start' : 'Pause'}</button>
-          <button class="action-btn danger" onclick="deleteSchedule('${s.id}')">Delete</button>
-        </td>
-      </tr>`;
-  });
-}
-
-function startSchedEdit(schedId) {
-  const s = scheduleStore.find(item => String(item.id) === String(schedId));
-  if (!s) return;
-
-  editingSchedId = schedId;
-  document.getElementById('sched-message-body').value = s.message_body || '';
-  document.getElementById('sched-type').value = s.schedule_type || 'one_time';
-  document.getElementById('sched-recurrence-type').value = s.recurrence_type || 'indefinite';
-  document.getElementById('sched-recurrence-count').value = s.recurrences_remaining || '';
-
-  if (s.schedule_type === 'multi_date') {
-    customDatesList = Array.isArray(s.pending_dates) ? [...s.pending_dates] : [];
-    renderCustomDatesList();
-  } else {
-    customDatesList = [];
-    document.getElementById('sched-datetime').value = toDatetimeLocal(s.next_run_at);
-  }
-
-  toggleScheduleFormOptions();
-
-  document.getElementById('sched-form-title').innerText = 'Edit Scheduled Message';
-  document.getElementById('sched-save-btn').innerText = 'Update Schedule';
-  document.getElementById('sched-cancel-btn').classList.remove('hidden');
-}
-
-function cancelSchedEdit() {
-  editingSchedId = null;
-  customDatesList = [];
-  
-  const msgInput = document.getElementById('sched-message-body');
-  const dtInput = document.getElementById('sched-datetime');
-  const tmplSelect = document.getElementById('sched-template-select');
-  const typeSelect = document.getElementById('sched-type');
-  const recTypeSelect = document.getElementById('sched-recurrence-type');
-  const recCountInput = document.getElementById('sched-recurrence-count');
-
-  if (msgInput) msgInput.value = '';
-  if (dtInput) dtInput.value = '';
-  if (tmplSelect) tmplSelect.value = '';
-  if (typeSelect) typeSelect.value = 'one_time';
-  if (recTypeSelect) recTypeSelect.value = 'indefinite';
-  if (recCountInput) recCountInput.value = '';
-  
-  toggleScheduleFormOptions();
-  renderCustomDatesList();
-
-  const title = document.getElementById('sched-form-title');
-  const saveBtn = document.getElementById('sched-save-btn');
-  const cancelBtn = document.getElementById('sched-cancel-btn');
-
-  if (title) title.innerText = 'Schedule Recurring or One-Time SMS';
-  if (saveBtn) saveBtn.innerText = 'Schedule Message';
-  if (cancelBtn) cancelBtn.classList.add('hidden');
-}
-
-async function saveSchedule() {
-  const message_body = document.getElementById('sched-message-body').value;
-  const schedule_type = document.getElementById('sched-type').value;
-  const recurrence_type = document.getElementById('sched-recurrence-type').value;
-  const countInput = document.getElementById('sched-recurrence-count').value;
-
-  if (!message_body) return alert('Please enter message text.');
-
-  let next_run_at = null;
-  let pending_dates = [];
-  let recurrences_remaining = null;
-
-  if (schedule_type === 'multi_date') {
-    if (customDatesList.length === 0) return alert('Please add at least one date to your list.');
-    next_run_at = customDatesList[0];
-    pending_dates = [...customDatesList];
-  } else {
-    const rawDatetime = document.getElementById('sched-datetime').value;
-    if (!rawDatetime) return alert('Please select a dispatch date/time.');
-    next_run_at = new Date(rawDatetime).toISOString();
-  }
-
-  if (schedule_type !== 'one_time' && schedule_type !== 'multi_date') {
-    if (recurrence_type === 'fixed_count') {
-      if (!countInput || parseInt(countInput, 10) < 1) return alert('Enter a valid number of recurrences.');
-      recurrences_remaining = parseInt(countInput, 10);
-    }
-  }
-
-  const payload = {
-    patient_id: String(currentProfileCustId),
-    message_body,
-    schedule_type,
-    recurrence_type: schedule_type === 'one_time' || schedule_type === 'multi_date' ? 'indefinite' : recurrence_type,
-    recurrences_remaining,
-    next_run_at,
-    pending_dates,
-    status: 'active'
-  };
-
-  if (editingSchedId) {
-    const { error } = await supabaseClient.from('scheduled_messages').update(payload).eq('id', editingSchedId);
-    if (error) alert(error.message);
-    else {
-      alert('Schedule updated successfully!');
-      cancelSchedEdit();
-      loadPatientSchedules(currentProfileCustId);
-    }
-  } else {
-    const { error } = await supabaseClient.from('scheduled_messages').insert([payload]);
-    if (error) alert(error.message);
-    else {
-      alert('Message schedule created successfully!');
-      cancelSchedEdit();
-      loadPatientSchedules(currentProfileCustId);
-    }
-  }
-}
-
-async function toggleScheduleStatus(schedId, currentStatus) {
-  const newStatus = currentStatus === 'paused' ? 'active' : 'paused';
-  await supabaseClient.from('scheduled_messages').update({ status: newStatus }).eq('id', schedId);
-  loadPatientSchedules(currentProfileCustId);
-}
-
-async function deleteSchedule(schedId) {
-  if (!confirm('Cancel and delete this schedule?')) return;
-  await supabaseClient.from('scheduled_messages').delete().eq('id', schedId);
-  loadPatientSchedules(currentProfileCustId);
-}
-
-async function loadPatientHistory(phone) {
-  const tbody = document.getElementById('profile-history-body');
-  if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="2">Loading history...</td></tr>';
-
-  const { data } = await supabaseClient
-    .from('activity_history')
-    .select('*')
-    .ilike('details', `%${phone}%`)
-    .order('created_at', { ascending: false });
-
-  if (!data || data.length === 0) {
-    return tbody.innerHTML = '<tr><td colspan="2">No past history recorded for this contact.</td></tr>';
-  }
-
-  tbody.innerHTML = '';
-  data.forEach(h => {
-    const time = new Date(h.created_at).toLocaleString();
-    tbody.innerHTML += `
-      <tr>
-        <td style="font-size:12px; color:#666; width:180px;">${time}</td>
-        <td><strong>${h.action}:</strong> ${h.details}</td>
-      </tr>`;
-  });
-}
-
-// --- MODULE 3: MESSAGE LIBRARY (TEMPLATES) ---
-async function fetchTemplatesQuietly() {
-  const { data } = await supabaseClient.from('reminder_templates').select('*').order('title', { ascending: true });
-  templateStore = data || [];
-}
-
-async function fetchTemplates() {
-  const tbody = document.getElementById('template-list-body');
-  if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
-  const { data, error } = await supabaseClient.from('reminder_templates').select('*').order('created_at', { ascending: false });
-  if (error) return tbody.innerHTML = '<tr><td colspan="3">Error loading templates.</td></tr>';
-  templateStore = data || [];
-  if (templateStore.length === 0) return tbody.innerHTML = '<tr><td colspan="3">No templates found. Create your first one above!</td></tr>';
-  tbody.innerHTML = '';
-  templateStore.forEach(t => {
-    tbody.innerHTML += `
-      <tr>
-        <td><strong>${t.title}</strong></td>
-        <td>${t.body}</td>
-        <td>
-          <button class="action-btn warning" onclick="startTmplEdit('${t.id}')">Edit</button>
-          <button class="action-btn danger" onclick="deleteTemplate('${t.id}')">Delete</button>
-        </td>
-      </tr>`;
-  });
-}
-
-async function saveTemplate() {
-  const title = document.getElementById('tmpl-title').value;
-  const body = document.getElementById('tmpl-body').value;
-  if (!title || !body) return alert('Title and body are required.');
-
-  if (editingTmplId) {
-    const { error } = await supabaseClient.from('reminder_templates').update({ title, body }).eq('id', editingTmplId);
-    if (error) alert(error.message);
-    else {
-      await logActivity('Updated Template', `Modified template "${title}"`);
-      cancelTmplEdit();
-      fetchTemplates();
-    }
-  } else {
-    const { error } = await supabaseClient.from('reminder_templates').insert([{ title, body }]);
-    if (error) alert(error.message);
-    else {
-      await logActivity('Created Template', `Saved new template "${title}"`);
-      clearTmplForm();
-      fetchTemplates();
-    }
-  }
-}
-
-function startTmplEdit(id) {
-  const t = templateStore.find(i => String(i.id) === String(id));
-  if (!t) return;
-  editingTmplId = id;
-  document.getElementById('tmpl-title').value = t.title || '';
-  document.getElementById('tmpl-body').value = t.body || '';
-  document.getElementById('tmpl-form-title').innerText = 'Edit Template';
-  document.getElementById('tmpl-save-btn').innerText = 'Save Changes';
-  document.getElementById('tmpl-cancel-btn').classList.remove('hidden');
-}
-
-function cancelTmplEdit() {
-  editingTmplId = null;
-  clearTmplForm();
-  document.getElementById('tmpl-form-title').innerText = 'Add Reminder Template';
-  document.getElementById('tmpl-save-btn').innerText = 'Save Template';
-  document.getElementById('tmpl-cancel-btn').classList.add('hidden');
-}
-
-function clearTmplForm() {
-  document.getElementById('tmpl-title').value = '';
-  document.getElementById('tmpl-body').value = '';
-}
-
-async function deleteTemplate(id) {
-  const t = templateStore.find(i => String(i.id) === String(id));
-  if (!confirm('Delete this template?')) return;
-  const { error } = await supabaseClient.from('reminder_templates').delete().eq('id', id);
-  if (error) alert(error.message);
-  else {
-    await logActivity('Deleted Template', `Removed template "${t ? t.title : id}"`);
-    fetchTemplates();
-  }
-}
-
-// --- MODULE 4: SEND IMMEDIATE SMS MODAL ---
-async function openSendModal(custId) {
-  activeModalCust = customerStore.find(c => String(c.id) === String(custId));
-  if (!activeModalCust) return alert('Contact not found.');
-
-  document.getElementById('modal-cust-name').innerText = `${activeModalCust.first_name || ''} ${activeModalCust.last_name || ''}`;
-  document.getElementById('modal-cust-phone').innerText = formatForDisplay(activeModalCust.phone) || 'No Phone Number';
-  document.getElementById('modal-message-preview').value = '';
-
-  await fetchTemplatesQuietly();
-  const select = document.getElementById('modal-template-select');
-  select.innerHTML = '<option value="">-- Choose a Template --</option>';
-
-  if (templateStore.length === 0) {
-    select.innerHTML = '<option value="">No saved templates available</option>';
-  } else {
-    templateStore.forEach(t => {
-      select.innerHTML += `<option value="${t.id}">${t.title}</option>`;
-    });
-  }
-
-  document.getElementById('send-modal').classList.remove('hidden');
-}
-
-function applyTemplateToPreview() {
-  const selectedId = document.getElementById('modal-template-select').value;
-  if (!selectedId || !activeModalCust) {
-    document.getElementById('modal-message-preview').value = '';
-    return;
-  }
-
-  const tmpl = templateStore.find(t => String(t.id) === String(selectedId));
-  if (!tmpl) return;
-
-  let text = tmpl.body;
-  text = text.replace(/\{first_name\}/g, activeModalCust.first_name || '');
-  text = text.replace(/\{last_name\}/g, activeModalCust.last_name || '');
-  text = text.replace(/\{email\}/g, activeModalCust.email || '');
-  text = text.replace(/\{phone\}/g, formatForDisplay(activeModalCust.phone) || '');
-
-  document.getElementById('modal-message-preview').value = text;
-}
-
-async function executeSendMessage() {
-  const messageText = document.getElementById('modal-message-preview').value;
-  if (!messageText) return alert('Message body cannot be empty.');
-  if (!activeModalCust || !activeModalCust.phone) return alert('Contact has no phone number listed.');
-  if (!currentUserId) return alert('User session expired. Please log in again.');
-
-  const custName = `${activeModalCust.first_name || ''} ${activeModalCust.last_name || ''}`;
-  
-  try {
-    const res = await fetch('/api/send-sms', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: currentUserId,
-        phone: activeModalCust.phone,
-        message: messageText
-      })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || data.error || 'Failed to send SMS');
-
-    await logActivity('Sent SMS', `Sent to ${custName} (${activeModalCust.phone}): "${messageText}"`);
-
-    alert(`SMS successfully delivered to ${custName}!`);
-    closeSendModal();
-  } catch (err) {
-    alert('SMS Send Error: ' + err.message);
-  }
-}
-
-function closeSendModal() {
-  activeModalCust = null;
-  document.getElementById('send-modal').classList.add('hidden');
-}
-
-// --- MODULE 5: ACTIVITY HISTORY ---
-async function fetchHistory() {
-  const tbody = document.getElementById('history-list-body');
-  if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
-  const { data, error } = await supabaseClient.from('activity_history').select('*').order('created_at', { ascending: false });
-  if (error) return tbody.innerHTML = '<tr><td colspan="3">Error loading activity logs.</td></tr>';
-  historyStore = data || [];
-  populateHistoryTypeFilter();
-  renderHistoryRows(historyStore);
-}
-
-// Populates the "Activity Type" filter dropdown from whatever action values
-// actually exist in the fetched history, so it never drifts out of sync
-// with the action strings logActivity() happens to produce.
-function populateHistoryTypeFilter() {
-  const select = document.getElementById('history-filter-type');
-  if (!select) return;
-  const currentValue = select.value;
-  const uniqueTypes = [...new Set(historyStore.map(h => h.action).filter(Boolean))].sort();
-  select.innerHTML = '<option value="">All Activity Types</option>' +
-    uniqueTypes.map(t => `<option value="${t}">${t}</option>`).join('');
-  if (uniqueTypes.includes(currentValue)) select.value = currentValue;
-}
-
-function renderHistoryRows(rows) {
-  const tbody = document.getElementById('history-list-body');
-  if (!tbody) return;
-  if (!rows || rows.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3">No activity matches the selected filters.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = '';
-  rows.forEach(h => {
-    const time = new Date(h.created_at).toLocaleString();
-    tbody.innerHTML += `
-      <tr>
-        <td style="font-size:12px; color:#666;">${time}</td>
-        <td><strong>${h.action}</strong></td>
-        <td>${h.details || ''}</td>
-      </tr>`;
-  });
-}
-
-// Filters the already-fetched history client-side (no re-query needed) by
-// activity type and/or a from/to date range, then re-renders the table.
-function applyHistoryFilters() {
-  const typeEl = document.getElementById('history-filter-type');
-  const fromEl = document.getElementById('history-filter-from');
-  const toEl = document.getElementById('history-filter-to');
-
-  const typeVal = typeEl ? typeEl.value : '';
-  const fromVal = fromEl ? fromEl.value : '';
-  const toVal = toEl ? toEl.value : '';
-
-  let filtered = historyStore;
-
-  if (typeVal) {
-    filtered = filtered.filter(h => h.action === typeVal);
-  }
-  if (fromVal) {
-    const fromDate = new Date(fromVal + 'T00:00:00');
-    filtered = filtered.filter(h => new Date(h.created_at) >= fromDate);
-  }
-  if (toVal) {
-    const toDate = new Date(toVal + 'T23:59:59');
-    filtered = filtered.filter(h => new Date(h.created_at) <= toDate);
-  }
-
-  renderHistoryRows(filtered);
-}
-
-function clearHistoryFilters() {
-  const typeEl = document.getElementById('history-filter-type');
-  const fromEl = document.getElementById('history-filter-from');
-  const toEl = document.getElementById('history-filter-to');
-  if (typeEl) typeEl.value = '';
-  if (fromEl) fromEl.value = '';
-  if (toEl) toEl.value = '';
-  renderHistoryRows(historyStore);
-}
-
-// --- MODULE 6: BILLING & SUBSCRIPTION CONTROLLER ---
-async function fetchBillingDetails() {
-  if (!currentUserId) return;
-
-  const { data: customer, error } = await supabaseClient
-    .from('practices')
-    .select('*')
-    .eq('user_id', currentUserId)
-    .maybeSingle();
-
-  if (error || !customer) return;
-
-  const planTier = customer.plan_tier || 'trial';
-  const sentCount = customer.sms_sent_this_month || 0;
-  const limitCount = customer.sms_limit || 100;
-
-  // 1. Populate Usage & Plan Badge
-  const badge = document.getElementById('billing-plan-badge');
-  const sentEl = document.getElementById('billing-sms-sent');
-  const limitEl = document.getElementById('billing-sms-limit');
-  const autoUpgradeEl = document.getElementById('billing-auto-upgrade');
-
-  if (badge) badge.innerText = planTier.toUpperCase();
-  if (sentEl) sentEl.innerText = sentCount;
-  if (limitEl) limitEl.innerText = limitCount;
-  if (autoUpgradeEl) autoUpgradeEl.checked = customer.auto_upgrade_enabled || false;
-
-  const percent = Math.min(100, Math.round((sentCount / limitCount) * 100));
-  const bar = document.getElementById('billing-progress-bar');
-  if (bar) {
-    bar.style.width = `${percent}%`;
-    bar.style.backgroundColor = percent > 90 ? '#E51A24' : '#00B04F';
-  }
-
-  // 2. Load Saved BYOC Gateway Settings
-  const provSelect = document.getElementById('provider-select');
-  const provKey = document.getElementById('provider-key');
-  const provSid = document.getElementById('provider-sid');
-  const provPhone = document.getElementById('provider-phone');
-
-  if (provSelect && customer.provider_type) provSelect.value = customer.provider_type;
-  if (provKey) provKey.value = customer.provider_api_key || '';
-  if (provSid) provSid.value = customer.provider_account_sid || '';
-  if (provPhone) provPhone.value = customer.provider_phone_number || '';
-
-  // Load A2P status badge if present
-  const a2pBadge = document.getElementById('a2p-status-badge');
-  if (a2pBadge && customer.a2p_status) {
-    a2pBadge.innerText = customer.a2p_status.toUpperCase();
-    a2pBadge.style.background = customer.a2p_status === 'approved' ? '#dcfce7' : '#fef3c7';
-    a2pBadge.style.color = customer.a2p_status === 'approved' ? '#15803d' : '#b45309';
-  }
-
-  toggleProviderFields();
-
-  // 3. Trigger Trial Modal Check
-  if (planTier === 'trial') {
-    const modalSent = document.getElementById('trial-modal-sent');
-    const modalLimit = document.getElementById('trial-modal-limit');
-    if (modalSent) modalSent.innerText = sentCount;
-    if (modalLimit) modalLimit.innerText = limitCount;
+    .sidebar-header { padding: 0 20px; margin-bottom: 30px; }
+    .sidebar-header h3 { font-size: 22px; }
     
-    if (!sessionStorage.getItem('trialModalShown')) {
-      const trialModal = document.getElementById('trial-modal');
-      if (trialModal) trialModal.classList.remove('hidden');
-      sessionStorage.setItem('trialModalShown', 'true');
+    .nav-group { 
+      flex-direction: column; 
+      width: 100%; 
+      overflow-x: visible; 
+      padding: 0 12px; 
+      gap: 8px;
     }
-  }
-}
 
-function closeTrialModal() {
-  const modal = document.getElementById('trial-modal');
-  if (modal) modal.classList.add('hidden');
-}
-
-async function toggleAutoUpgrade(isEnabled) {
-  if (!currentUserId) return;
-  const { error } = await supabaseClient
-    .from('practices')
-    .update({ auto_upgrade_enabled: isEnabled })
-    .eq('user_id', currentUserId);
-
-  if (error) {
-    alert('Failed to update auto-upgrade setting.');
-    const el = document.getElementById('billing-auto-upgrade');
-    if (el) el.checked = !isEnabled;
-  }
-}
-
-async function triggerCheckout(planTier) {
-  if (!currentUserId) return alert('Please log in first.');
-  const autoUpgradeEl = document.getElementById('billing-auto-upgrade');
-  const autoUpgrade = autoUpgradeEl ? autoUpgradeEl.checked : false;
-
-  try {
-    const res = await fetch('/api/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: currentUserId,
-        planTier: planTier,
-        autoUpgrade: autoUpgrade
-      })
-    });
-
-    const data = await res.json();
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      alert('Checkout initiation failed: ' + (data.error || 'Unknown error'));
+    /* Automatically pushes footer elements strictly to the bottom */
+    .sidebar-footer { 
+      margin-top: auto !important; /* Pushes user info & logout to the very bottom */
+      padding: 20px 16px 0 16px !important; 
+      border-top: 3px dashed var(--brand-yellow) !important; 
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
     }
-  } catch (err) {
-    alert('Network error initiating payment session.');
-  }
-}
-
-// --- MODULE 7: BYOC GATEWAY & PROVISIONING CONTROLLER ---
-function toggleProviderFields() {
-  const providerEl = document.getElementById('provider-select');
-  if (!providerEl) return;
-
-  const provider = providerEl.value;
-  const credsDiv = document.getElementById('provider-credentials');
-  const sidInput = document.getElementById('provider-sid');
-  const instructionsDiv = document.getElementById('provider-instructions');
-
-  if (provider === 'system') {
-    if (credsDiv) credsDiv.classList.add('hidden');
-    if (instructionsDiv) {
-      instructionsDiv.innerHTML = '<p style="color: #64748b;"><strong>Built-in Gateway Selected:</strong> Outbound messages dispatch automatically via our system master Twilio account. No extra setup required.</p>';
-    }
-    return;
-  }
-
-  if (credsDiv) credsDiv.classList.remove('hidden');
-
-  if (provider === 'twilio') {
-    if (sidInput) sidInput.classList.remove('hidden');
-    const keyInput = document.getElementById('provider-key');
-    if (keyInput) keyInput.placeholder = 'Auth Token (or API Secret)';
-    if (instructionsDiv) {
-      instructionsDiv.innerHTML = `
-        <strong>Twilio Setup Guide:</strong>
-        <ol style="margin-top: 6px; padding-left: 20px; line-height: 1.5;">
-          <li>Log in to your <strong>Twilio Console</strong>.</li>
-          <li>Copy your <strong>Account SID</strong> and <strong>Auth Token</strong>.</li>
-          <li>Enter your verified Twilio phone number in E.164 format (+1XXXXXXXXXX).</li>
-        </ol>
-      `;
-    }
-  } else if (provider === 'quo') {
-    if (sidInput) sidInput.classList.add('hidden');
-    const keyInput = document.getElementById('provider-key');
-    if (keyInput) keyInput.placeholder = 'Quo API Key';
-    if (instructionsDiv) {
-      instructionsDiv.innerHTML = `
-        <strong>Quo (formerly OpenPhone) Setup Guide:</strong>
-        <ol style="margin-top: 6px; padding-left: 20px; line-height: 1.5;">
-          <li>Log in to your <strong>Quo Workspace</strong> (Admin role required).</li>
-          <li>Navigate to <strong>Settings → API</strong> and click <strong>Generate API Key</strong>.</li>
-          <li>Paste the key above along with your Quo phone number.</li>
-        </ol>
-      `;
-    }
-  } else if (provider === 'telnyx') {
-    if (sidInput) sidInput.classList.add('hidden');
-    const keyInput = document.getElementById('provider-key');
-    if (keyInput) keyInput.placeholder = 'Telnyx V2 API Key';
-    if (instructionsDiv) {
-      instructionsDiv.innerHTML = `
-        <strong>Telnyx Setup Guide:</strong>
-        <ol style="margin-top: 6px; padding-left: 20px; line-height: 1.5;">
-          <li>Log in to the <strong>Telnyx Portal</strong>.</li>
-          <li>Go to <strong>API Keys</strong> and generate a V2 API Key.</li>
-          <li>Enter your Telnyx phone number assigned to an active Messaging Profile.</li>
-        </ol>
-      `;
-    }
-  }
-}
-
-async function saveProviderSettings() {
-  if (!currentUserId) return alert('User session expired. Please log in again.');
-
-  const provider_type = document.getElementById('provider-select').value;
-  const provider_api_key = document.getElementById('provider-key').value.trim();
-  const provider_account_sid = document.getElementById('provider-sid').value.trim();
-  const provider_phone_number = document.getElementById('provider-phone').value.trim();
-
-  const { error } = await supabaseClient
-    .from('practices')
-    .update({
-      provider_type,
-      provider_api_key,
-      provider_account_sid,
-      provider_phone_number
-    })
-    .eq('user_id', currentUserId);
-
-  if (error) {
-    alert('Error saving provider settings: ' + error.message);
-  } else {
-    alert('SMS Gateway settings saved successfully!');
-    await logActivity('Updated Gateway', `Switched gateway mode to: ${provider_type.toUpperCase()}`);
-    await fetchBillingDetails();
-  }
-}
-
-// --- MODULE 8: A2P ISV & NUMBER PROVISIONING HANDLERS ---
-async function searchAvailableNumbers() {
-  const areaCodeInput = document.getElementById('area-code-input');
-  if (!areaCodeInput) return;
   
-  const areaCode = areaCodeInput.value;
-  if (!areaCode || areaCode.length !== 3) return alert('Enter a valid 3-digit area code.');
-
-  try {
-    const res = await fetch('/api/provision-number', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'search', areaCode })
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Search failed');
-
-    const select = document.getElementById('available-numbers-select');
-    if (!select) return;
-
-    select.innerHTML = '';
-    data.numbers.forEach(num => {
-      select.innerHTML += `<option value="${num}">${formatForDisplay(num)}</option>`;
-    });
-
-    const resContainer = document.getElementById('number-results-container');
-    if (resContainer) resContainer.classList.remove('hidden');
-  } catch (err) {
-    alert('Number Search Error: ' + err.message);
-  }
-}
-
-async function buySelectedNumber() {
-  const select = document.getElementById('available-numbers-select');
-  if (!select) return;
-
-  const phoneNumber = select.value;
-  if (!confirm(`Provision ${formatForDisplay(phoneNumber)} as your practice sending number?`)) return;
-
-  try {
-    const res = await fetch('/api/provision-number', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: currentUserId, action: 'buy', phoneNumber })
-    });
-
-    const data = await res.json();
-    if (res.ok) {
-      alert(`Success! Dedicated number ${formatForDisplay(data.phoneNumber)} is active for your practice.`);
-      fetchBillingDetails();
-    } else {
-      throw new Error(data.error || 'Provisioning failed');
+    /* Style adjustment for the user email text */
+    .sidebar-footer p {
+      margin: 0 !important;
+      font-size: 13px !important;
+      color: #FFFFFF !important;
+      word-break: break-all; /* Prevents long email addresses from overflowing */
     }
-  } catch (err) {
-    alert('Provisioning Error: ' + err.message);
-  }
-}
-
-async function submitA2PRegistration(event) {
-  if (event) event.preventDefault();
   
-  const payload = {
-    userId: currentUserId,
-    legalName: document.getElementById('a2p-legal-name').value,
-    ein: document.getElementById('a2p-ein').value,
-    businessType: document.getElementById('a2p-type').value,
-    address: document.getElementById('a2p-address').value,
-    city: document.getElementById('a2p-city').value,
-    state: document.getElementById('a2p-state').value,
-    postalCode: document.getElementById('a2p-zip').value
-  };
-
-  try {
-    const res = await fetch('/api/register-a2p', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Submission failed');
-
-    alert('Registration details submitted! Carrier verification takes 2-5 business days.');
-    fetchBillingDetails();
-  } catch (err) {
-    alert('A2P Submission Error: ' + err.message);
+    /* Full-width Log Out Button at the bottom */
+    .sidebar-footer button {
+      width: 100% !important;
+      margin-bottom: 0 !important;
+    }
+  
+    .nav-item { padding: 12px 16px; display: block; font-size: 14px; }
+    .main-content { padding: 35px; }
   }
-}
