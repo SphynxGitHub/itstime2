@@ -698,25 +698,27 @@
   }
 
   /* The Actions cell (always last, when a row has one) becomes its own
-     full-width row underneath the other data. Only the first action button
-     (e.g. "Profile & Schedules") is shown on mobile — the rest (Send Msg,
-     Edit, Delete, etc.) are reachable once you're on that record's detail
-     page, so they're hidden here rather than squeezed in. */
+     full-width row underneath the other data, with its buttons laid out in
+     a small wrapping row/grid instead of a narrow squeezed column. Contact
+     rows now only carry 2 buttons (Profile & Schedules, Send Msg) since
+     Edit/Delete moved to the profile page — both stay visible here. */
   td:has(.action-btn), th:has(.action-btn) {
     flex: 1 1 100%;
     width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
     margin-top: 6px;
     padding-top: 10px;
     border-top: 1px dashed #e2e8f0;
   }
 
   td .action-btn {
-    display: none;
-  }
-
-  td .action-btn:first-of-type {
-    display: block;
-    width: 100%;
+    display: inline-flex;
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 110px;
+    justify-content: center;
     text-align: center;
     margin-bottom: 0;
   }
