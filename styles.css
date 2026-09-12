@@ -1,4 +1,4 @@
-:root {
+  :root {
     /* Toy Train Palette */
     --brand-red: #E51A24;
     --brand-blue: #0052FF;
@@ -682,7 +682,9 @@
     align-items: flex-start;
     gap: 6px 14px;
     width: 100%;
-    padding: 14px 0;
+    padding: 14px 20px; /* horizontal padding matches the 20px used on
+      .card/.billing-card elsewhere, so row content doesn't touch the
+      card's edges the way it was */
     border-bottom: 2px solid #e2e8f0;
   }
 
