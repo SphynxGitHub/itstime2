@@ -7,94 +7,12 @@
   
   <!-- FAVICON LINK -->
   <link rel="icon" type="image/png" href="logo.png">
+  <link rel="stylesheet" href="styles.css">
 
   <!-- SUPABASE & LUCIDE ICONS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <style>
-    :root {
-      --brand-red: #E51A24;
-      --brand-blue: #0052FF;
-      --brand-green: #00B04F;
-      --brand-yellow: #F2B800;
-      --sidebar-bg: #121829;
-      --card-bg: #ffffff;
-    }
-
-    * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f6f9; color: #1e293b; }
-    .hidden { display: none !important; }
-
-    /* AUTH SCREEN */
-    #auth-section { max-width: 400px; margin: 50px auto; padding: 30px; background: white; border-top: 5px solid var(--brand-yellow); border-radius: 12px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-    input, textarea, select, button { display: block; width: 100%; margin-bottom: 12px; padding: 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 15px; }
-    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--brand-blue); box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.15); }
-    
-    button { background-color: var(--brand-blue); color: white; border: none; font-weight: bold; cursor: pointer; min-height: 44px; transition: opacity 0.2s ease; }
-    button:hover { opacity: 0.92; }
-    button.secondary { background-color: #64748b; }
-    button.danger { background-color: var(--brand-red); }
-    button.warning { background-color: var(--brand-yellow); color: #1e293b; }
-    button.success { background-color: var(--brand-green); }
-    button.info { background-color: var(--brand-blue); }
-    button.link-btn { background: none; color: var(--brand-blue); border: none; text-decoration: underline; padding: 5px; margin-bottom: 10px; cursor: pointer; text-align: right; font-weight: normal; min-height: auto; }
-
-    /* DASHBOARD RESPONSIVE LAYOUT */
-    #dashboard { display: flex; flex-direction: column; min-height: 100vh; }
-    
-    /* SIDEBAR / TOPNAV */
-    .sidebar { width: 100%; background-color: var(--sidebar-bg); color: white; padding: 15px; display: flex; flex-direction: flex-row; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-    .sidebar-header { margin: 0; display: flex; align-items: center; gap: 10px; }
-    .sidebar-header h3 { margin: 0; padding: 0; font-size: 20px; color: #ffffff; font-weight: bold; }
-    .sidebar-header span.accent { color: var(--brand-red); }
-    .sidebar-header span.accent-2 { color: var(--brand-blue); }
-    .sidebar-header span.accent-3 { color: var(--brand-green); }
-
-    .nav-group { display: flex; gap: 5px; width: 100%; margin-top: 10px; overflow-x: auto; padding-bottom: 5px; }
-    .nav-item { padding: 10px 16px; color: #94a3b8; text-decoration: none; display: inline-block; cursor: pointer; transition: 0.2s; font-size: 14px; border-radius: 6px; white-space: nowrap; font-weight: 500; }
-    .nav-item:hover { color: #ffffff; background-color: #1e293b; }
-    .nav-item.active { background-color: #1e293b; color: #ffffff; font-weight: bold; border-left: 4px solid var(--brand-yellow); }
-    .sidebar-footer { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 10px; padding-top: 10px; border-top: 1px solid #1e293b; font-size: 12px; }
-
-    /* MAIN CONTENT AREA */
-    .main-content { flex: 1; padding: 20px; background-color: #ffffff; width: 100%; }
-    
-    /* RESPONSIVE TABLES & CONTAINERS */
-    .table-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
-    table { width: 100%; border-collapse: collapse; min-width: 500px; }
-    th, td { border-bottom: 1px solid #e2e8f0; padding: 12px 14px; text-align: left; font-size: 14px; }
-    th { background-color: #f8fafc; font-weight: 600; color: #475569; }
-    .action-btn { display: inline-block; width: auto; padding: 6px 12px; margin-bottom: 4px; font-size: 12px; margin-right: 2px; border-radius: 4px; }
-
-    /* FLEX RESPONSIVE GRID HELPERS */
-    .form-row-flex { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
-    .btn-group-flex { display: flex; flex-direction: row; gap: 8px; }
-
-    /* MODAL POPUPS */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(18, 24, 41, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 10px; }
-    .modal-content { background: white; padding: 25px; width: 100%; max-width: 500px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; border-top: 5px solid var(--brand-blue); }
-
-    /* BILLING / USAGE UI STYLES */
-    .billing-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
-    .progress-bar-bg { width: 100%; height: 12px; background: #e2e8f0; border-radius: 6px; overflow: hidden; margin: 10px 0; }
-    .progress-bar-fill { height: 100%; width: 0%; background: var(--brand-green); transition: width 0.3s ease, background-color 0.3s ease; }
-    .badge-plan { background: #dbeafe; color: var(--brand-blue); font-size: 12px; font-weight: bold; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; border: 1px solid rgba(0, 82, 255, 0.2); }
-    .grid-plans { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 15px; }
-
-    /* DESKTOP MEDIA QUERIES (768px and up) */
-    @media (min-width: 768px) {
-      #dashboard { flex-direction: row; }
-      .sidebar { width: 240px; flex-direction: column; justify-content: flex-start; padding: 25px 0; align-items: stretch; }
-      .sidebar-header { padding: 0 20px; margin-bottom: 30px; }
-      .nav-group { flex-direction: column; width: 100%; margin-top: 0; overflow-x: visible; padding-bottom: 0; }
-      .nav-item { padding: 12px 20px; border-radius: 0; display: block; }
-      .sidebar-footer { margin-top: auto; padding: 20px; border-top: 1px solid #1e293b; flex-direction: column; align-items: flex-start; }
-      .main-content { padding: 35px; }
-      .form-row-flex { flex-direction: row; align-items: flex-end; }
-      .grid-plans { grid-template-columns: 1fr 1fr; }
-    }
-  </style>
 </head>
 <body>
 
