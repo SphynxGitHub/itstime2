@@ -611,22 +611,25 @@
       width: 100%;
       padding: 12px 20px;
       flex-wrap: nowrap;
+      gap: 20px;
     }
   
     .nav-links, .nav-links.hidden-mobile {
       display: flex !important;
+      position: static;
       flex-direction: row;
+      width: auto !important;
       background-color: transparent;
-      border-top: none;
+      border: none;
       padding: 0;
-      gap: 12px;
-      margin-left: auto;
-      margin-right: 20px;
+      margin: 0;
+      gap: 16px;
     }
   
     .nav-links a {
       background-color: transparent;
       padding: 8px 14px;
+      font-size: 14px;
     }
   
     .btn-login, .btn-signup {
