@@ -111,7 +111,7 @@
           
           <!-- FREQUENCY & MULTI-DATE CONTROLLER -->
           <div class="form-row-flex">
-            <div style="flex: 1;">
+            <div style="flex: 1; min-width: 160px;">
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">Frequency:</label>
               <select id="sched-type" onchange="toggleScheduleFormOptions()" style="margin-bottom:0;">
                 <option value="one_time">One-time</option>
@@ -123,16 +123,16 @@
             </div>
 
             <!-- SINGLE DATE PICKER -->
-            <div id="single-date-container" style="flex: 1;">
+            <div id="single-date-container" style="flex: 1; min-width: 160px;">
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">Dispatch Date/Time:</label>
               <input type="datetime-local" id="sched-datetime" style="margin-bottom:0;">
             </div>
 
             <!-- MULTI-DATE BUILDER (HIDDEN BY DEFAULT) -->
-            <div id="multi-date-container" class="hidden" style="flex: 2; background: #fff; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%;">
+            <div id="multi-date-container" class="hidden" style="flex: 2; min-width: 220px; background: #fff; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%;">
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:6px;">Add Dates to Schedule:</label>
-              <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                <input type="datetime-local" id="multi-date-input" style="margin-bottom:0; flex: 1;">
+              <div style="display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;">
+                <input type="datetime-local" id="multi-date-input" style="margin-bottom:0; flex: 1; min-width: 180px;">
                 <button type="button" onclick="addCustomDateToList()" style="width: auto; height: 44px; margin-bottom:0; background-color: var(--brand-blue); white-space: nowrap;">+ Add Date</button>
               </div>
 
@@ -146,7 +146,7 @@
 
           <!-- RECURRENCE LIMIT CONTROLS -->
           <div class="form-row-flex hidden" id="recurrence-limit-container" style="margin-top: 10px;">
-            <div style="flex: 1;">
+            <div style="flex: 1; min-width: 160px;">
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">End Condition:</label>
               <select id="sched-recurrence-type" onchange="toggleRecurrenceInput()" style="margin-bottom:0;">
                 <option value="indefinite">Until Canceled</option>
@@ -154,7 +154,7 @@
               </select>
             </div>
           
-            <div id="recurrence-count-wrapper" class="hidden" style="flex: 1;">
+            <div id="recurrence-count-wrapper" class="hidden" style="flex: 1; min-width: 160px;">
               <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">Total Number of Messages:</label>
               <input type="number" id="sched-recurrence-count" min="1" placeholder="e.g. 5" style="margin-bottom:0;">
             </div>
@@ -230,14 +230,14 @@
         <p style="color: #64748b; font-size: 14px;">Monitor your monthly SMS quota and manage subscription tiers.</p>
         
         <div class="billing-card">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             <h3 style="margin:0;">Current Tier</h3>
             <span class="badge-plan" id="billing-plan-badge">TRIAL</span>
           </div>
 
           <!-- SMS Usage Counter & Progress Bar -->
           <div style="margin-top: 20px;">
-            <div style="display: flex; justify-content: space-between; font-size: 14px;">
+            <div style="display: flex; justify-content: space-between; font-size: 14px; flex-wrap: wrap; gap: 4px;">
               <span>Monthly SMS Usage</span>
               <span><strong id="billing-sms-sent">0</strong> / <span id="billing-sms-limit">100</span> Sent</span>
             </div>
@@ -260,7 +260,7 @@
 
         <!-- A2P 10DLC ISV REGISTRATION PANEL -->
         <div class="billing-card" style="background: white; border: 1px solid #cbd5e1; margin-top: 20px;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             <h3 style="margin: 0;">Carrier Compliance & A2P Vetting</h3>
             <span class="badge-plan" id="a2p-status-badge" style="background: #fef3c7; color: #b45309;">UNREGISTERED</span>
           </div>
@@ -270,25 +270,25 @@
 
           <form id="a2p-form" onsubmit="submitA2PRegistration(event)">
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              <input type="text" id="a2p-legal-name" placeholder="Legal Business Name (e.g., Apex Health LLC)" required style="flex:1;">
-              <input type="text" id="a2p-ein" placeholder="Tax ID / EIN (9 digits)" required style="flex:1;">
+              <input type="text" id="a2p-legal-name" placeholder="Legal Business Name (e.g., Apex Health LLC)" required style="flex:1; min-width: 220px;">
+              <input type="text" id="a2p-ein" placeholder="Tax ID / EIN (9 digits)" required style="flex:1; min-width: 160px;">
             </div>
             
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              <select id="a2p-type" required style="flex:1;">
+              <select id="a2p-type" required style="flex:1; min-width: 180px;">
                 <option value="">-- Business Structure --</option>
                 <option value="llc">LLC</option>
                 <option value="corporation">Corporation</option>
                 <option value="partnership">Partnership</option>
                 <option value="sole_proprietorship">Sole Proprietorship</option>
               </select>
-              <input type="text" id="a2p-address" placeholder="Street Address" required style="flex:2;">
+              <input type="text" id="a2p-address" placeholder="Street Address" required style="flex:2; min-width: 220px;">
             </div>
 
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              <input type="text" id="a2p-city" placeholder="City" required style="flex:2;">
-              <input type="text" id="a2p-state" placeholder="State (e.g. NJ)" maxlength="2" required style="flex:1;">
-              <input type="text" id="a2p-zip" placeholder="Zip Code" required style="flex:1;">
+              <input type="text" id="a2p-city" placeholder="City" required style="flex:2; min-width: 160px;">
+              <input type="text" id="a2p-state" placeholder="State (e.g. NJ)" maxlength="2" required style="flex:1; min-width: 100px;">
+              <input type="text" id="a2p-zip" placeholder="Zip Code" required style="flex:1; min-width: 100px;">
             </div>
 
             <button type="submit" class="info" style="width: auto; margin-bottom: 0;">Submit Carrier Registration</button>
@@ -310,7 +310,7 @@
             <h4 style="margin-top:0;">Get a Dedicated Practice Phone Number</h4>
             <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">Select an area code to choose a dedicated SMS number for your practice.</p>
             
-            <div style="display: flex; gap: 8px;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
               <input type="text" id="area-code-input" placeholder="e.g. 555" maxlength="3" style="width: 100px; margin-bottom:0;">
               <button type="button" onclick="searchAvailableNumbers()" class="info" style="width: auto; margin-bottom:0;">Search Numbers</button>
             </div>
