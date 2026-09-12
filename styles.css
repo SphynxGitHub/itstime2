@@ -656,6 +656,35 @@
     display: none !important;
   }
 
+  /* Force tables to fit within the card width instead of growing wide and
+     relying on horizontal scroll + clipping (which was letting action
+     buttons visually poke past the card on some renders). table-layout:
+     fixed makes columns share the available width, and forcing all cell
+     content to wrap means nothing inside a row can push the table wider
+     than its container. */
+  table {
+    table-layout: fixed;
+    width: 100%;
+    min-width: 0;
+  }
+
+  th, td {
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  td .action-btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 6px;
+  }
+
+  td .action-btn:last-child {
+    margin-bottom: 0;
+  }
+
   /* Stack the schedule-form frequency/date fields on phones instead of
      letting them squeeze into a row */
   .form-row-flex {
