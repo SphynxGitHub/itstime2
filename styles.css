@@ -737,6 +737,11 @@
      letting them squeeze into a row */
   .form-row-flex {
     flex-direction: column;
+    align-items: stretch !important; /* the inline align-items:flex-end some
+      instances use is meant for the desktop row (aligning a button with
+      input bottoms) — in a column-direction flex container that same
+      property controls horizontal alignment, which was shoving every
+      stacked field to the right instead of letting it fill the width */
   }
 
   /* Give the two billing plan cards a bit less demanded width on small phones */
