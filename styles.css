@@ -49,6 +49,7 @@
     border: 3px solid var(--border-toy) !important;
     border-radius: 18px !important;
     box-shadow: var(--toy-shadow-dark) !important;
+    padding: 20px;
     position: relative;
     overflow: hidden;
   }
@@ -656,32 +657,67 @@
     display: none !important;
   }
 
-  /* Force tables to fit within the card width instead of growing wide and
-     relying on horizontal scroll + clipping (which was letting action
-     buttons visually poke past the card on some renders). table-layout:
-     fixed makes columns share the available width, and forcing all cell
-     content to wrap means nothing inside a row can push the table wider
-     than its container. */
-  table {
-    table-layout: fixed;
+  /* Reflow each table row into a compact "card" on mobile: the first cells
+     (Name/Email/Phone, or whatever the row's non-action data is) sit
+     together on one line, and the last cell — always Actions where it
+     exists — drops to its own full-width row underneath with its buttons
+     laid out in a small wrapping grid, instead of being squeezed into a
+     narrow column or stacked as tall full-width bars. */
+  table, thead, tbody {
+    display: block;
     width: 100%;
-    min-width: 0;
   }
 
-  th, td {
+  table thead {
+    display: none; /* column labels aren't needed once rows become cards */
+  }
+
+  tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 6px 14px;
+    width: 100%;
+    padding: 14px 0;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  tr:last-child {
+    border-bottom: none;
+  }
+
+  td, th {
+    display: block;
+    border: none;
+    padding: 0;
+    flex: 1 1 auto;
+    min-width: 100px;
     white-space: normal;
     word-break: break-word;
     overflow-wrap: break-word;
   }
 
+  /* The Actions cell (always last, when a row has one) becomes its own
+     full-width row underneath the other data. Only the first action button
+     (e.g. "Profile & Schedules") is shown on mobile — the rest (Send Msg,
+     Edit, Delete, etc.) are reachable once you're on that record's detail
+     page, so they're hidden here rather than squeezed in. */
+  td:has(.action-btn), th:has(.action-btn) {
+    flex: 1 1 100%;
+    width: 100%;
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
+  }
+
   td .action-btn {
+    display: none;
+  }
+
+  td .action-btn:first-of-type {
     display: block;
     width: 100%;
     text-align: center;
-    margin-bottom: 6px;
-  }
-
-  td .action-btn:last-child {
     margin-bottom: 0;
   }
 
