@@ -29,15 +29,122 @@
 
   <style>
     :root {
+      /* Toy Train Palette */
       --brand-red: #E51A24;
       --brand-blue: #0052FF;
       --brand-green: #00B04F;
       --brand-yellow: #F2B800;
       --dark-bg: #121829;
+      
+      /* Vibrant Layout Backgrounds */
+      --page-bg: #EAF2FF;            /* Soft playful blue backdrop */
+      --card-bg: #FFFFFF;
+      --border-toy: #1D2338;          /* High-contrast border outline */
+      
+      /* Chunky Toy Box Shadows */
+      --toy-shadow-red: 0 6px 0px #B00F17;
+      --toy-shadow-blue: 0 6px 0px #003BCC;
+      --toy-shadow-yellow: 0 6px 0px #B88C00;
+      --toy-shadow-green: 0 6px 0px #007A37;
+      --toy-shadow-dark: 0 6px 0px #090C15;
     }
 
     * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background-color: #f8fafc; color: #1e293b; line-height: 1.6; }
+    
+    /* Base Body with Track Pattern Accent */
+    body {
+      background-color: var(--page-bg);
+      background-image: radial-gradient(var(--brand-yellow) 15%, transparent 16%);
+      background-size: 24px 24px;
+      color: var(--dark-bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    /* Sidebar / Header - Bright Engine Red */
+    #sidebar, .navbar {
+      background-color: var(--brand-red) !important;
+      border-right: 5px solid var(--border-toy);
+      box-shadow: 4px 0 0px var(--dark-bg);
+    }
+    
+    #sidebar a, .navbar a {
+      color: #FFFFFF !important;
+      font-weight: 700;
+      border-radius: 12px;
+      margin: 6px 12px;
+      padding: 10px 14px;
+      transition: transform 0.1s ease, background 0.1s ease;
+    }
+    
+    #sidebar a:hover, #sidebar a.active {
+      background-color: var(--brand-yellow) !important;
+      color: var(--dark-bg) !important;
+      border: 2px solid var(--dark-bg);
+      box-shadow: var(--toy-shadow-dark);
+    }
+    
+    /* Cards - Chunky Wooden/Plastic Blocks */
+    .card, .dashboard-card, #auth-section {
+      background: var(--card-bg) !important;
+      border: 3px solid var(--dark-bg) !important;
+      border-radius: 18px !important;
+      box-shadow: var(--toy-shadow-dark) !important;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* Alternating Card Top Borders (Toy Cars) */
+    .card:nth-child(4n+1) { border-top: 10px solid var(--brand-red) !important; }
+    .card:nth-child(4n+2) { border-top: 10px solid var(--brand-blue) !important; }
+    .card:nth-child(4n+3) { border-top: 10px solid var(--brand-green) !important; }
+    .card:nth-child(4n+4) { border-top: 10px solid var(--brand-yellow) !important; }
+    
+    /* Interactive Toy Buttons */
+    button, .btn-primary {
+      background-color: var(--brand-green) !important;
+      color: #FFFFFF !important;
+      font-weight: 800 !important;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 3px solid var(--dark-bg) !important;
+      border-radius: 12px !important;
+      box-shadow: var(--toy-shadow-green) !important;
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+      cursor: pointer;
+    }
+    
+    button:active, .btn-primary:active {
+      transform: translateY(4px) !important;
+      box-shadow: 0 2px 0px #007A37 !important;
+    }
+    
+    /* Secondary Action Buttons - Engine Yellow */
+    .btn-secondary {
+      background-color: var(--brand-yellow) !important;
+      color: var(--dark-bg) !important;
+      box-shadow: var(--toy-shadow-yellow) !important;
+    }
+    
+    /* Inputs with Track Focus Rings */
+    input, select, textarea {
+      border: 2.5px solid var(--dark-bg) !important;
+      border-radius: 10px !important;
+      font-weight: 600;
+      background-color: #FAFAFA;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--brand-blue) !important;
+      box-shadow: 0 0 0 4px rgba(0, 82, 255, 0.25) !important;
+      background-color: #FFFFFF;
+    }
+    
+    /* Train Track Divider Line */
+    hr, .track-divider {
+      border: none;
+      border-top: 4px dashed var(--brand-yellow);
+      margin: 24px 0;
+    }
     
     /* NAVIGATION BAR */
     header { background-color: #ffffff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100; }
