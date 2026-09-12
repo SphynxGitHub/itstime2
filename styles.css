@@ -176,9 +176,8 @@
     margin: 0 auto; 
     padding: 10px 14px; 
     display: flex; 
-    flex-wrap: wrap; /* Allows mobile dropdown menu to wrap underneath */
+    flex-wrap: nowrap; /* Allows mobile dropdown menu to wrap underneath */
     justify-content: space-between;
-    flex-direction: column; /* Stack logo & nav links vertically on mobile */
     gap: 10px;
     align-items: center; 
   }
@@ -237,6 +236,7 @@
     display: flex; 
     align-items: center; 
     gap: 6px; 
+    flex-shrink: 0;
   }
   .btn-login { 
     background-color: #FFFFFF !important; 
@@ -562,9 +562,30 @@
   .badge-plan { background: var(--brand-yellow); color: var(--dark-bg); font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 10px; border: 2px solid var(--border-toy); }
 
   /* ==========================================================================
-     DESKTOP MEDIA QUERIES (768px and up)
+     MOBILE MEDIA QUERIES (767 and down) + DESKTOP MEDIA QUERIES (768px and up)
      ========================================================================== */
-  @media (min-width: 768px) {
+  /* Mobile Dropdown Position Fix */
+@media (max-width: 767px) {
+  .nav-links {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    flex-direction: column;
+    background-color: #B00F17;
+    border-top: 3px dashed var(--brand-yellow);
+    border-bottom: 4px solid var(--border-toy);
+    padding: 10px 16px;
+    gap: 8px;
+    margin: 0;
+  }
+  
+  .nav-links.hidden-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 768px) {
    .logo-brand img { width: 36px; height: 36px; }
     .logo-brand h1 { font-size: 22px; }
 
