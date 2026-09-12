@@ -47,20 +47,27 @@
     <!-- NAVIGATION BAR / SIDEBAR -->
     <div class="sidebar">
       <div class="sidebar-header">
-        <img src="logo.png" alt="It's Time 2 Logo" style="width: 38px; height: 38px; object-fit: contain;" onerror="this.style.display='none'">
-        <h3><span class="accent">It's</span> <span class="accent-3">Time</span> <span class="accent-2">2</span></h3>
+        <div class="sidebar-brand">
+          <img src="logo.png" alt="It's Time 2 Logo" style="width: 38px; height: 38px; object-fit: contain;" onerror="this.style.display='none'">
+          <h3><span class="accent">It's</span> <span class="accent-3">Time</span> <span class="accent-2">2</span></h3>
+        </div>
+        <button class="hamburger-toggle" id="dashMenuToggle" aria-label="Toggle Navigation">
+          <i data-lucide="menu" style="width: 20px; height: 20px;"></i>
+        </button>
       </div>
 
-      <div class="nav-group">
-        <a class="nav-item active" id="nav-customers" onclick="switchTab('customers')">Contacts</a>
-        <a class="nav-item" id="nav-templates" onclick="switchTab('templates')">Message Library</a>
-        <a class="nav-item" id="nav-history" onclick="switchTab('history')">Activity History</a>
-        <a class="nav-item" id="nav-billing" onclick="switchTab('billing')">Billing & Plan</a>
-      </div>
+      <div class="sidebar-menu-panel" id="sidebarMenuPanel">
+        <div class="nav-group">
+          <a class="nav-item active" id="nav-customers" onclick="switchTab('customers')">Contacts</a>
+          <a class="nav-item" id="nav-templates" onclick="switchTab('templates')">Message Library</a>
+          <a class="nav-item" id="nav-history" onclick="switchTab('history')">Activity History</a>
+          <a class="nav-item" id="nav-billing" onclick="switchTab('billing')">Billing & Plan</a>
+        </div>
 
-      <div class="sidebar-footer">
-        <p style="margin: 0 0 8px 0; color: #94a3b8;">User: <strong id="user-email" style="color:white;"></strong></p>
-        <button onclick="logout()" class="secondary" style="margin-bottom:0; min-height:36px; padding: 4px 12px; width: auto; border-radius: 4px;">Log Out</button>
+        <div class="sidebar-footer">
+          <p style="margin: 0 0 8px 0; color: #94a3b8;">User: <strong id="user-email" style="color:white;"></strong></p>
+          <button onclick="logout()" class="secondary" style="margin-bottom:0; min-height:36px; padding: 4px 12px; width: auto; border-radius: 4px;">Log Out</button>
+        </div>
       </div>
     </div>
 
@@ -81,12 +88,14 @@
         <hr style="margin: 30px 0; border: none; border-top: 1px solid #e2e8f0;">
         <h2>Contact Directory</h2>
         <div class="table-container">
+          <div class="table-scroll">
           <table>
             <thead>
               <tr><th>Name</th><th>Email</th><th>Phone</th><th>Actions</th></tr>
             </thead>
             <tbody id="customer-list-body"><tr><td colspan="4">Loading...</td></tr></tbody>
           </table>
+        </div>
         </div>
       </div>
 
@@ -169,6 +178,7 @@
         <!-- SCHEDULED MESSAGES LIST -->
         <h3 style="margin-bottom: 10px;">Active & Scheduled Messages</h3>
         <div class="table-container" style="margin-bottom: 30px;">
+          <div class="table-scroll">
           <table>
             <thead>
               <tr><th>Frequency</th><th>Next Run</th><th>Status</th><th>Message Text</th><th>Actions</th></tr>
@@ -176,16 +186,19 @@
             <tbody id="sched-list-body"><tr><td colspan="5">Loading...</td></tr></tbody>
           </table>
         </div>
+        </div>
 
         <!-- PATIENT HISTORY -->
         <h3 style="margin-bottom: 10px;">Contact Interaction History</h3>
         <div class="table-container">
+          <div class="table-scroll">
           <table>
             <thead>
               <tr><th>Timestamp</th><th>Action / Message Details</th></tr>
             </thead>
             <tbody id="profile-history-body"><tr><td colspan="2">Loading...</td></tr></tbody>
           </table>
+        </div>
         </div>
       </div>
 
@@ -201,12 +214,14 @@
         <hr style="margin: 30px 0; border: none; border-top: 1px solid #e2e8f0;">
         <h2>Saved Reminder Templates</h2>
         <div class="table-container">
+          <div class="table-scroll">
           <table>
             <thead>
               <tr><th>Title</th><th>Message Preview</th><th>Actions</th></tr>
             </thead>
             <tbody id="template-list-body"><tr><td colspan="3">Loading...</td></tr></tbody>
           </table>
+        </div>
         </div>
       </div>
 
@@ -215,12 +230,14 @@
         <h2 style="margin-top:0;">Activity History</h2>
         <p style="color: #64748b; font-size: 14px;">Log of account actions, contact updates, and sent messages.</p>
         <div class="table-container">
+          <div class="table-scroll">
           <table>
             <thead>
               <tr><th>Timestamp</th><th>Action</th><th>Details</th></tr>
             </thead>
             <tbody id="history-list-body"><tr><td colspan="3">Loading...</td></tr></tbody>
           </table>
+        </div>
         </div>
       </div>
 
@@ -412,5 +429,28 @@
 
   <!-- SCRIPT INCLUSION -->
   <script src="app.js"></script>
+
+  <!-- MOBILE DASHBOARD NAV TOGGLE (mirrors the hamburger behavior on the marketing site) -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleBtn = document.getElementById('dashMenuToggle');
+      const panel = document.getElementById('sidebarMenuPanel');
+
+      if (toggleBtn && panel) {
+        toggleBtn.addEventListener('click', () => {
+          panel.classList.toggle('open');
+        });
+
+        // Auto-close the dropdown once a nav tab is tapped
+        panel.querySelectorAll('.nav-item').forEach(item => {
+          item.addEventListener('click', () => {
+            panel.classList.remove('open');
+          });
+        });
+      }
+
+      if (window.lucide) lucide.createIcons();
+    });
+  </script>
 </body>
 </html>
