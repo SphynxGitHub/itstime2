@@ -19,7 +19,7 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { userId, phone, message } = req.body;
+  const { userId, phone, message, custName } = req.body;
 
   if (!userId || !phone || !message) {
     return res.status(400).json({ error: 'Missing required fields: userId, phone, and message are required.' });
@@ -307,6 +307,22 @@ module.exports = async function handler(req, res) {
         .from('practices')
         .update({ sms_sent_this_month: sentCount + 1 })
         .eq('id', practice.id);
+    }
+
+    // 2b. Log to activity_history server-side, so this is captured
+    //     consistently whether the send was triggered manually (this
+    //     endpoint) or by cron-dispatcher.js for scheduled/recurring
+    //     messages — the frontend previously only logged manual sends.
+    //     Non-fatal: the text already sent, so a logging failure shouldn't
+    //     be reported to the user as a send failure.
+    try {
+      await supabase.from('activity_history').insert([{
+        action: 'Sent SMS',
+        details: `Sent to ${custName || phone} (${phone}): "${message}"`,
+        user_id: userId
+      }]);
+    } catch (logErr) {
+      console.error('Failed to log activity_history:', logErr.message);
     }
 
     // 3. Report metered usage to Stripe — ONLY for paid accounts on the
