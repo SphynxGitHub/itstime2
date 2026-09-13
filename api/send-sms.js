@@ -1,18 +1,8 @@
-const webpush = require('web-push');
 const twilio = require('twilio');
 const Stripe = require('stripe');
 const { createClient } = require('@supabase/supabase-js');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-// Configure VAPID Keys for Web Push
-if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT || 'mailto:support@itstime2.net',
-    process.env.VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY
-  );
-}
 
 module.exports = async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
@@ -55,8 +45,22 @@ module.exports = async function handler(req, res) {
     const sentCount = practice?.sms_sent_this_month || 0;
     const trialLimit = practice?.sms_limit || 100;
 
+    // The built-in 'system' gateway isn't launched yet (see app.html's
+    // "Sign Up for a Number (Coming Soon)" toggle) — block sending rather
+    // than silently falling through to a shared system Twilio number.
+    const supportedByocProviders = ['twilio', 'quo', 'telnyx', 'ringcentral', 'zoom', 'vonage'];
+    if (!supportedByocProviders.includes(providerType)) {
+      return res.status(400).json({
+        error: 'No SMS gateway is configured yet. Please connect a bring-your-own-carrier provider in Billing settings.'
+      });
+    }
+
     // -----------------------------------------------------------------
     // SUBSCRIPTION GATING
+    // Trial: capped at trialLimit (default 100) regardless of gateway.
+    // Active: no cap — 'system' gateway usage is billed as overage instead
+    //         (see the usage-record reporting below).
+    // Anything else (canceled, etc.): blocked until they resubscribe.
     // -----------------------------------------------------------------
     if (planTier === 'trial') {
       if (sentCount >= trialLimit) {
@@ -71,50 +75,8 @@ module.exports = async function handler(req, res) {
     }
 
     // -----------------------------------------------------------------
-    // STEP A: WEB PUSH DISPATCH ATTEMPT (Push-First)
+    // GATEWAY ROUTING LOGIC
     // -----------------------------------------------------------------
-    if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
-      const { data: pushSub } = await supabase
-        .from('push_subscriptions')
-        .select('subscription')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (pushSub && pushSub.subscription) {
-        try {
-          const payload = JSON.stringify({
-            title: "It's Time 2 Alert",
-            body: message,
-            url: '/app'
-          });
-
-          await webpush.sendNotification(pushSub.subscription, payload);
-
-          // Return immediately on successful push — bypasses SMS gateways & saves costs
-          return res.status(200).json({ 
-            success: true, 
-            deliveryMethod: 'push', 
-            message: 'Push notification delivered successfully.' 
-          });
-        } catch (pushErr) {
-          console.warn(`Web Push failed for user ${userId}, falling back to SMS:`, pushErr.message);
-          // If subscription expired/invalid (410 or 404), clean it up from DB
-          if (pushErr.statusCode === 410 || pushErr.statusCode === 404) {
-            await supabase.from('push_subscriptions').delete().eq('user_id', userId);
-          }
-        }
-      }
-    }
-
-    // -----------------------------------------------------------------
-    // STEP B: GATEWAY ROUTING LOGIC (SMS Fallback)
-    // -----------------------------------------------------------------
-    const supportedByocProviders = ['twilio', 'quo', 'telnyx', 'ringcentral', 'zoom', 'vonage'];
-    if (!supportedByocProviders.includes(providerType)) {
-      return res.status(400).json({
-        error: 'No SMS gateway is configured yet. Please connect a bring-your-own-carrier provider in Billing settings.'
-      });
-    }
 
     if (providerType === 'quo') {
       // --- QUO (OPENPHONE) API ROUTE ---
@@ -176,6 +138,9 @@ module.exports = async function handler(req, res) {
 
     } else if (providerType === 'ringcentral') {
       // --- RINGCENTRAL API ROUTE ---
+      // Auth is two-part: OUR registered RingCentral app (Client ID/Secret,
+      // server env vars) exchanges the CUSTOMER's personal/service JWT for
+      // a short-lived access token, which is then used to send.
       const rcJwt = practice?.provider_api_key;
       const rcPhoneNumber = practice?.provider_phone_number;
       const rcClientId = process.env.RC_CLIENT_ID;
@@ -229,6 +194,10 @@ module.exports = async function handler(req, res) {
 
     } else if (providerType === 'zoom') {
       // --- ZOOM PHONE API ROUTE ---
+      // NOTE: Zoom's SMS API has documented limitations sending on behalf
+      // of other users from a Server-to-Server app — test this thoroughly
+      // before relying on it in production; it's less mature than the
+      // other gateways here.
       const zoomSidParts = (practice?.provider_account_sid || '').split(':');
       const zoomAccountId = zoomSidParts[0];
       const zoomClientId = zoomSidParts[1];
@@ -304,7 +273,7 @@ module.exports = async function handler(req, res) {
       }
 
     } else {
-      // --- TWILIO ROUTE ---
+      // --- TWILIO ROUTE (SYSTEM BUILT-IN OR BYOC TWILIO) ---
       const accountSid = practice?.provider_account_sid || process.env.TWILIO_ACCOUNT_SID;
       const authToken = practice?.provider_api_key || process.env.TWILIO_AUTH_TOKEN;
       const sendingNumber = practice?.provider_phone_number || process.env.TWILIO_PHONE_NUMBER;
@@ -323,7 +292,8 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // Increment usage counter
+    // 2. Increment monthly usage counter (drives the trial cap and the
+    //    "X sent this period" display for everyone, regardless of gateway)
     if (practice) {
       await supabase
         .from('practices')
@@ -331,7 +301,16 @@ module.exports = async function handler(req, res) {
         .eq('id', practice.id);
     }
 
-    // Report metered usage to Stripe for built-in gateway
+    // 3. Report metered usage to Stripe — ONLY for paid accounts on the
+    //    built-in 'system' gateway. BYOC accounts (their own Twilio/Quo/
+    //    Telnyx credentials) never generate a usage event, so they're
+    //    never charged beyond the flat $4/mo platform fee.
+    //
+    //    Uses Stripe's current Billing Meters API (meter events keyed to
+    //    stripe_customer_id) — the older subscriptionItems.createUsageRecord
+    //    API this used to call was fully removed by Stripe, so it's been
+    //    replaced. STRIPE_SMS_METER_EVENT_NAME must match the "Event name"
+    //    configured on the Meter in the Stripe Dashboard.
     if (planTier === 'active' && providerType === 'system' && practice.stripe_customer_id) {
       try {
         await stripe.billing.meterEvents.create({
@@ -342,11 +321,13 @@ module.exports = async function handler(req, res) {
           }
         });
       } catch (usageErr) {
+        // The text already sent successfully — don't fail the request just
+        // because billing couldn't be recorded. Log it so it's visible.
         console.error('Failed to report Stripe meter event:', usageErr.message);
       }
     }
 
-    return res.status(200).json({ success: true, deliveryMethod: 'sms', message: 'SMS delivered successfully.' });
+    return res.status(200).json({ success: true, message: 'SMS delivered successfully.' });
 
   } catch (err) {
     console.error('Send SMS Error:', err);
