@@ -30,22 +30,19 @@ export default async function handler(req, res) {
   //    in the app reads from or writes to — that meant a completed checkout
   //    never actually activated anything. Fixed to write to `practices`,
   //    which is what send-sms.js, cron-dispatcher.js, and the app UI all use.
+  //
+  //    Usage-based billing now reports against stripe_customer_id via
+  //    Stripe's Billing Meters API (see send-sms.js), not a specific
+  //    subscription item — the old subscription-item lookup that used to
+  //    live here has been removed since it relied on the now-removed
+  //    legacy usage records API.
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     const userId = session.metadata.userId;
 
-    // Retrieve the full subscription so we can find the metered line item's
-    // subscription_item id — usage records get reported against that id,
-    // not the subscription itself.
-    const subscription = await stripe.subscriptions.retrieve(session.subscription);
-    const meteredItem = subscription.items.data.find(
-      (item) => item.price.id === process.env.STRIPE_SMS_METERED_PRICE_ID
-    );
-
     await supabase.from('practices').update({
       stripe_customer_id: session.customer,
       stripe_subscription_id: session.subscription,
-      stripe_metered_subscription_item_id: meteredItem ? meteredItem.id : null,
       plan_tier: 'active',
       subscribed_at: new Date().toISOString(),
     }).eq('user_id', userId);
