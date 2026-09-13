@@ -303,18 +303,27 @@ module.exports = async function handler(req, res) {
 
     // 3. Report metered usage to Stripe — ONLY for paid accounts on the
     //    built-in 'system' gateway. BYOC accounts (their own Twilio/Quo/
-    //    Telnyx credentials) never generate a usage record, so they're
+    //    Telnyx credentials) never generate a usage event, so they're
     //    never charged beyond the flat $4/mo platform fee.
-    if (planTier === 'active' && providerType === 'system' && practice.stripe_metered_subscription_item_id) {
+    //
+    //    Uses Stripe's current Billing Meters API (meter events keyed to
+    //    stripe_customer_id) — the older subscriptionItems.createUsageRecord
+    //    API this used to call was fully removed by Stripe, so it's been
+    //    replaced. STRIPE_SMS_METER_EVENT_NAME must match the "Event name"
+    //    configured on the Meter in the Stripe Dashboard.
+    if (planTier === 'active' && providerType === 'system' && practice.stripe_customer_id) {
       try {
-        await stripe.subscriptionItems.createUsageRecord(
-          practice.stripe_metered_subscription_item_id,
-          { quantity: 1, timestamp: Math.floor(Date.now() / 1000), action: 'increment' }
-        );
+        await stripe.billing.meterEvents.create({
+          event_name: process.env.STRIPE_SMS_METER_EVENT_NAME || 'sms_sent',
+          payload: {
+            stripe_customer_id: practice.stripe_customer_id,
+            value: '1'
+          }
+        });
       } catch (usageErr) {
         // The text already sent successfully — don't fail the request just
         // because billing couldn't be recorded. Log it so it's visible.
-        console.error('Failed to report Stripe usage record:', usageErr.message);
+        console.error('Failed to report Stripe meter event:', usageErr.message);
       }
     }
 
