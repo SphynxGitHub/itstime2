@@ -1,6 +1,10 @@
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+let stripe = null;
+function getStripe() {
+  if (!stripe) stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  return stripe;
+}
 
 // Every subscription now has exactly two line items:
 //  1. STRIPE_PLATFORM_PRICE_ID  - flat $4/mo recurring price. Required for
@@ -24,7 +28,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [
