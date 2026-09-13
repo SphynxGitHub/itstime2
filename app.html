@@ -66,6 +66,7 @@
 
         <div class="sidebar-footer">
           <p style="margin: 0 0 8px 0; color: #94a3b8;">User: <strong id="user-email" style="color:white;"></strong></p>
+          <button onclick="openOnboarding()" class="link-btn" style="margin-bottom:8px; padding: 0; color: #ffffff; text-decoration: underline;">🚀 Setup Guide</button>
           <button onclick="logout()" class="secondary" style="margin-bottom:0; min-height:36px; padding: 4px 12px; width: auto; border-radius: 4px;">Log Out</button>
         </div>
       </div>
@@ -349,43 +350,50 @@
 
         <div class="billing-card" style="background: white;">
           <h3>SMS Provider Configuration</h3>
-          <label style="font-size: 13px; font-weight: bold; margin-bottom: 4px; display: block;">Select Gateway:</label>
-          <select id="provider-select" onchange="toggleProviderFields()" style="margin-bottom: 12px;">
-            <option value="system" disabled>Built-in Gateway (Coming Soon)</option>
-            <option value="twilio">Twilio (BYOC)</option>
-            <option value="quo">Quo (formerly OpenPhone) (BYOC)</option>
-            <option value="telnyx">Telnyx (BYOC)</option>
-            <option value="ringcentral">RingCentral (BYOC)</option>
-            <option value="zoom">Zoom Phone (BYOC)</option>
-            <option value="vonage">Vonage (BYOC)</option>
-          </select>
 
-          <!-- DEDICATED NUMBER PROVISIONER: not launched yet — the "Built-in
-               Gateway" option above is disabled until this is ready, so this
-               is shown as a coming-soon notice rather than the functional
-               search/buy flow. -->
-          <div id="dedicated-number-section" class="hidden" style="margin-top: 15px; padding: 15px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 15px;">
-            <h4 style="margin-top:0;">Get a Dedicated Practice Phone Number</h4>
-            <p style="font-size: 12px; color: #64748b; margin: 0;">🚧 Coming soon — for now, please bring your own carrier account from the list above.</p>
+          <!-- GATEWAY MODE TOGGLE -->
+          <div class="btn-group-flex" style="margin-bottom: 16px;">
+            <button type="button" id="gateway-mode-btn-byoc" onclick="switchGatewayMode('byoc')" class="info" style="width: auto; margin-bottom: 0;">Bring Your Own Carrier</button>
+            <button type="button" id="gateway-mode-btn-system" onclick="switchGatewayMode('system')" class="secondary" style="width: auto; margin-bottom: 0;">Sign Up for a Number (Coming Soon)</button>
           </div>
-        
-          <!-- Dynamic Credentials Inputs -->
-          <div id="provider-credentials" class="hidden">
-            <!-- MASKED API KEY WITH LUCIDE EYE ICON -->
-            <div style="position: relative; margin-bottom: 12px;">
-              <input type="password" id="provider-key" placeholder="API Key / Auth Token" style="margin-bottom: 0; padding-right: 42px;">
-              <button type="button" onclick="toggleVisibility('provider-key', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; width: auto; min-height: auto; margin-bottom: 0; padding: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #64748b;" title="Toggle Visibility">
-                <i data-lucide="eye" style="width: 20px; height: 20px;"></i>
-              </button>
+
+          <!-- BYOC MODE: provider picker + credentials -->
+          <div id="gateway-mode-byoc-content">
+            <label style="font-size: 13px; font-weight: bold; margin-bottom: 4px; display: block;">Select Provider:</label>
+            <select id="provider-select" onchange="toggleProviderFields()" style="margin-bottom: 12px;">
+              <option value="twilio">Twilio</option>
+              <option value="quo">Quo (formerly OpenPhone)</option>
+              <option value="telnyx">Telnyx</option>
+              <option value="ringcentral">RingCentral</option>
+              <option value="zoom">Zoom Phone</option>
+              <option value="vonage">Vonage</option>
+            </select>
+
+            <div id="provider-credentials">
+              <!-- MASKED API KEY WITH LUCIDE EYE ICON -->
+              <div style="position: relative; margin-bottom: 12px;">
+                <input type="password" id="provider-key" placeholder="API Key / Auth Token" style="margin-bottom: 0; padding-right: 42px;">
+                <button type="button" onclick="toggleVisibility('provider-key', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; width: auto; min-height: auto; margin-bottom: 0; padding: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #64748b;" title="Toggle Visibility">
+                  <i data-lucide="eye" style="width: 20px; height: 20px;"></i>
+                </button>
+              </div>
+
+              <input type="text" id="provider-sid" placeholder="Account SID (Twilio only)">
+              <input type="text" id="provider-phone" placeholder="Sending Phone Number (e.g. +15555555555)">
+              <button onclick="saveProviderSettings()" style="width: auto;">Save Gateway Credentials</button>
             </div>
 
-            <input type="text" id="provider-sid" placeholder="Account SID (Twilio only)">
-            <input type="text" id="provider-phone" placeholder="Sending Phone Number (e.g. +15555555555)">
-            <button onclick="saveProviderSettings()" style="width: auto;">Save Gateway Credentials</button>
+            <!-- Instruction Accordion -->
+            <div id="provider-instructions" style="margin-top: 15px; font-size: 13px; color: #64748b;"></div>
           </div>
-        
-          <!-- Instruction Accordion -->
-          <div id="provider-instructions" style="margin-top: 15px; font-size: 13px; color: #64748b;"></div>
+
+          <!-- SYSTEM MODE: coming-soon notice only -->
+          <div id="gateway-mode-system-content" class="hidden">
+            <div style="background: #f8fafc; padding: 15px; border: 1px solid #cbd5e1; border-radius: 6px;">
+              <h4 style="margin-top:0;">Get a Dedicated Practice Phone Number</h4>
+              <p style="font-size: 12px; color: #64748b; margin: 0;">🚧 Coming soon — we'll email you the moment this is ready. For now, please use Bring Your Own Carrier.</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -431,6 +439,88 @@
       <button onclick="closeTrialModal()" class="secondary">
         Continue with Trial
       </button>
+    </div>
+  </div>
+
+  <!-- GUIDED ONBOARDING WIZARD -->
+  <div id="onboarding-modal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 560px; text-align: left;">
+
+      <!-- STEP 1: Name + Business -->
+      <div id="onboard-step-1">
+        <h2 style="margin-top:0;">Welcome to It's Time 2 👋</h2>
+        <p style="color: #64748b; font-size: 14px; margin-bottom: 16px;">Let's get your account set up. This only takes a minute, and you can always come back to it later.</p>
+        <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">Your Name:</label>
+        <input type="text" id="onboard-contact-name" placeholder="Jane Smith">
+        <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">Business Name:</label>
+        <input type="text" id="onboard-business-name" placeholder="Apex Health Clinic">
+        <button onclick="onboardSaveIdentity()" style="width: auto; margin-bottom: 0;">Next</button>
+      </div>
+
+      <!-- STEP 2: BYOC vs System choice -->
+      <div id="onboard-step-2" class="hidden">
+        <h2 style="margin-top:0;">How will you send texts?</h2>
+        <p style="color: #64748b; font-size: 14px; margin-bottom: 16px;">Choose how outbound messages will be sent from your account.</p>
+        <div class="btn-group-flex">
+          <button onclick="onboardChooseMode('byoc')" style="width: auto; margin-bottom: 0;">Bring Your Own Carrier</button>
+          <button onclick="onboardChooseMode('system')" class="secondary" style="width: auto; margin-bottom: 0;">Sign Up for a Number (Coming Soon)</button>
+        </div>
+      </div>
+
+      <!-- STEP 3a: BYOC setup -->
+      <div id="onboard-step-3-byoc" class="hidden">
+        <h2 style="margin-top:0;">Connect Your Carrier</h2>
+        <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">Select Provider:</label>
+        <select id="onboard-provider-select" onchange="onboardToggleProviderFields()" style="margin-bottom: 12px;">
+          <option value="twilio">Twilio</option>
+          <option value="quo">Quo (formerly OpenPhone)</option>
+          <option value="telnyx">Telnyx</option>
+          <option value="ringcentral">RingCentral</option>
+          <option value="zoom">Zoom Phone</option>
+          <option value="vonage">Vonage</option>
+        </select>
+
+        <div style="position: relative; margin-bottom: 12px;">
+          <input type="password" id="onboard-provider-key" placeholder="API Key / Auth Token" style="margin-bottom: 0; padding-right: 42px;">
+          <button type="button" onclick="toggleVisibility('onboard-provider-key', this)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; width: auto; min-height: auto; margin-bottom: 0; padding: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #64748b;" title="Toggle Visibility">
+            <i data-lucide="eye" style="width: 20px; height: 20px;"></i>
+          </button>
+        </div>
+        <input type="text" id="onboard-provider-sid" placeholder="Account SID">
+        <input type="text" id="onboard-provider-phone" placeholder="Sending Phone Number (e.g. +15555555555)">
+
+        <div id="onboard-provider-instructions" style="margin: 10px 0 15px 0; font-size: 13px; color: #64748b;"></div>
+
+        <div class="btn-group-flex">
+          <button onclick="onboardSaveProvider()" class="success" style="width: auto; margin-bottom: 0;">Save & Continue</button>
+          <button onclick="onboardGoToStep(2)" class="secondary" style="width: auto; margin-bottom: 0;">Back</button>
+        </div>
+      </div>
+
+      <!-- STEP 3b: System coming soon -->
+      <div id="onboard-step-3-system" class="hidden">
+        <h2 style="margin-top:0;">🚧 Coming Soon</h2>
+        <p style="color: #64748b; font-size: 14px; margin-bottom: 16px;">Signing up for a number directly through us isn't available yet — we'll let you know the moment it is! For now, please bring your own carrier account.</p>
+        <button onclick="onboardChooseMode('byoc')" style="width: auto; margin-bottom: 0;">Bring Your Own Carrier Instead</button>
+      </div>
+
+      <!-- STEP 4: Sample data prompt -->
+      <div id="onboard-step-4" class="hidden">
+        <h2 style="margin-top:0;">Want a head start?</h2>
+        <p style="color: #64748b; font-size: 14px; margin-bottom: 16px;">We can add one sample reminder template and one sample contact to your library, so you can see how everything works before adding your own.</p>
+        <div class="btn-group-flex">
+          <button onclick="onboardCreateSamples()" class="success" style="width: auto; margin-bottom: 0;">Yes, Add Samples</button>
+          <button onclick="onboardSkipSamples()" class="secondary" style="width: auto; margin-bottom: 0;">No Thanks, I'll Add My Own</button>
+        </div>
+      </div>
+
+      <!-- STEP 5: Done -->
+      <div id="onboard-step-5" class="hidden" style="text-align: center;">
+        <h2 style="margin-top:0;">You're all set! 🎉</h2>
+        <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">Your account is ready to go. You can always revisit this setup guide from the sidebar if you need to.</p>
+        <button onclick="closeOnboarding()" style="width: auto; margin-bottom: 0;">Get Started</button>
+      </div>
+
     </div>
   </div>
 
