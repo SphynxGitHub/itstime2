@@ -1,8 +1,19 @@
 import twilio from 'twilio';
 import { createClient } from '@supabase/supabase-js';
 
-const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+// Lazily constructed — a missing env var shouldn't crash the whole module
+// before Vercel can even route the request.
+let client = null;
+function getTwilioClient() {
+  if (!client) client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+  return client;
+}
+
+let supabase = null;
+function getSupabase() {
+  if (!supabase) supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return supabase;
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -12,7 +23,7 @@ export default async function handler(req, res) {
   try {
     // 1. SEARCH AVAILABLE NUMBERS BY AREA CODE
     if (action === 'search') {
-      const available = await client.availablePhoneNumbers('US')
+      const available = await getTwilioClient().availablePhoneNumbers('US')
         .local.list({ areaCode: parseInt(areaCode, 10), limit: 5 });
       
       const numbers = available.map(n => n.phoneNumber);
@@ -21,7 +32,7 @@ export default async function handler(req, res) {
 
     // 2. PURCHASE & ASSIGN NUMBER TO PRACTICE
     if (action === 'buy') {
-      const purchasedNumber = await client.incomingPhoneNumbers.create({
+      const purchasedNumber = await getTwilioClient().incomingPhoneNumbers.create({
         phoneNumber: phoneNumber,
         friendlyName: `Practice ID: ${userId}`
       });
@@ -33,7 +44,7 @@ export default async function handler(req, res) {
       // practice as BYOC and skipped pay-as-you-go metered billing even
       // though they're still using your system Twilio account for every
       // message.
-      await supabase
+      await getSupabase()
         .from('practices')
         .update({
           provider_type: 'system',
