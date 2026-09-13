@@ -907,18 +907,39 @@ async function fetchBillingDetails() {
   const badge = document.getElementById('billing-plan-badge');
   const sentEl = document.getElementById('billing-sms-sent');
   const limitEl = document.getElementById('billing-sms-limit');
-  const autoUpgradeEl = document.getElementById('billing-auto-upgrade');
+  const usageBox = document.getElementById('billing-usage-box');
+  const subscribeBox = document.getElementById('billing-subscribe-box');
+  const activeBox = document.getElementById('billing-active-box');
 
   if (badge) badge.innerText = planTier.toUpperCase();
-  if (sentEl) sentEl.innerText = sentCount;
-  if (limitEl) limitEl.innerText = limitCount;
-  if (autoUpgradeEl) autoUpgradeEl.checked = customer.auto_upgrade_enabled || false;
 
-  const percent = Math.min(100, Math.round((sentCount / limitCount) * 100));
-  const bar = document.getElementById('billing-progress-bar');
-  if (bar) {
-    bar.style.width = `${percent}%`;
-    bar.style.backgroundColor = percent > 90 ? '#E51A24' : '#00B04F';
+  // Trial: show the 100-text usage bar and the $4/mo Subscribe button.
+  // Active: hide the trial usage bar (there's no cap once subscribed) and
+  // show a simple "you're subscribed" confirmation instead.
+  // Canceled/other: show the Subscribe button again so they can resubscribe.
+  if (planTier === 'trial') {
+    if (usageBox) usageBox.classList.remove('hidden');
+    if (subscribeBox) subscribeBox.classList.remove('hidden');
+    if (activeBox) activeBox.classList.add('hidden');
+    if (sentEl) sentEl.innerText = sentCount;
+    if (limitEl) limitEl.innerText = limitCount;
+    const percent = Math.min(100, Math.round((sentCount / limitCount) * 100));
+    const bar = document.getElementById('billing-progress-bar');
+    if (bar) {
+      bar.style.width = `${percent}%`;
+      bar.style.backgroundColor = percent > 90 ? '#E51A24' : '#00B04F';
+    }
+  } else if (planTier === 'active') {
+    if (usageBox) usageBox.classList.add('hidden');
+    if (subscribeBox) subscribeBox.classList.add('hidden');
+    if (activeBox) activeBox.classList.remove('hidden');
+    const activeSentEl = document.getElementById('billing-active-sent');
+    if (activeSentEl) activeSentEl.innerText = sentCount;
+  } else {
+    // canceled or any other non-active status
+    if (usageBox) usageBox.classList.add('hidden');
+    if (subscribeBox) subscribeBox.classList.remove('hidden');
+    if (activeBox) activeBox.classList.add('hidden');
   }
 
   // 2. Load Saved BYOC Gateway Settings
@@ -962,33 +983,15 @@ function closeTrialModal() {
   if (modal) modal.classList.add('hidden');
 }
 
-async function toggleAutoUpgrade(isEnabled) {
-  if (!currentUserId) return;
-  const { error } = await supabaseClient
-    .from('practices')
-    .update({ auto_upgrade_enabled: isEnabled })
-    .eq('user_id', currentUserId);
-
-  if (error) {
-    alert('Failed to update auto-upgrade setting.');
-    const el = document.getElementById('billing-auto-upgrade');
-    if (el) el.checked = !isEnabled;
-  }
-}
-
-async function triggerCheckout(planTier) {
+async function triggerCheckout() {
   if (!currentUserId) return alert('Please log in first.');
-  const autoUpgradeEl = document.getElementById('billing-auto-upgrade');
-  const autoUpgrade = autoUpgradeEl ? autoUpgradeEl.checked : false;
 
   try {
     const res = await fetch('/api/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId: currentUserId,
-        planTier: planTier,
-        autoUpgrade: autoUpgrade
+        userId: currentUserId
       })
     });
 
@@ -1012,16 +1015,22 @@ function toggleProviderFields() {
   const credsDiv = document.getElementById('provider-credentials');
   const sidInput = document.getElementById('provider-sid');
   const instructionsDiv = document.getElementById('provider-instructions');
+  const numberSection = document.getElementById('dedicated-number-section');
 
   if (provider === 'system') {
     if (credsDiv) credsDiv.classList.add('hidden');
+    if (numberSection) numberSection.classList.remove('hidden');
     if (instructionsDiv) {
       instructionsDiv.innerHTML = '<p style="color: #64748b;"><strong>Built-in Gateway Selected:</strong> Outbound messages dispatch automatically via our system master Twilio account. No extra setup required.</p>';
     }
     return;
   }
 
+  // Any BYOC provider: they bring their own number from their own account,
+  // so the "get a dedicated number" flow doesn't apply here.
+  if (numberSection) numberSection.classList.add('hidden');
   if (credsDiv) credsDiv.classList.remove('hidden');
+
 
   if (provider === 'twilio') {
     if (sidInput) sidInput.classList.remove('hidden');
