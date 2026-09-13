@@ -34,8 +34,8 @@ export default async function handler(req, res) {
       metadata: {
         userId: userId,
       },
-      success_url: `https://app.itstime2.net/dashboard?payment=success`,
-      cancel_url: `https://itstime2.net/pricing`,
+      success_url: `https://www.itstime2.net/app?payment=success`,
+      cancel_url: `https://www.itstime2.net/#pricing`,
     });
 
     res.status(200).json({ url: session.url });
