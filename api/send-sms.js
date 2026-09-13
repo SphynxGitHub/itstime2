@@ -126,6 +126,142 @@ module.exports = async function handler(req, res) {
         return res.status(500).json({ error: `Telnyx Dispatch Error: ${telnyxError}` });
       }
 
+    } else if (providerType === 'ringcentral') {
+      // --- RINGCENTRAL API ROUTE ---
+      // Auth is two-part: OUR registered RingCentral app (Client ID/Secret,
+      // server env vars) exchanges the CUSTOMER's personal/service JWT for
+      // a short-lived access token, which is then used to send.
+      const rcJwt = practice?.provider_api_key;
+      const rcPhoneNumber = practice?.provider_phone_number;
+      const rcClientId = process.env.RC_CLIENT_ID;
+      const rcClientSecret = process.env.RC_CLIENT_SECRET;
+
+      if (!rcJwt || !rcPhoneNumber) {
+        return res.status(400).json({
+          error: 'RingCentral Gateway selected, but JWT or Phone Number is missing in settings.'
+        });
+      }
+      if (!rcClientId || !rcClientSecret) {
+        return res.status(500).json({
+          error: 'Missing RC_CLIENT_ID or RC_CLIENT_SECRET in Vercel Environment Variables.'
+        });
+      }
+
+      const rcTokenRes = await fetch('https://platform.ringcentral.com/restapi/oauth/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Basic ' + Buffer.from(`${rcClientId}:${rcClientSecret}`).toString('base64')
+        },
+        body: new URLSearchParams({
+          grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+          assertion: rcJwt
+        })
+      });
+
+      const rcTokenData = await rcTokenRes.json();
+      if (!rcTokenRes.ok) {
+        return res.status(500).json({ error: `RingCentral Auth Error: ${rcTokenData.error_description || rcTokenData.error}` });
+      }
+
+      const rcRes = await fetch('https://platform.ringcentral.com/restapi/v1.0/account/~/extension/~/sms', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${rcTokenData.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: { phoneNumber: rcPhoneNumber },
+          to: [{ phoneNumber: phone }],
+          text: message
+        })
+      });
+
+      if (!rcRes.ok) {
+        const rcError = await rcRes.text();
+        return res.status(500).json({ error: `RingCentral Dispatch Error: ${rcError}` });
+      }
+
+    } else if (providerType === 'zoom') {
+      // --- ZOOM PHONE API ROUTE ---
+      // NOTE: Zoom's SMS API has documented limitations sending on behalf
+      // of other users from a Server-to-Server app — test this thoroughly
+      // before relying on it in production; it's less mature than the
+      // other gateways here.
+      const zoomSidParts = (practice?.provider_account_sid || '').split(':');
+      const zoomAccountId = zoomSidParts[0];
+      const zoomClientId = zoomSidParts[1];
+      const zoomClientSecret = practice?.provider_api_key;
+      const zoomPhoneNumber = practice?.provider_phone_number;
+
+      if (!zoomAccountId || !zoomClientId || !zoomClientSecret || !zoomPhoneNumber) {
+        return res.status(400).json({
+          error: 'Zoom Phone Gateway selected, but Account ID, Client ID, Client Secret, or Phone Number is missing in settings.'
+        });
+      }
+
+      const zoomTokenRes = await fetch(`https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${zoomAccountId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Basic ' + Buffer.from(`${zoomClientId}:${zoomClientSecret}`).toString('base64')
+        }
+      });
+
+      const zoomTokenData = await zoomTokenRes.json();
+      if (!zoomTokenRes.ok) {
+        return res.status(500).json({ error: `Zoom Auth Error: ${zoomTokenData.reason || zoomTokenData.error}` });
+      }
+
+      const zoomRes = await fetch('https://api.zoom.us/v2/phone/sms/messages', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${zoomTokenData.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sender: zoomPhoneNumber,
+          to_members: [{ phone_number: phone }],
+          message: message
+        })
+      });
+
+      if (!zoomRes.ok) {
+        const zoomError = await zoomRes.text();
+        return res.status(500).json({ error: `Zoom Dispatch Error: ${zoomError}` });
+      }
+
+    } else if (providerType === 'vonage') {
+      // --- VONAGE API ROUTE ---
+      const vonageApiKey = practice?.provider_account_sid;
+      const vonageApiSecret = practice?.provider_api_key;
+      const vonageSender = practice?.provider_phone_number;
+
+      if (!vonageApiKey || !vonageApiSecret || !vonageSender) {
+        return res.status(400).json({
+          error: 'Vonage Gateway selected, but API Key, API Secret, or Sender Number is missing in settings.'
+        });
+      }
+
+      const vonageRes = await fetch('https://api.nexmo.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Basic ' + Buffer.from(`${vonageApiKey}:${vonageApiSecret}`).toString('base64'),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          to: phone,
+          from: vonageSender,
+          channel: 'sms',
+          message_type: 'text',
+          text: message
+        })
+      });
+
+      if (!vonageRes.ok) {
+        const vonageError = await vonageRes.text();
+        return res.status(500).json({ error: `Vonage Dispatch Error: ${vonageError}` });
+      }
+
     } else {
       // --- TWILIO ROUTE (SYSTEM BUILT-IN OR BYOC TWILIO) ---
       const accountSid = practice?.provider_account_sid || process.env.TWILIO_ACCOUNT_SID;
