@@ -422,7 +422,13 @@
 
   <!-- GUIDED ONBOARDING WIZARD -->
   <div id="onboarding-modal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 560px; text-align: left;">
+    <div class="modal-content" style="max-width: 560px; text-align: left; position: relative;">
+
+      <!-- Persistent exit button, sits outside the step divs so it stays
+           visible no matter which step is showing. Closes without marking
+           onboarding_completed, so the wizard will still offer itself again
+           next session rather than being lost forever. -->
+      <button type="button" onclick="skipOnboarding()" title="Skip for now" style="position: absolute; top: 12px; right: 12px; width: auto; min-height: auto; margin-bottom: 0; padding: 4px 8px; background: none; border: none; box-shadow: none; color: #64748b; font-size: 20px; font-weight: 800; cursor: pointer; line-height: 1;">&times;</button>
 
       <!-- STEP 1: Name + Business -->
       <div id="onboard-step-1">
@@ -433,6 +439,7 @@
         <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px; color: #475569;">Business Name:</label>
         <input type="text" id="onboard-business-name" placeholder="Apex Health Clinic">
         <button onclick="onboardSaveIdentity()" style="width: auto; margin-bottom: 0;">Next</button>
+        <button onclick="skipOnboarding()" class="link-btn" style="margin-bottom: 0;">Skip for now</button>
       </div>
 
       <!-- STEP 2: BYOC vs System choice -->
