@@ -189,7 +189,7 @@ async function resetPassword() {
 
 // --- ACTIVITY LOGGING HELPER ---
 async function logActivity(action, details) {
-  await supabaseClient.from('activity_history').insert([{ action, details }]);
+  await supabaseClient.from('activity_history').insert([{ action, details, user_id: currentUserId }]);
 }
 
 // --- MODULE 1: PATIENTS DIRECTORY ---
@@ -631,6 +631,7 @@ async function loadPatientHistory(phone) {
   const { data } = await supabaseClient
     .from('activity_history')
     .select('*')
+    .eq('user_id', currentUserId)
     .ilike('details', `%${phone}%`)
     .order('created_at', { ascending: false });
 
@@ -794,14 +795,17 @@ async function executeSendMessage() {
       body: JSON.stringify({
         userId: currentUserId,
         phone: activeModalCust.phone,
-        message: messageText
+        message: messageText,
+        custName: custName
       })
     });
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || data.error || 'Failed to send SMS');
 
-    await logActivity('Sent SMS', `Sent to ${custName} (${activeModalCust.phone}): "${messageText}"`);
+    // Activity logging now happens server-side in send-sms.js, so this
+    // path and scheduled/recurring sends (cron-dispatcher.js) both get
+    // logged consistently — previously only this manual-send path did.
 
     alert(`SMS successfully delivered to ${custName}!`);
     closeSendModal();
@@ -820,7 +824,7 @@ async function fetchHistory() {
   const tbody = document.getElementById('history-list-body');
   if (!tbody) return;
   tbody.innerHTML = '<tr><td colspan="3">Loading...</td></tr>';
-  const { data, error } = await supabaseClient.from('activity_history').select('*').order('created_at', { ascending: false });
+  const { data, error } = await supabaseClient.from('activity_history').select('*').eq('user_id', currentUserId).order('created_at', { ascending: false });
   if (error) return tbody.innerHTML = '<tr><td colspan="3">Error loading activity logs.</td></tr>';
   historyStore = data || [];
   populateHistoryTypeFilter();
