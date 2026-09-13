@@ -1,5 +1,8 @@
 const twilio = require('twilio');
+const Stripe = require('stripe');
 const { createClient } = require('@supabase/supabase-js');
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 module.exports = async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
@@ -33,6 +36,7 @@ module.exports = async function handler(req, res) {
     }
 
     let processedCount = 0;
+    let skippedCount = 0;
 
     for (const msg of messages) {
       const patient = msg.patients;
@@ -46,12 +50,34 @@ module.exports = async function handler(req, res) {
         .maybeSingle();
 
       const providerType = practice?.provider_type || 'system';
+      const planTier = practice?.plan_tier || 'trial';
+      const sentCount = practice?.sms_sent_this_month || 0;
+      const trialLimit = practice?.sms_limit || 100;
       const toPhone = patient.phone;
       const messageBody = msg.message_body;
 
       // -----------------------------------------------------------------
+      // SUBSCRIPTION GATING (same rules as send-sms.js). A message that's
+      // skipped here is left 'active' so the cron picks it back up on the
+      // next run once the practice trial/subscription allows it again —
+      // it is NOT canceled or marked completed just because it was skipped.
+      // -----------------------------------------------------------------
+      if (planTier === 'trial' && sentCount >= trialLimit) {
+        console.log(`Skipping message ${msg.id}: trial limit reached for practice ${practice?.id}`);
+        skippedCount++;
+        continue;
+      }
+      if (planTier !== 'trial' && planTier !== 'active') {
+        console.log(`Skipping message ${msg.id}: practice ${practice?.id} subscription is ${planTier}`);
+        skippedCount++;
+        continue;
+      }
+
+      // -----------------------------------------------------------------
       // GATEWAY ROUTING LOGIC
       // -----------------------------------------------------------------
+
+      let dispatchFailed = false;
 
       if (providerType === 'quo') {
         // --- QUO (OPENPHONE) API ROUTE ---
@@ -132,12 +158,25 @@ module.exports = async function handler(req, res) {
 
       processedCount++;
 
-      // Increment practice usage counter
+      // Increment practice usage counter (drives the trial cap + display)
       if (practice) {
         await supabase
           .from('practices')
-          .update({ sms_sent_this_month: (practice.sms_sent_this_month || 0) + 1 })
+          .update({ sms_sent_this_month: sentCount + 1 })
           .eq('id', practice.id);
+      }
+
+      // Report metered usage to Stripe — only for paid accounts on the
+      // built-in 'system' gateway, same rule as send-sms.js.
+      if (planTier === 'active' && providerType === 'system' && practice?.stripe_metered_subscription_item_id) {
+        try {
+          await stripe.subscriptionItems.createUsageRecord(
+            practice.stripe_metered_subscription_item_id,
+            { quantity: 1, timestamp: Math.floor(Date.now() / 1000), action: 'increment' }
+          );
+        } catch (usageErr) {
+          console.error(`Failed to report Stripe usage record for practice ${practice.id}:`, usageErr.message);
+        }
       }
 
       // Schedule updates
@@ -184,7 +223,7 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    return res.status(200).json({ success: true, processed: processedCount });
+    return res.status(200).json({ success: true, processed: processedCount, skipped: skippedCount });
   } catch (err) {
     console.error('Cron Execution Exception:', err);
     return res.status(500).json({ error: err.message || 'Serverless Execution Exception' });
