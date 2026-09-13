@@ -56,6 +56,15 @@ module.exports = async function handler(req, res) {
       const toPhone = patient.phone;
       const messageBody = msg.message_body;
 
+      // The built-in 'system' gateway isn't launched yet — skip rather than
+      // silently falling through to a shared system Twilio number.
+      const supportedByocProviders = ['twilio', 'quo', 'telnyx', 'ringcentral', 'zoom', 'vonage'];
+      if (!supportedByocProviders.includes(providerType)) {
+        console.log(`Skipping message ${msg.id}: practice ${practice?.id} has no BYOC gateway configured`);
+        skippedCount++;
+        continue;
+      }
+
       // -----------------------------------------------------------------
       // SUBSCRIPTION GATING (same rules as send-sms.js). A message that's
       // skipped here is left 'active' so the cron picks it back up on the
