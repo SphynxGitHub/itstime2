@@ -105,6 +105,16 @@ function switchTab(tabName) {
 window.addEventListener('DOMContentLoaded', async () => {
   if (window.lucide) lucide.createIcons();
   if (checkInactivity()) return;
+
+  // Register the service worker so the browser can display push
+  // notifications if one ever arrives (sw.js already handles the 'push'
+  // event). This alone doesn't create push subscriptions yet — that needs
+  // VAPID keys and a backend endpoint to store them, which isn't built yet.
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(err => {
+      console.error('Service worker registration failed:', err);
+    });
+  }
   
   const { data: { session } } = await supabaseClient.auth.getSession();
   
