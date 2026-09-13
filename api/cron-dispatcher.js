@@ -2,7 +2,14 @@ const twilio = require('twilio');
 const Stripe = require('stripe');
 const { createClient } = require('@supabase/supabase-js');
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// Lazily constructed — see send-sms.js for why (a missing/invalid
+// STRIPE_SECRET_KEY shouldn't crash the whole dispatcher, just the
+// optional usage-metering step for a given message).
+let stripe = null;
+function getStripe() {
+  if (!stripe) stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  return stripe;
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
@@ -307,7 +314,7 @@ module.exports = async function handler(req, res) {
       // current Billing Meters API (see send-sms.js for details on why).
       if (planTier === 'active' && providerType === 'system' && practice?.stripe_customer_id) {
         try {
-          await stripe.billing.meterEvents.create({
+          await getStripe().billing.meterEvents.create({
             event_name: process.env.STRIPE_SMS_METER_EVENT_NAME || 'sms_sent',
             payload: {
               stripe_customer_id: practice.stripe_customer_id,
