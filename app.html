@@ -351,29 +351,22 @@
           <h3>SMS Provider Configuration</h3>
           <label style="font-size: 13px; font-weight: bold; margin-bottom: 4px; display: block;">Select Gateway:</label>
           <select id="provider-select" onchange="toggleProviderFields()" style="margin-bottom: 12px;">
-            <option value="system">Built-in Gateway (System Master Account)</option>
+            <option value="system" disabled>Built-in Gateway (Coming Soon)</option>
             <option value="twilio">Twilio (BYOC)</option>
             <option value="quo">Quo (formerly OpenPhone) (BYOC)</option>
             <option value="telnyx">Telnyx (BYOC)</option>
+            <option value="ringcentral">RingCentral (BYOC)</option>
+            <option value="zoom">Zoom Phone (BYOC)</option>
+            <option value="vonage">Vonage (BYOC)</option>
           </select>
 
-          <!-- DEDICATED NUMBER PROVISIONER: only relevant for the built-in
-               system gateway — BYOC users bring their own number from their
-               own Twilio/Quo/Telnyx account, so this stays hidden for them -->
-          <div id="dedicated-number-section" style="margin-top: 15px; padding: 15px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 15px;">
+          <!-- DEDICATED NUMBER PROVISIONER: not launched yet — the "Built-in
+               Gateway" option above is disabled until this is ready, so this
+               is shown as a coming-soon notice rather than the functional
+               search/buy flow. -->
+          <div id="dedicated-number-section" class="hidden" style="margin-top: 15px; padding: 15px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 15px;">
             <h4 style="margin-top:0;">Get a Dedicated Practice Phone Number</h4>
-            <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">Select an area code to choose a dedicated SMS number for your practice.</p>
-            
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <input type="text" id="area-code-input" placeholder="e.g. 555" maxlength="3" style="width: 100px; margin-bottom:0;">
-              <button type="button" onclick="searchAvailableNumbers()" class="info" style="width: auto; margin-bottom:0;">Search Numbers</button>
-            </div>
-
-            <div id="number-results-container" class="hidden" style="margin-top: 12px;">
-              <label style="font-size: 12px; font-weight: bold;">Available Numbers:</label>
-              <select id="available-numbers-select" style="margin-bottom: 8px;"></select>
-              <button type="button" onclick="buySelectedNumber()" class="success" style="width: auto;">Provision Selected Number</button>
-            </div>
+            <p style="font-size: 12px; color: #64748b; margin: 0;">🚧 Coming soon — for now, please bring your own carrier account from the list above.</p>
           </div>
         
           <!-- Dynamic Credentials Inputs -->
