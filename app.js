@@ -1021,7 +1021,7 @@ function toggleProviderFields() {
     if (credsDiv) credsDiv.classList.add('hidden');
     if (numberSection) numberSection.classList.remove('hidden');
     if (instructionsDiv) {
-      instructionsDiv.innerHTML = '<p style="color: #64748b;"><strong>Built-in Gateway Selected:</strong> Outbound messages dispatch automatically via our system master Twilio account. No extra setup required.</p>';
+      instructionsDiv.innerHTML = '<p style="color: #64748b;"><strong>Coming Soon:</strong> the built-in gateway (no separate carrier account needed) isn\'t available yet. Please choose a bring-your-own-carrier option above for now.</p>';
     }
     return;
   }
@@ -1033,7 +1033,10 @@ function toggleProviderFields() {
 
 
   if (provider === 'twilio') {
-    if (sidInput) sidInput.classList.remove('hidden');
+    if (sidInput) {
+      sidInput.classList.remove('hidden');
+      sidInput.placeholder = 'Account SID (Twilio only)';
+    }
     const keyInput = document.getElementById('provider-key');
     if (keyInput) keyInput.placeholder = 'Auth Token (or API Secret)';
     if (instructionsDiv) {
@@ -1074,8 +1077,67 @@ function toggleProviderFields() {
         </ol>
       `;
     }
+  } else if (provider === 'ringcentral') {
+    // RingCentral uses OUR registered app (Client ID/Secret, stored as
+    // server env vars) plus THEIR personal/service JWT — so only the JWT
+    // and phone number are collected here, not a Client ID/Secret pair.
+    if (sidInput) sidInput.classList.add('hidden');
+    const keyInput = document.getElementById('provider-key');
+    if (keyInput) keyInput.placeholder = 'RingCentral JWT Token';
+    if (instructionsDiv) {
+      instructionsDiv.innerHTML = `
+        <strong>RingCentral Setup Guide:</strong>
+        <ol style="margin-top: 6px; padding-left: 20px; line-height: 1.5;">
+          <li>In the <strong>RingCentral Developer Console</strong>, generate a personal/service <strong>JWT credential</strong> for your account (Admin role required).</li>
+          <li>Paste that JWT above.</li>
+          <li>Enter one of your RingCentral extension's SMS-capable numbers (must show the "SmsSender" feature) in E.164 format.</li>
+        </ol>
+        <p style="margin-top: 8px; font-size: 12px;">Note: RingCentral can only send from numbers directly assigned to the authenticated extension.</p>
+      `;
+    }
+  } else if (provider === 'zoom') {
+    // Zoom's Server-to-Server OAuth apps are per-account (not shareable
+    // across customers the way RingCentral's JWT flow is), so each
+    // customer needs their own Account ID + Client ID + Client Secret.
+    // Account ID and Client ID are combined into the SID field as
+    // "AccountID:ClientID" since there's no separate field for a 3rd value.
+    if (sidInput) {
+      sidInput.classList.remove('hidden');
+      sidInput.placeholder = 'Account ID:Client ID';
+    }
+    const keyInput = document.getElementById('provider-key');
+    if (keyInput) keyInput.placeholder = 'Client Secret';
+    if (instructionsDiv) {
+      instructionsDiv.innerHTML = `
+        <strong>Zoom Phone Setup Guide:</strong>
+        <ol style="margin-top: 6px; padding-left: 20px; line-height: 1.5;">
+          <li>In the <strong>Zoom App Marketplace</strong>, create a <strong>Server-to-Server OAuth</strong> app with Zoom Phone SMS scopes.</li>
+          <li>Copy your <strong>Account ID</strong> and <strong>Client ID</strong>, and enter them above separated by a colon, e.g. <code>abc123:def456</code>.</li>
+          <li>Enter the app's <strong>Client Secret</strong> in the field below, and an SMS-enabled Zoom Phone number in E.164 format.</li>
+        </ol>
+        <p style="margin-top: 8px; font-size: 12px; color: #b45309;">⚠️ Zoom's SMS API has known limitations sending on behalf of other users in a fully automated setup — test thoroughly before relying on this in production.</p>
+      `;
+    }
+  } else if (provider === 'vonage') {
+    if (sidInput) {
+      sidInput.classList.remove('hidden');
+      sidInput.placeholder = 'API Key';
+    }
+    const keyInput = document.getElementById('provider-key');
+    if (keyInput) keyInput.placeholder = 'API Secret';
+    if (instructionsDiv) {
+      instructionsDiv.innerHTML = `
+        <strong>Vonage Setup Guide:</strong>
+        <ol style="margin-top: 6px; padding-left: 20px; line-height: 1.5;">
+          <li>Log in to your <strong>Vonage API Dashboard</strong>.</li>
+          <li>On the Getting Started page, copy your <strong>API Key</strong> and <strong>API Secret</strong>.</li>
+          <li>Enter your Vonage phone number (or approved Sender ID) below.</li>
+        </ol>
+      `;
+    }
   }
 }
+
 
 async function saveProviderSettings() {
   if (!currentUserId) return alert('User session expired. Please log in again.');
