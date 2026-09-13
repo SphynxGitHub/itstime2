@@ -303,15 +303,19 @@ module.exports = async function handler(req, res) {
       }
 
       // Report metered usage to Stripe — only for paid accounts on the
-      // built-in 'system' gateway, same rule as send-sms.js.
-      if (planTier === 'active' && providerType === 'system' && practice?.stripe_metered_subscription_item_id) {
+      // built-in 'system' gateway, same rule as send-sms.js. Uses the
+      // current Billing Meters API (see send-sms.js for details on why).
+      if (planTier === 'active' && providerType === 'system' && practice?.stripe_customer_id) {
         try {
-          await stripe.subscriptionItems.createUsageRecord(
-            practice.stripe_metered_subscription_item_id,
-            { quantity: 1, timestamp: Math.floor(Date.now() / 1000), action: 'increment' }
-          );
+          await stripe.billing.meterEvents.create({
+            event_name: process.env.STRIPE_SMS_METER_EVENT_NAME || 'sms_sent',
+            payload: {
+              stripe_customer_id: practice.stripe_customer_id,
+              value: '1'
+            }
+          });
         } catch (usageErr) {
-          console.error(`Failed to report Stripe usage record for practice ${practice.id}:`, usageErr.message);
+          console.error(`Failed to report Stripe meter event for practice ${practice.id}:`, usageErr.message);
         }
       }
 
