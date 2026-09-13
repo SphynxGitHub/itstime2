@@ -311,54 +311,30 @@
           </div>
         </div>
 
-        <!-- A2P 10DLC ISV REGISTRATION PANEL -->
-        <div class="billing-card" style="background: white; border: 1px solid #cbd5e1; margin-top: 20px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-            <h3 style="margin: 0;">Carrier Compliance & A2P Vetting</h3>
-            <span class="badge-plan" id="a2p-status-badge" style="background: #fef3c7; color: #b45309;">UNREGISTERED</span>
-          </div>
-          <p style="font-size: 13px; color: #64748b; margin: 8px 0 16px 0;">
-            U.S. carriers require business verification to guarantee deliverability and prevent spam blocks on your dedicated practice phone number.
-          </p>
-
-          <form id="a2p-form" onsubmit="submitA2PRegistration(event)">
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              <input type="text" id="a2p-legal-name" placeholder="Legal Business Name (e.g., Apex Health LLC)" required style="flex:1; min-width: 220px;">
-              <input type="text" id="a2p-ein" placeholder="Tax ID / EIN (9 digits)" required style="flex:1; min-width: 160px;">
-            </div>
-            
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              <select id="a2p-type" required style="flex:1; min-width: 180px;">
-                <option value="">-- Business Structure --</option>
-                <option value="llc">LLC</option>
-                <option value="corporation">Corporation</option>
-                <option value="partnership">Partnership</option>
-                <option value="sole_proprietorship">Sole Proprietorship</option>
-              </select>
-              <input type="text" id="a2p-address" placeholder="Street Address" required style="flex:2; min-width: 220px;">
-            </div>
-
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              <input type="text" id="a2p-city" placeholder="City" required style="flex:2; min-width: 160px;">
-              <input type="text" id="a2p-state" placeholder="State (e.g. NJ)" maxlength="2" required style="flex:1; min-width: 100px;">
-              <input type="text" id="a2p-zip" placeholder="Zip Code" required style="flex:1; min-width: 100px;">
-            </div>
-
-            <button type="submit" class="info" style="width: auto; margin-bottom: 0;">Submit Carrier Registration</button>
-          </form>
+        <!-- GATEWAY MODE TOGGLE: decides which of the two cards below apply -->
+        <div class="btn-group-flex" style="margin: 20px 0;">
+          <button type="button" id="gateway-mode-btn-byoc" onclick="switchGatewayMode('byoc')" class="info" style="width: auto; margin-bottom: 0;">Bring Your Own Carrier</button>
+          <button type="button" id="gateway-mode-btn-system" onclick="switchGatewayMode('system')" class="secondary" style="width: auto; margin-bottom: 0;">Sign Up for a Number (Coming Soon)</button>
         </div>
 
-        <div class="billing-card" style="background: white;">
-          <h3>SMS Provider Configuration</h3>
+        <!-- BYOC MODE CONTENT -->
+        <div id="gateway-mode-byoc-content">
 
-          <!-- GATEWAY MODE TOGGLE -->
-          <div class="btn-group-flex" style="margin-bottom: 16px;">
-            <button type="button" id="gateway-mode-btn-byoc" onclick="switchGatewayMode('byoc')" class="info" style="width: auto; margin-bottom: 0;">Bring Your Own Carrier</button>
-            <button type="button" id="gateway-mode-btn-system" onclick="switchGatewayMode('system')" class="secondary" style="width: auto; margin-bottom: 0;">Sign Up for a Number (Coming Soon)</button>
+          <!-- Carrier compliance note: the A2P registration FORM only
+               registers a brand under OUR system Twilio account, so it
+               doesn't do anything useful for someone using their own
+               carrier — showing it here would be misleading. Point them to
+               their own provider's compliance process instead. -->
+          <div class="billing-card" style="background: white; border: 1px solid #cbd5e1;">
+            <h3 style="margin: 0 0 8px 0;">Carrier Compliance & A2P Vetting</h3>
+            <p style="font-size: 13px; color: #64748b; margin: 0;">
+              Since you're bringing your own carrier, please complete A2P 10DLC (or equivalent) business verification directly with them — the setup guide for your selected provider below links to where to do that. This is required by U.S. carriers regardless of which platform you send from, and skipping it risks your messages being blocked as spam.
+            </p>
           </div>
 
-          <!-- BYOC MODE: provider picker + credentials -->
-          <div id="gateway-mode-byoc-content">
+          <div class="billing-card" style="background: white; margin-top: 20px;">
+            <h3>SMS Provider Configuration</h3>
+
             <label style="font-size: 13px; font-weight: bold; margin-bottom: 4px; display: block;">Select Provider:</label>
             <select id="provider-select" onchange="toggleProviderFields()" style="margin-bottom: 12px;">
               <option value="twilio">Twilio</option>
@@ -386,13 +362,15 @@
             <!-- Instruction Accordion -->
             <div id="provider-instructions" style="margin-top: 15px; font-size: 13px; color: #64748b;"></div>
           </div>
+        </div>
 
-          <!-- SYSTEM MODE: coming-soon notice only -->
-          <div id="gateway-mode-system-content" class="hidden">
-            <div style="background: #f8fafc; padding: 15px; border: 1px solid #cbd5e1; border-radius: 6px;">
-              <h4 style="margin-top:0;">Get a Dedicated Practice Phone Number</h4>
-              <p style="font-size: 12px; color: #64748b; margin: 0;">🚧 Coming soon — we'll email you the moment this is ready. For now, please use Bring Your Own Carrier.</p>
-            </div>
+        <!-- SYSTEM MODE CONTENT: one combined coming-soon notice covering
+             both the dedicated number AND carrier compliance, since once
+             this launches we'll handle A2P registration for you too. -->
+        <div id="gateway-mode-system-content" class="hidden">
+          <div class="billing-card" style="background: white;">
+            <h4 style="margin-top:0;">Get a Dedicated Practice Phone Number</h4>
+            <p style="font-size: 13px; color: #64748b; margin: 0;">🚧 Coming soon — we'll email you the moment this is ready. Once it launches, we'll also handle A2P carrier compliance on your behalf. For now, please use Bring Your Own Carrier.</p>
           </div>
         </div>
       </div>
