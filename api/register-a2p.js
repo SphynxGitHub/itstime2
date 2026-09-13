@@ -1,8 +1,19 @@
 import twilio from 'twilio';
 import { createClient } from '@supabase/supabase-js';
 
-const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+// Lazily constructed — a missing env var shouldn't crash the whole module
+// before Vercel can even route the request.
+let client = null;
+function getTwilioClient() {
+  if (!client) client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+  return client;
+}
+
+let supabase = null;
+function getSupabase() {
+  if (!supabase) supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+  return supabase;
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -11,14 +22,14 @@ export default async function handler(req, res) {
 
   try {
     // 1. Create a Customer Profile / Secondary Brand in Twilio
-    const brand = await client.trusthub.v1.customerProfiles.create({
+    const brand = await getTwilioClient().trusthub.v1.customerProfiles.create({
       friendlyName: legalName,
       email: req.body.email || 'compliance@itstime2.net',
       policySid: 'RNdfdd54153922372719522f6e9198651a' // Standard A2P Brand Policy SID
     });
 
     // 2. Save Brand SID and mark status as 'pending' in Supabase
-    await supabase
+    await getSupabase()
       .from('practices')
       .update({
         legal_business_name: legalName,
