@@ -2,11 +2,26 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { buffer } from 'micro';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// Both lazily constructed — a missing env var here shouldn't crash the
+// whole module before Vercel can even route the request (which produces
+// Vercel's generic non-JSON "A server error has occurred" page instead of
+// anything useful).
+let stripe = null;
+function getStripe() {
+  if (!stripe) stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  return stripe;
+}
+
+let supabase = null;
+function getSupabase() {
+  if (!supabase) {
+    supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+  }
+  return supabase;
+}
 
 export const config = {
   api: { bodyParser: false }, // Disables body parsing so Stripe can verify raw signature
@@ -20,7 +35,7 @@ export default async function handler(req, res) {
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    event = getStripe().webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
@@ -40,7 +55,7 @@ export default async function handler(req, res) {
     const session = event.data.object;
     const userId = session.metadata.userId;
 
-    await supabase.from('practices').update({
+    await getSupabase().from('practices').update({
       stripe_customer_id: session.customer,
       stripe_subscription_id: session.subscription,
       plan_tier: 'active',
@@ -54,7 +69,7 @@ export default async function handler(req, res) {
   //    counter), but it's still useful to show "X sent this billing period."
   if (event.type === 'invoice.payment_succeeded') {
     const invoice = event.data.object;
-    await supabase.from('practices').update({
+    await getSupabase().from('practices').update({
       sms_sent_this_month: 0,
     }).eq('stripe_customer_id', invoice.customer);
   }
@@ -64,7 +79,7 @@ export default async function handler(req, res) {
   //    marked 'active' forever since nothing else updates plan_tier back.
   if (event.type === 'customer.subscription.deleted') {
     const subscription = event.data.object;
-    await supabase.from('practices').update({
+    await getSupabase().from('practices').update({
       plan_tier: 'canceled',
     }).eq('stripe_customer_id', subscription.customer);
   }
