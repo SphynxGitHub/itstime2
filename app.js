@@ -1324,6 +1324,14 @@ function closeOnboarding() {
   switchTab('customers');
 }
 
+// Exits the wizard early without marking onboarding_completed — it'll be
+// offered again on a future login (though not again this session, since
+// the sessionStorage guard in fetchBillingDetails already covers that).
+function skipOnboarding() {
+  const modal = document.getElementById('onboarding-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
 // STEP 1 -> 2: save name/business, then move on.
 async function onboardSaveIdentity() {
   if (!currentUserId) return alert('User session expired. Please log in again.');
