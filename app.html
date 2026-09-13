@@ -282,10 +282,12 @@
             <span class="badge-plan" id="billing-plan-badge">TRIAL</span>
           </div>
 
-          <!-- SMS Usage Counter & Progress Bar -->
-          <div style="margin-top: 20px;">
+          <!-- SMS Usage Counter & Progress Bar — shown during the free trial
+               only. Once subscribed there's no cap, so this hides and
+               #billing-active-box shows instead. -->
+          <div id="billing-usage-box" style="margin-top: 20px;">
             <div style="display: flex; justify-content: space-between; font-size: 14px; flex-wrap: wrap; gap: 4px;">
-              <span>Monthly SMS Usage</span>
+              <span>Free Trial Usage</span>
               <span><strong id="billing-sms-sent">0</strong> / <span id="billing-sms-limit">100</span> Sent</span>
             </div>
             <div class="progress-bar-bg">
@@ -293,15 +295,18 @@
             </div>
           </div>
 
-          <!-- Auto Upgrade Toggle -->
-          <div style="margin-top: 20px; background: white; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
-            <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; margin-bottom: 0;">
-              <input type="checkbox" id="billing-auto-upgrade" onchange="toggleAutoUpgrade(this.checked)" style="width: auto; margin-top: 3px;">
-              <div>
-                <strong style="font-size: 14px;">Enable Auto-Upgrade</strong>
-                <p style="margin: 0; font-size: 12px; color: #64748b;">Automatically bump your account to the next tier when your limit is reached to ensure reminders continue dispatching without interruption.</p>
-              </div>
-            </label>
+          <!-- Subscribe box: shown during trial (and if a subscription was
+               canceled) so there's always a clear next step to keep sending. -->
+          <div id="billing-subscribe-box" class="hidden" style="margin-top: 20px; background: white; padding: 16px; border: 1px solid #cbd5e1; border-radius: 6px;">
+            <strong style="font-size: 15px;">Subscribe — $4/month</strong>
+            <p style="margin: 6px 0 12px 0; font-size: 13px; color: #64748b;">Sign up is free. The $4/mo flat fee covers the platform itself. If you use our built-in gateway (instead of your own Twilio/Quo/Telnyx account), individual texts are billed pay-as-you-go on top of the flat fee — bring your own carrier and you'll never see a per-text charge.</p>
+            <button onclick="triggerCheckout()" style="width: auto; margin-bottom: 0;">Subscribe for $4/mo</button>
+          </div>
+
+          <!-- Active box: shown once subscribed. -->
+          <div id="billing-active-box" class="hidden" style="margin-top: 20px; background: white; padding: 16px; border: 1px solid #cbd5e1; border-radius: 6px;">
+            <strong style="font-size: 15px; color: #00B04F;">You're subscribed</strong>
+            <p style="margin: 6px 0 0 0; font-size: 13px; color: #64748b;">Sent <strong id="billing-active-sent">0</strong> texts this billing period. Built-in gateway usage is billed pay-as-you-go on your next invoice — bring-your-own-carrier accounts never incur a per-text charge.</p>
           </div>
         </div>
 
@@ -352,8 +357,10 @@
             <option value="telnyx">Telnyx (BYOC)</option>
           </select>
 
-          <!-- DEDICATED NUMBER PROVISIONER -->
-          <div style="margin-top: 15px; padding: 15px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 15px;">
+          <!-- DEDICATED NUMBER PROVISIONER: only relevant for the built-in
+               system gateway — BYOC users bring their own number from their
+               own Twilio/Quo/Telnyx account, so this stays hidden for them -->
+          <div id="dedicated-number-section" style="margin-top: 15px; padding: 15px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 15px;">
             <h4 style="margin-top:0;">Get a Dedicated Practice Phone Number</h4>
             <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">Select an area code to choose a dedicated SMS number for your practice.</p>
             
@@ -387,23 +394,6 @@
           <!-- Instruction Accordion -->
           <div id="provider-instructions" style="margin-top: 15px; font-size: 13px; color: #64748b;"></div>
         </div>
-
-        <h3>Upgrade Subscription Plan</h3>
-        <div class="grid-plans">
-          <div class="billing-card" style="background: white;">
-            <h4 style="margin-top: 0;">Starter Practice</h4>
-            <p style="font-size: 24px; font-weight: bold; margin: 10px 0;">$29 <span style="font-size: 14px; font-weight: normal; color: #64748b;">/ month</span></p>
-            <p style="font-size: 13px; color: #64748b;">Includes 1,000 SMS check-ins per month.</p>
-            <button onclick="triggerCheckout('starter')" class="info" style="margin-bottom: 0;">Upgrade to Starter</button>
-          </div>
-
-          <div class="billing-card" style="background: white; border: 2px solid var(--brand-blue);">
-            <h4 style="margin-top: 0; color: var(--brand-blue);">Pro Practice</h4>
-            <p style="font-size: 24px; font-weight: bold; margin: 10px 0;">$79 <span style="font-size: 14px; font-weight: normal; color: #64748b;">/ month</span></p>
-            <p style="font-size: 13px; color: #64748b;">Includes 5,000 SMS check-ins per month.</p>
-            <button onclick="triggerCheckout('pro')" style="margin-bottom: 0;">Upgrade to Pro</button>
-          </div>
-        </div>
       </div>
 
     </div>
@@ -431,19 +421,19 @@
   <!-- TRIAL / UNPAID PLAN POPUP MODAL -->
   <div id="trial-modal" class="modal-overlay hidden">
     <div class="modal-content" style="text-align: center; border-top: 5px solid var(--brand-yellow);">
-      <h2 style="margin-top: 0; color: #b45309;">⚠️ You are on a Trial Plan</h2>
+      <h2 style="margin-top: 0; color: #b45309;">⚠️ You're on a Free Trial</h2>
       <p style="font-size: 14px; color: #64748b; margin: 15px 0;">
-        Your account is currently limited to <strong>100 SMS messages</strong> per month. Upgrade your plan to unlock higher dispatch limits and prevent delivery interruptions.
+        Your free trial includes <strong>100 texts</strong>. Once you use them up, subscribe for $4/mo to keep sending.
       </p>
   
       <!-- Usage Preview inside Modal -->
       <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
-        <span style="font-size: 13px; color: #64748b;">Current Usage: </span>
+        <span style="font-size: 13px; color: #64748b;">Trial Usage: </span>
         <strong id="trial-modal-sent">0</strong> / <span id="trial-modal-limit">100</span> SMS
       </div>
   
       <button onclick="switchTab('billing'); closeTrialModal();" style="background-color: var(--brand-blue); margin-bottom: 8px;">
-        Upgrade Plan Now
+        Go to Billing
       </button>
       <button onclick="closeTrialModal()" class="secondary">
         Continue with Trial
