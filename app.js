@@ -948,7 +948,13 @@ async function fetchBillingDetails() {
   const provSid = document.getElementById('provider-sid');
   const provPhone = document.getElementById('provider-phone');
 
-  if (provSelect && customer.provider_type) provSelect.value = customer.provider_type;
+  const savedProviderType = customer.provider_type;
+  if (savedProviderType === 'system') {
+    switchGatewayMode('system');
+  } else {
+    switchGatewayMode('byoc');
+    if (provSelect && savedProviderType) provSelect.value = savedProviderType;
+  }
   if (provKey) provKey.value = customer.provider_api_key || '';
   if (provSid) provSid.value = customer.provider_account_sid || '';
   if (provPhone) provPhone.value = customer.provider_phone_number || '';
@@ -975,6 +981,14 @@ async function fetchBillingDetails() {
       if (trialModal) trialModal.classList.remove('hidden');
       sessionStorage.setItem('trialModalShown', 'true');
     }
+  }
+
+  // 4. Auto-launch the onboarding wizard once per session for accounts
+  // that haven't finished it yet. It can always be reopened later via the
+  // "🚀 Setup Guide" button in the sidebar.
+  if (!customer.onboarding_completed && !sessionStorage.getItem('onboardingShownThisSession')) {
+    sessionStorage.setItem('onboardingShownThisSession', 'true');
+    openOnboarding();
   }
 }
 
@@ -1007,85 +1021,73 @@ async function triggerCheckout() {
 }
 
 // --- MODULE 7: BYOC GATEWAY & PROVISIONING CONTROLLER ---
-function toggleProviderFields() {
-  const providerEl = document.getElementById('provider-select');
-  if (!providerEl) return;
+// Toggles between the two top-level gateway modes. BYOC is functional;
+// system is a coming-soon placeholder with no functional content beneath it.
+function switchGatewayMode(mode) {
+  const byocContent = document.getElementById('gateway-mode-byoc-content');
+  const systemContent = document.getElementById('gateway-mode-system-content');
+  const byocBtn = document.getElementById('gateway-mode-btn-byoc');
+  const systemBtn = document.getElementById('gateway-mode-btn-system');
 
-  const provider = providerEl.value;
-  const credsDiv = document.getElementById('provider-credentials');
-  const sidInput = document.getElementById('provider-sid');
-  const instructionsDiv = document.getElementById('provider-instructions');
-  const numberSection = document.getElementById('dedicated-number-section');
-
-  if (provider === 'system') {
-    if (credsDiv) credsDiv.classList.add('hidden');
-    if (numberSection) numberSection.classList.remove('hidden');
-    if (instructionsDiv) {
-      instructionsDiv.innerHTML = '<p style="color: #64748b;"><strong>Coming Soon:</strong> the built-in gateway (no separate carrier account needed) isn\'t available yet. Please choose a bring-your-own-carrier option above for now.</p>';
-    }
-    return;
+  if (mode === 'system') {
+    if (byocContent) byocContent.classList.add('hidden');
+    if (systemContent) systemContent.classList.remove('hidden');
+    if (byocBtn) { byocBtn.classList.remove('info'); byocBtn.classList.add('secondary'); }
+    if (systemBtn) { systemBtn.classList.remove('secondary'); systemBtn.classList.add('info'); }
+  } else {
+    if (byocContent) byocContent.classList.remove('hidden');
+    if (systemContent) systemContent.classList.add('hidden');
+    if (byocBtn) { byocBtn.classList.remove('secondary'); byocBtn.classList.add('info'); }
+    if (systemBtn) { systemBtn.classList.remove('info'); systemBtn.classList.add('secondary'); }
   }
+}
 
-  // Any BYOC provider: they bring their own number from their own account,
-  // so the "get a dedicated number" flow doesn't apply here.
-  if (numberSection) numberSection.classList.add('hidden');
-  if (credsDiv) credsDiv.classList.remove('hidden');
-
-
-  if (provider === 'twilio') {
-    if (sidInput) {
-      sidInput.classList.remove('hidden');
-      sidInput.placeholder = 'Account SID (Twilio only)';
-    }
-    const keyInput = document.getElementById('provider-key');
-    if (keyInput) keyInput.placeholder = 'Auth Token (or API Secret)';
-    if (instructionsDiv) {
-      instructionsDiv.innerHTML = `
+// Shared provider metadata used by both the main Billing page's gateway
+// form and the onboarding wizard's gateway step, so the instruction text
+// only has to be written once.
+function getProviderFieldConfig(provider) {
+  const configs = {
+    twilio: {
+      sidVisible: true,
+      sidPlaceholder: 'Account SID (Twilio only)',
+      keyPlaceholder: 'Auth Token (or API Secret)',
+      instructionsHtml: `
         <strong>Twilio Setup Guide:</strong>
         <ol style="margin-top: 6px; padding-left: 20px; line-height: 1.5;">
           <li>Log in to your <strong>Twilio Console</strong>.</li>
           <li>Copy your <strong>Account SID</strong> and <strong>Auth Token</strong>.</li>
           <li>Enter your verified Twilio phone number in E.164 format (+1XXXXXXXXXX).</li>
         </ol>
-      `;
-    }
-  } else if (provider === 'quo') {
-    if (sidInput) sidInput.classList.add('hidden');
-    const keyInput = document.getElementById('provider-key');
-    if (keyInput) keyInput.placeholder = 'Quo API Key';
-    if (instructionsDiv) {
-      instructionsDiv.innerHTML = `
+      `
+    },
+    quo: {
+      sidVisible: false,
+      keyPlaceholder: 'Quo API Key',
+      instructionsHtml: `
         <strong>Quo (formerly OpenPhone) Setup Guide:</strong>
         <ol style="margin-top: 6px; padding-left: 20px; line-height: 1.5;">
           <li>Log in to your <strong>Quo Workspace</strong> (Admin role required).</li>
           <li>Navigate to <strong>Settings → API</strong> and click <strong>Generate API Key</strong>.</li>
           <li>Paste the key above along with your Quo phone number.</li>
         </ol>
-      `;
-    }
-  } else if (provider === 'telnyx') {
-    if (sidInput) sidInput.classList.add('hidden');
-    const keyInput = document.getElementById('provider-key');
-    if (keyInput) keyInput.placeholder = 'Telnyx V2 API Key';
-    if (instructionsDiv) {
-      instructionsDiv.innerHTML = `
+      `
+    },
+    telnyx: {
+      sidVisible: false,
+      keyPlaceholder: 'Telnyx V2 API Key',
+      instructionsHtml: `
         <strong>Telnyx Setup Guide:</strong>
         <ol style="margin-top: 6px; padding-left: 20px; line-height: 1.5;">
           <li>Log in to the <strong>Telnyx Portal</strong>.</li>
           <li>Go to <strong>API Keys</strong> and generate a V2 API Key.</li>
           <li>Enter your Telnyx phone number assigned to an active Messaging Profile.</li>
         </ol>
-      `;
-    }
-  } else if (provider === 'ringcentral') {
-    // RingCentral uses OUR registered app (Client ID/Secret, stored as
-    // server env vars) plus THEIR personal/service JWT — so only the JWT
-    // and phone number are collected here, not a Client ID/Secret pair.
-    if (sidInput) sidInput.classList.add('hidden');
-    const keyInput = document.getElementById('provider-key');
-    if (keyInput) keyInput.placeholder = 'RingCentral JWT Token';
-    if (instructionsDiv) {
-      instructionsDiv.innerHTML = `
+      `
+    },
+    ringcentral: {
+      sidVisible: false,
+      keyPlaceholder: 'RingCentral JWT Token',
+      instructionsHtml: `
         <strong>RingCentral Setup Guide:</strong>
         <ol style="margin-top: 6px; padding-left: 20px; line-height: 1.5;">
           <li>In the <strong>RingCentral Developer Console</strong>, generate a personal/service <strong>JWT credential</strong> for your account (Admin role required).</li>
@@ -1093,22 +1095,13 @@ function toggleProviderFields() {
           <li>Enter one of your RingCentral extension's SMS-capable numbers (must show the "SmsSender" feature) in E.164 format.</li>
         </ol>
         <p style="margin-top: 8px; font-size: 12px;">Note: RingCentral can only send from numbers directly assigned to the authenticated extension.</p>
-      `;
-    }
-  } else if (provider === 'zoom') {
-    // Zoom's Server-to-Server OAuth apps are per-account (not shareable
-    // across customers the way RingCentral's JWT flow is), so each
-    // customer needs their own Account ID + Client ID + Client Secret.
-    // Account ID and Client ID are combined into the SID field as
-    // "AccountID:ClientID" since there's no separate field for a 3rd value.
-    if (sidInput) {
-      sidInput.classList.remove('hidden');
-      sidInput.placeholder = 'Account ID:Client ID';
-    }
-    const keyInput = document.getElementById('provider-key');
-    if (keyInput) keyInput.placeholder = 'Client Secret';
-    if (instructionsDiv) {
-      instructionsDiv.innerHTML = `
+      `
+    },
+    zoom: {
+      sidVisible: true,
+      sidPlaceholder: 'Account ID:Client ID',
+      keyPlaceholder: 'Client Secret',
+      instructionsHtml: `
         <strong>Zoom Phone Setup Guide:</strong>
         <ol style="margin-top: 6px; padding-left: 20px; line-height: 1.5;">
           <li>In the <strong>Zoom App Marketplace</strong>, create a <strong>Server-to-Server OAuth</strong> app with Zoom Phone SMS scopes.</li>
@@ -1116,27 +1109,58 @@ function toggleProviderFields() {
           <li>Enter the app's <strong>Client Secret</strong> in the field below, and an SMS-enabled Zoom Phone number in E.164 format.</li>
         </ol>
         <p style="margin-top: 8px; font-size: 12px; color: #b45309;">⚠️ Zoom's SMS API has known limitations sending on behalf of other users in a fully automated setup — test thoroughly before relying on this in production.</p>
-      `;
-    }
-  } else if (provider === 'vonage') {
-    if (sidInput) {
-      sidInput.classList.remove('hidden');
-      sidInput.placeholder = 'API Key';
-    }
-    const keyInput = document.getElementById('provider-key');
-    if (keyInput) keyInput.placeholder = 'API Secret';
-    if (instructionsDiv) {
-      instructionsDiv.innerHTML = `
+      `
+    },
+    vonage: {
+      sidVisible: true,
+      sidPlaceholder: 'API Key',
+      keyPlaceholder: 'API Secret',
+      instructionsHtml: `
         <strong>Vonage Setup Guide:</strong>
         <ol style="margin-top: 6px; padding-left: 20px; line-height: 1.5;">
           <li>Log in to your <strong>Vonage API Dashboard</strong>.</li>
           <li>On the Getting Started page, copy your <strong>API Key</strong> and <strong>API Secret</strong>.</li>
           <li>Enter your Vonage phone number (or approved Sender ID) below.</li>
         </ol>
-      `;
+      `
+    }
+  };
+  return configs[provider] || null;
+}
+
+// Applies a provider config to a given set of key/sid/instructions elements.
+// Used by both the main Billing page (toggleProviderFields) and the
+// onboarding wizard (onboardToggleProviderFields).
+function applyProviderFieldConfig(provider, keyInput, sidInput, instructionsDiv) {
+  const config = getProviderFieldConfig(provider);
+  if (!config) return;
+
+  if (sidInput) {
+    if (config.sidVisible) {
+      sidInput.classList.remove('hidden');
+      sidInput.placeholder = config.sidPlaceholder || '';
+    } else {
+      sidInput.classList.add('hidden');
     }
   }
+  if (keyInput) keyInput.placeholder = config.keyPlaceholder || 'API Key / Auth Token';
+  if (instructionsDiv) instructionsDiv.innerHTML = config.instructionsHtml || '';
 }
+
+function toggleProviderFields() {
+  const providerEl = document.getElementById('provider-select');
+  if (!providerEl) return;
+
+  const provider = providerEl.value;
+  const credsDiv = document.getElementById('provider-credentials');
+  const sidInput = document.getElementById('provider-sid');
+  const keyInput = document.getElementById('provider-key');
+  const instructionsDiv = document.getElementById('provider-instructions');
+
+  if (credsDiv) credsDiv.classList.remove('hidden');
+  applyProviderFieldConfig(provider, keyInput, sidInput, instructionsDiv);
+}
+
 
 
 async function saveProviderSettings() {
@@ -1254,4 +1278,165 @@ async function submitA2PRegistration(event) {
   } catch (err) {
     alert('A2P Submission Error: ' + err.message);
   }
+}
+
+// --- MODULE 9: GUIDED ONBOARDING WIZARD ---
+
+// Shows one step of the wizard and hides all others.
+function onboardGoToStep(n) {
+  ['1', '2', '3-byoc', '3-system', '4', '5'].forEach(s => {
+    const el = document.getElementById(`onboard-step-${s}`);
+    if (el) el.classList.add('hidden');
+  });
+  const target = document.getElementById(`onboard-step-${n}`);
+  if (target) target.classList.remove('hidden');
+}
+
+// Opens the wizard (used both for the automatic first-login prompt and the
+// "🚀 Setup Guide" sidebar button that reopens it any time). Pre-fills name/
+// business fields if the practice already has them saved from a prior run.
+async function openOnboarding() {
+  const modal = document.getElementById('onboarding-modal');
+  if (!modal) return;
+
+  onboardGoToStep(1);
+  modal.classList.remove('hidden');
+
+  if (currentUserId) {
+    const { data } = await supabaseClient
+      .from('practices')
+      .select('contact_name, business_name')
+      .eq('user_id', currentUserId)
+      .maybeSingle();
+
+    if (data) {
+      const nameInput = document.getElementById('onboard-contact-name');
+      const bizInput = document.getElementById('onboard-business-name');
+      if (nameInput && data.contact_name) nameInput.value = data.contact_name;
+      if (bizInput && data.business_name) bizInput.value = data.business_name;
+    }
+  }
+}
+
+function closeOnboarding() {
+  const modal = document.getElementById('onboarding-modal');
+  if (modal) modal.classList.add('hidden');
+  switchTab('customers');
+}
+
+// STEP 1 -> 2: save name/business, then move on.
+async function onboardSaveIdentity() {
+  if (!currentUserId) return alert('User session expired. Please log in again.');
+
+  const contact_name = document.getElementById('onboard-contact-name').value.trim();
+  const business_name = document.getElementById('onboard-business-name').value.trim();
+
+  if (!contact_name || !business_name) {
+    return alert('Please enter your name and business name to continue.');
+  }
+
+  const { error } = await supabaseClient
+    .from('practices')
+    .update({ contact_name, business_name })
+    .eq('user_id', currentUserId);
+
+  if (error) return alert('Error saving: ' + error.message);
+
+  onboardGoToStep(2);
+}
+
+// STEP 2 -> 3a/3b
+function onboardChooseMode(mode) {
+  if (mode === 'system') {
+    onboardGoToStep('3-system');
+  } else {
+    onboardGoToStep('3-byoc');
+    onboardToggleProviderFields();
+  }
+}
+
+// Mirrors toggleProviderFields() on the Billing page, but scoped to the
+// wizard's own onboard-prefixed input ids so they don't collide.
+function onboardToggleProviderFields() {
+  const providerEl = document.getElementById('onboard-provider-select');
+  if (!providerEl) return;
+
+  const provider = providerEl.value;
+  const sidInput = document.getElementById('onboard-provider-sid');
+  const keyInput = document.getElementById('onboard-provider-key');
+  const instructionsDiv = document.getElementById('onboard-provider-instructions');
+
+  applyProviderFieldConfig(provider, keyInput, sidInput, instructionsDiv);
+}
+
+// STEP 3a -> 4: save the chosen BYOC gateway credentials.
+async function onboardSaveProvider() {
+  if (!currentUserId) return alert('User session expired. Please log in again.');
+
+  const provider_type = document.getElementById('onboard-provider-select').value;
+  const provider_api_key = document.getElementById('onboard-provider-key').value.trim();
+  const provider_account_sid = document.getElementById('onboard-provider-sid').value.trim();
+  const provider_phone_number = document.getElementById('onboard-provider-phone').value.trim();
+
+  if (!provider_api_key || !provider_phone_number) {
+    return alert('Please fill in your provider credentials and phone number to continue.');
+  }
+
+  const { error } = await supabaseClient
+    .from('practices')
+    .update({ provider_type, provider_api_key, provider_account_sid, provider_phone_number })
+    .eq('user_id', currentUserId);
+
+  if (error) return alert('Error saving provider settings: ' + error.message);
+
+  await logActivity('Updated Gateway', `Connected ${provider_type.toUpperCase()} during onboarding`);
+  onboardGoToStep(4);
+}
+
+// STEP 4 -> 5: create one sample contact + one sample template. Inserts
+// directly rather than reusing the Contacts/Templates tab forms, since
+// those forms live on a different tab and shouldn't be silently populated
+// as a side effect of the wizard.
+async function onboardCreateSamples() {
+  if (!currentUserId) return onboardGoToStep(5);
+
+  const sampleContact = {
+    first_name: 'Jane',
+    last_name: 'Sample',
+    email: 'jane.sample@example.com',
+    phone: formatToE164('5555550123'),
+    user_id: currentUserId
+  };
+
+  const sampleTemplate = {
+    title: '24h Appointment Reminder',
+    body: "Hi {first_name}, this is a reminder about your appointment tomorrow. Reply STOP to opt out."
+  };
+
+  const { error: custErr } = await supabaseClient.from('patients').insert([sampleContact]);
+  const { error: tmplErr } = await supabaseClient.from('reminder_templates').insert([sampleTemplate]);
+
+  if (custErr || tmplErr) {
+    alert("Something went wrong creating your sample data, but you can add your own anytime from the Contacts and Message Library tabs.");
+  } else {
+    await logActivity('Created Contact', 'Added sample contact during onboarding');
+    await logActivity('Created Template', 'Added sample template during onboarding');
+  }
+
+  await onboardMarkComplete();
+  onboardGoToStep(5);
+}
+
+// STEP 4 -> 5 (skip path)
+async function onboardSkipSamples() {
+  await onboardMarkComplete();
+  onboardGoToStep(5);
+}
+
+async function onboardMarkComplete() {
+  if (!currentUserId) return;
+  await supabaseClient
+    .from('practices')
+    .update({ onboarding_completed: true })
+    .eq('user_id', currentUserId);
 }
