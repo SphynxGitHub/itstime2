@@ -26,13 +26,18 @@ export default async function handler(req, res) {
         friendlyName: `Practice ID: ${userId}`
       });
 
-      // Save number to practice profile in Supabase
+      // NOTE: this number is purchased under YOUR master Twilio account
+      // (process.env.TWILIO_ACCOUNT_SID above), not the customer's own
+      // credentials — so provider_type stays 'system'. It was previously
+      // being set to 'twilio', which would have wrongly classified this
+      // practice as BYOC and skipped pay-as-you-go metered billing even
+      // though they're still using your system Twilio account for every
+      // message.
       await supabase
         .from('practices')
         .update({
-          provider_type: 'twilio',
-          provider_phone_number: purchasedNumber.phoneNumber,
-          provider_sid: purchasedNumber.sid
+          provider_type: 'system',
+          provider_phone_number: purchasedNumber.phoneNumber
         })
         .eq('user_id', userId);
 
