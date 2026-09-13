@@ -309,6 +309,20 @@ module.exports = async function handler(req, res) {
           .eq('id', practice.id);
       }
 
+      // Log to activity_history — this was previously missing entirely for
+      // scheduled/recurring sends, since only the frontend's manual-send
+      // path logged activity. Non-fatal: the text already sent.
+      try {
+        const custName = `${patient.first_name || ''} ${patient.last_name || ''}`.trim() || toPhone;
+        await supabase.from('activity_history').insert([{
+          action: 'Sent SMS',
+          details: `Sent to ${custName} (${toPhone}): "${messageBody}"`,
+          user_id: patient.user_id
+        }]);
+      } catch (logErr) {
+        console.error(`Failed to log activity_history for patient ${patient.id}:`, logErr.message);
+      }
+
       // Report metered usage to Stripe — only for paid accounts on the
       // built-in 'system' gateway, same rule as send-sms.js. Uses the
       // current Billing Meters API (see send-sms.js for details on why).
