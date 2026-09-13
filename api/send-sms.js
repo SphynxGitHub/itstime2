@@ -45,6 +45,16 @@ module.exports = async function handler(req, res) {
     const sentCount = practice?.sms_sent_this_month || 0;
     const trialLimit = practice?.sms_limit || 100;
 
+    // The built-in 'system' gateway isn't launched yet (see app.html's
+    // "Sign Up for a Number (Coming Soon)" toggle) — block sending rather
+    // than silently falling through to a shared system Twilio number.
+    const supportedByocProviders = ['twilio', 'quo', 'telnyx', 'ringcentral', 'zoom', 'vonage'];
+    if (!supportedByocProviders.includes(providerType)) {
+      return res.status(400).json({
+        error: 'No SMS gateway is configured yet. Please connect a bring-your-own-carrier provider in Billing settings.'
+      });
+    }
+
     // -----------------------------------------------------------------
     // SUBSCRIPTION GATING
     // Trial: capped at trialLimit (default 100) regardless of gateway.
