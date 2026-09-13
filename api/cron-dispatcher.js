@@ -137,6 +137,133 @@ module.exports = async function handler(req, res) {
           continue;
         }
 
+      } else if (providerType === 'ringcentral') {
+        // --- RINGCENTRAL API ROUTE ---
+        const rcJwt = practice?.provider_api_key;
+        const rcPhoneNumber = practice?.provider_phone_number;
+        const rcClientId = process.env.RC_CLIENT_ID;
+        const rcClientSecret = process.env.RC_CLIENT_SECRET;
+
+        if (!rcJwt || !rcPhoneNumber || !rcClientId || !rcClientSecret) {
+          console.error(`Missing RingCentral credentials for patient ${patient.id}`);
+          continue;
+        }
+
+        const rcTokenRes = await fetch('https://platform.ringcentral.com/restapi/oauth/token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': 'Basic ' + Buffer.from(`${rcClientId}:${rcClientSecret}`).toString('base64')
+          },
+          body: new URLSearchParams({
+            grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+            assertion: rcJwt
+          })
+        });
+
+        const rcTokenData = await rcTokenRes.json();
+        if (!rcTokenRes.ok) {
+          console.error(`RingCentral Auth Error for patient ${patient.id}:`, rcTokenData.error_description || rcTokenData.error);
+          continue;
+        }
+
+        const rcRes = await fetch('https://platform.ringcentral.com/restapi/v1.0/account/~/extension/~/sms', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${rcTokenData.access_token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            from: { phoneNumber: rcPhoneNumber },
+            to: [{ phoneNumber: toPhone }],
+            text: messageBody
+          })
+        });
+
+        if (!rcRes.ok) {
+          const rcError = await rcRes.text();
+          console.error(`RingCentral Dispatch Error for patient ${patient.id}:`, rcError);
+          continue;
+        }
+
+      } else if (providerType === 'zoom') {
+        // --- ZOOM PHONE API ROUTE (see send-sms.js for the caveat about
+        // Zoom's SMS API limitations with automated/server-to-server sending) ---
+        const zoomSidParts = (practice?.provider_account_sid || '').split(':');
+        const zoomAccountId = zoomSidParts[0];
+        const zoomClientId = zoomSidParts[1];
+        const zoomClientSecret = practice?.provider_api_key;
+        const zoomPhoneNumber = practice?.provider_phone_number;
+
+        if (!zoomAccountId || !zoomClientId || !zoomClientSecret || !zoomPhoneNumber) {
+          console.error(`Missing Zoom Phone credentials for patient ${patient.id}`);
+          continue;
+        }
+
+        const zoomTokenRes = await fetch(`https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${zoomAccountId}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Basic ' + Buffer.from(`${zoomClientId}:${zoomClientSecret}`).toString('base64')
+          }
+        });
+
+        const zoomTokenData = await zoomTokenRes.json();
+        if (!zoomTokenRes.ok) {
+          console.error(`Zoom Auth Error for patient ${patient.id}:`, zoomTokenData.reason || zoomTokenData.error);
+          continue;
+        }
+
+        const zoomRes = await fetch('https://api.zoom.us/v2/phone/sms/messages', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${zoomTokenData.access_token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            sender: zoomPhoneNumber,
+            to_members: [{ phone_number: toPhone }],
+            message: messageBody
+          })
+        });
+
+        if (!zoomRes.ok) {
+          const zoomError = await zoomRes.text();
+          console.error(`Zoom Dispatch Error for patient ${patient.id}:`, zoomError);
+          continue;
+        }
+
+      } else if (providerType === 'vonage') {
+        // --- VONAGE API ROUTE ---
+        const vonageApiKey = practice?.provider_account_sid;
+        const vonageApiSecret = practice?.provider_api_key;
+        const vonageSender = practice?.provider_phone_number;
+
+        if (!vonageApiKey || !vonageApiSecret || !vonageSender) {
+          console.error(`Missing Vonage credentials for patient ${patient.id}`);
+          continue;
+        }
+
+        const vonageRes = await fetch('https://api.nexmo.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Basic ' + Buffer.from(`${vonageApiKey}:${vonageApiSecret}`).toString('base64'),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            to: toPhone,
+            from: vonageSender,
+            channel: 'sms',
+            message_type: 'text',
+            text: messageBody
+          })
+        });
+
+        if (!vonageRes.ok) {
+          const vonageError = await vonageRes.text();
+          console.error(`Vonage Dispatch Error for patient ${patient.id}:`, vonageError);
+          continue;
+        }
+
       } else {
         // --- TWILIO ROUTE (SYSTEM BUILT-IN OR BYOC TWILIO) ---
         const accountSid = practice?.provider_account_sid || process.env.TWILIO_ACCOUNT_SID;
