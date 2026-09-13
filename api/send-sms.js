@@ -2,7 +2,15 @@ const twilio = require('twilio');
 const Stripe = require('stripe');
 const { createClient } = require('@supabase/supabase-js');
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// Lazily constructed — a missing/invalid STRIPE_SECRET_KEY should only
+// break the optional usage-metering step below, not crash the entire
+// function (and with it, basic SMS sending, which doesn't need Stripe
+// at all for BYOC accounts).
+let stripe = null;
+function getStripe() {
+  if (!stripe) stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  return stripe;
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader('Content-Type', 'application/json');
@@ -313,7 +321,7 @@ module.exports = async function handler(req, res) {
     //    configured on the Meter in the Stripe Dashboard.
     if (planTier === 'active' && providerType === 'system' && practice.stripe_customer_id) {
       try {
-        await stripe.billing.meterEvents.create({
+        await getStripe().billing.meterEvents.create({
           event_name: process.env.STRIPE_SMS_METER_EVENT_NAME || 'sms_sent',
           payload: {
             stripe_customer_id: practice.stripe_customer_id,
@@ -322,7 +330,9 @@ module.exports = async function handler(req, res) {
         });
       } catch (usageErr) {
         // The text already sent successfully — don't fail the request just
-        // because billing couldn't be recorded. Log it so it's visible.
+        // because billing couldn't be recorded (including a missing/invalid
+        // STRIPE_SECRET_KEY, which getStripe() would throw on here). Log it
+        // so it's visible.
         console.error('Failed to report Stripe meter event:', usageErr.message);
       }
     }
